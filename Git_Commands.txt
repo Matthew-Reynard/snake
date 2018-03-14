@@ -1,0 +1,31 @@
+Taken from YT video "Git Tutorial for Beginners: Command-Line Fundamentals" -
+https://www.youtube.com/watch?v=HVsySz-h9r4&t=324s
+
+git --version
+
+git config --global user.name "NAME"
+git config --global user.email "EMAIL"
+git config --list
+
+git help VERB
+git VERB --help
+
+git status
+git add -A
+git commit -m "COMMENT"
+git pull origin master
+git push origin master
+
+---Branching and Merging is not covered here ---
+
+git branch BRANCH_NAME
+git checkout BRANCH_NAME
+git branch -a
+git push -u origin BRANCH_NAME
+
+git checkout master
+git pull origin master
+git merge BRANCH_NAME
+git push orgin master
+
+git branch -d BRANCH_NAME #deletes branch
