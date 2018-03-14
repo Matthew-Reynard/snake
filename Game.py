@@ -57,6 +57,8 @@ snake.head_img = pygame.image.load("./Images/Snake_Head.png").convert()
 snake.head_img.set_colorkey(white) # sets white to alpha
 snake.head_img = pygame.transform.scale(snake.head_img, (20, 20)) # scales it down from a 50x50 image to 20x20
 snake.head_mask = pygame.mask.from_surface(snake.head_img) # creates a mask
+snake.head_img = pygame.transform.flip(snake.head_img, False, True) #
+snake.head_img = pygame.transform.rotate(snake.head_img, 90) # Start facing right
 
 snake.tail_img = pygame.image.load("./Images/Snake_Tail.png").convert()
 snake.tail_img.set_colorkey(white)
@@ -133,7 +135,6 @@ def eatsFood(score):
     if (snake.head_mask.overlap(blue_mask, (offset_x, offset_y)) != None):
 
         score += 1
-        score_text = myfont.render("Score: " + str(score), True, white)  # anti aliasing
         makeFood()
 
         snake.tail_length += 1
@@ -150,6 +151,8 @@ def eatsFood(score):
 
         if snake.dy < 0:#UP
             snake.box[snake.tail_length].topleft = tuple(np.subtract(snake.box[snake.tail_length - 1].topleft, (0, -20)))
+
+    return score
 
 
 #Defines all the Players controls during the game
@@ -168,21 +171,37 @@ def controls(GAME_OVER):
             #Moving left
             if (event.key == pygame.K_LEFT or event.key == pygame.K_a) and snake.dx == 0 and GAME_OVER == False:
                 snake.dx = -MOVEMENT_SPEED
+                if snake.dy == 1:
+                    snake.head_img = pygame.transform.rotate(snake.head_img, -90)
+                else:
+                    snake.head_img = pygame.transform.rotate(snake.head_img, 90)
                 snake.dy = 0
 
             #Moving right
             elif (event.key == pygame.K_RIGHT or event.key == pygame.K_d) and snake.dx == 0 and GAME_OVER == False:
                 snake.dx = MOVEMENT_SPEED
+                if snake.dy == 1:
+                    snake.head_img = pygame.transform.rotate(snake.head_img, 90)
+                else:
+                    snake.head_img = pygame.transform.rotate(snake.head_img, -90)
                 snake.dy = 0
 
             #Moving up
             elif (event.key == pygame.K_UP or event.key == pygame.K_w) and snake.dy == 0 and GAME_OVER == False:
                 snake.dy = -MOVEMENT_SPEED
+                if snake.dx == 1:
+                    snake.head_img = pygame.transform.rotate(snake.head_img, 90)
+                else:
+                    snake.head_img = pygame.transform.rotate(snake.head_img, -90)
                 snake.dx = 0
 
             #Moving down
             elif (event.key == pygame.K_DOWN or event.key == pygame.K_s) and snake.dy == 0 and GAME_OVER == False:
                 snake.dy = MOVEMENT_SPEED
+                if snake.dx == 1:
+                    snake.head_img = pygame.transform.rotate(snake.head_img, -90)
+                else:
+                    snake.head_img = pygame.transform.rotate(snake.head_img, 90)
                 snake.dx = 0
 
             #DEBUGGING - add to the snakes tail
@@ -198,6 +217,23 @@ def controls(GAME_OVER):
             elif (event.key == pygame.K_SPACE) and GAME_OVER == True:
                 GAME_OVER = False
 
+                if snake.dx == 1 and snake.dy == 0:
+                    #print("going R")
+                    pass
+                elif snake.dx == -1 and snake.dy == 0:
+                    #print("going L")
+                    snake.head_img = pygame.transform.rotate(snake.head_img, 180)
+                elif snake.dy == 1 and snake.dx == 0:
+                    #print("going D")
+                    snake.head_img = pygame.transform.rotate(snake.head_img, 90)
+                elif snake.dy == -1 and snake.dx == 0:
+                   #print("going U")
+                    snake.head_img = pygame.transform.rotate(snake.head_img, -90)
+
+                snake.dx = MOVEMENT_SPEED # Initilise the snake moving to the left
+                snake.dy = 0
+
+                #print(snake.dx, snake.dy)
                 snake.tail_length = 0
                 snake.box.clear()
 
@@ -250,14 +286,14 @@ def gameLoop(GAME_QUIT):
 
         if GAME_OVER:
             #Game over screen
-            gameOver() 
+            score = gameOver(score) 
         else:
             #In game screen
             FPS_text = myfont.render("FPS: %0.3f" % clock.get_fps(), True, white)  # anti aliasing lowers performance
-            score_text = myfont.render("Score: " + str(score), True, white)
             
             #Checks if the snake has eaten the food
-            eatsFood(score)
+            score = eatsFood(score)
+            score_text = myfont.render("Score: " + str(score), True, white)
 
             #Update the snakes positioning
             #gameUpdate()
@@ -304,7 +340,7 @@ def gameLoop(GAME_QUIT):
     sys.exit(0) # safe backup   
         
 
-def gameOver():
+def gameOver(score):
 
     gameDisplay.fill(black)  #set background
     game_over_text = gameOverFont.render("GAME OVER", True, white)
@@ -315,10 +351,13 @@ def gameOver():
     gameDisplay.blit(try_again_text, (235, 400))
     gameDisplay.blit(quit_text, (300, 450))
 
-    snake.dx = MOVEMENT_SPEED
-    snake.dy = 0
+    score = 0
     snake.x = 0
     snake.y = 0
+    #snake.dx = MOVEMENT_SPEED
+    #snake.dy = 0
+    return score
+    
 
 snake.box[0].topleft = (snake.x, snake.y)
 makeFood()
