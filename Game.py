@@ -9,12 +9,17 @@
 #
 #
 # 1200-1 number comes from 800/20 = 40; 600/20 = 30; 40*30 = 1200 grid blocks; subtract one for the "head"
+
+# BUGS:
+# To increase the FPS, from 10 to 120, the player is able to press multiple buttons before the snake is updated, mkaing the nsake turn a full 180.
 #######################################################
 import numpy as np
 import pygame
-from Tail import Snake
-import random
+from snake import Snake
+from food import Food
 import sys
+import csv
+import pandas as pd
 
 pygame.init()
 
@@ -37,78 +42,23 @@ white = (255,255,255)
 black = (0,0,0)
 red = (255,0,0)
 
-FPS = 15 # changing the speed of the snake
+FPS = 120 # If not set, game tries to max out FPS (last test was 1200 FPS)
 score = 0
-MOVEMENT_SPEED = 1
+MOVEMENT_SPEED = 1 # Meaning 1 block per timestep
 SCALE = 20 # Block/Grid size (in pixels)
-
-#Create and Initialise Snake 
-snake = Snake(0,0,0,0)
-#print(snake.x)
+UPDATE_RATE = 80 # lower the faster
 
 gameDisplay = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
 pygame.display.set_caption('My Game')
 clock = pygame.time.Clock()
 
-#Starting position of the snake (top left corner)
-snake.tail = [(DISPLAY_WIDTH * 0.0, DISPLAY_HEIGHT * 0.0)]
+#Create and Initialise Snake 
+snake = Snake(pygame)
 
-snake.head_img = pygame.image.load("./Images/Snake_Head.png").convert()
-snake.head_img.set_colorkey(white) # sets white to alpha
-snake.head_img = pygame.transform.scale(snake.head_img, (20, 20)) # scales it down from a 50x50 image to 20x20
-snake.head_mask = pygame.mask.from_surface(snake.head_img) # creates a mask
-snake.head_img = pygame.transform.flip(snake.head_img, False, True) #
-snake.head_img = pygame.transform.rotate(snake.head_img, 90) # Start facing right
-
-snake.tail_img = pygame.image.load("./Images/Snake_Tail.png").convert()
-snake.tail_img.set_colorkey(white)
-snake.tail_img = pygame.transform.scale(snake.tail_img, (20, 20))
-
-blue_dot = pygame.image.load("./Images/BlueDot.png").convert()
-blue_dot.set_colorkey(white)
-blue_dot = pygame.transform.scale(blue_dot, (20, 20))
-blue_mask = pygame.mask.from_surface(blue_dot)
-
-snake.box = [(0,0)]
-snake.box[0] = snake.head_img.get_rect()
-
-blue_rect = blue_dot.get_rect()
-
-#Load a food item into the screen at a random location
-#Needs to be updated to not load onto the snake - NB
-def makeFood():
-    made = False
-    rows = DISPLAY_HEIGHT / SCALE
-    cols = DISPLAY_WIDTH / SCALE
-
-    while not made:
-        myRow = random.randint(0, rows-1)
-        myCol = random.randint(0, cols-1)
-        #print(myRow * SCALE, myCol * SCALE) # DEBUGGING
-
-        #DEBUGGING
-        #for n in snake.tail:
-        #    print("x: " + str(n[0]) + "   y: " + str(n[1])) 
-
-        blue_rect.topleft = (myCol * SCALE, myRow * SCALE)
-        made = True # used for the updated function - NOT YET IMPLEMENTED
+#Create Food 
+food = Food(pygame)
 
 #pygame.mouse.set_visible(False)
-
-#Draws the snake
-def DrawSnake():
-    #Draw head
-    #gameDisplay.blit(snake.head_img, (snake.x, snake.y))
-    gameDisplay.blit(snake.head_img, snake.box[0].topleft)
-    #Draw tail
-    if snake.tail_length > 0:
-        for i in range(1, snake.tail_length + 1):
-            gameDisplay.blit(snake.tail_img, snake.box[i].topleft)
-            #print(i) #DEBUGGING
-
-#Draw the food
-def DrawBlueDot():
-    gameDisplay.blit(blue_dot, blue_rect.topleft)
 
 #If the snake goes out of the screen bounds, wrap it around
 def wrap(x,y):
@@ -121,45 +71,41 @@ def wrap(x,y):
     if snake.y < 0:
         snake.y = DISPLAY_HEIGHT - 20;
 
-#Update the snakes position
-def gameUpdate():
-    snake.x += snake.dx*SCALE
-    snake.y += snake.dy*SCALE
-
-
-#If the red mask overlaps the blue mask, increment score and increase snake tail length
+#If the red mask overlaps the food mask, increment score and increase snake tail length
 def eatsFood(score):
 
-    offset_x, offset_y = (blue_rect.left - snake.box[0].left), (blue_rect.top - snake.box[0].top)
+    offset_x, offset_y = (food.rect.left - snake.box[0].left), (food.rect.top - snake.box[0].top)
 
-    if (snake.head_mask.overlap(blue_mask, (offset_x, offset_y)) != None):
+    if (snake.head_mask.overlap(food.mask, (offset_x, offset_y)) != None):
 
         score += 1
-        makeFood()
+        food.make(DISPLAY_HEIGHT, DISPLAY_WIDTH, SCALE, snake)
 
         snake.tail_length += 1
         snake.box.append(snake.tail_img.get_rect()) #adds a rectangle variable to snake.box array(list)
 
+        #Create the new tail section by the head, and let it get updated tp the end with snake.update()
         if snake.dx > 0: #RIGHT
-            snake.box[snake.tail_length].topleft = tuple(np.subtract(snake.box[snake.tail_length - 1].topleft, (20, 0)))
+            snake.box[snake.tail_length].topleft = (snake.x, snake.y)
 
         if snake.dx < 0:#LEFT
-            snake.box[snake.tail_length].topleft = tuple(np.subtract(snake.box[snake.tail_length - 1].topleft, (-20, 0)))
+            snake.box[snake.tail_length].topleft = (snake.x, snake.y)
 
         if snake.dy > 0:#DOWN
-            snake.box[snake.tail_length].topleft = tuple(np.subtract(snake.box[snake.tail_length - 1].topleft, (0, 20)))
+            snake.box[snake.tail_length].topleft = (snake.x, snake.y)
 
         if snake.dy < 0:#UP
-            snake.box[snake.tail_length].topleft = tuple(np.subtract(snake.box[snake.tail_length - 1].topleft, (0, -20)))
+            snake.box[snake.tail_length].topleft = (snake.x, snake.y)
 
     return score
 
 
 #Defines all the Players controls during the game
-def controls(GAME_OVER):
+def controls(GAME_OVER, log_file):
     for event in pygame.event.get():
         #print(event) # DEBUGGING
         if event.type == pygame.QUIT:
+            log_file.writerow(["---END---"])
             GAME_QUIT = True
             pygame.quit()
             quit()
@@ -170,39 +116,54 @@ def controls(GAME_OVER):
 
             #Moving left
             if (event.key == pygame.K_LEFT or event.key == pygame.K_a) and snake.dx == 0 and GAME_OVER == False:
-                snake.dx = -MOVEMENT_SPEED
-                if snake.dy == 1:
-                    snake.head_img = pygame.transform.rotate(snake.head_img, -90)
-                else:
-                    snake.head_img = pygame.transform.rotate(snake.head_img, 90)
-                snake.dy = 0
+                snake.move = 1
+                # snake.dx = -MOVEMENT_SPEED
+                # if snake.dy == 1:
+                #     snake.head_img = pygame.transform.rotate(snake.head_img, -90)
+                # else:
+                #     snake.head_img = pygame.transform.rotate(snake.head_img, 90)
+                # snake.dy = 0
+                # # log_file.write("A\n")
+                # log_file.writerow([pygame.time.get_ticks(), str(snake.x), str(snake.y), "A"])
 
             #Moving right
             elif (event.key == pygame.K_RIGHT or event.key == pygame.K_d) and snake.dx == 0 and GAME_OVER == False:
-                snake.dx = MOVEMENT_SPEED
-                if snake.dy == 1:
-                    snake.head_img = pygame.transform.rotate(snake.head_img, 90)
-                else:
-                    snake.head_img = pygame.transform.rotate(snake.head_img, -90)
-                snake.dy = 0
+                snake.move = 2
+                # snake.dx = MOVEMENT_SPEED
+                # if snake.dy == 1:
+                #     snake.head_img = pygame.transform.rotate(snake.head_img, 90)
+                # else:
+                #     snake.head_img = pygame.transform.rotate(snake.head_img, -90)
+                # snake.dy = 0
+                # #log_file.write("D\n")
+                # log_file.writerow([pygame.time.get_ticks(), str(snake.x), str(snake.y), "D"])
+
 
             #Moving up
             elif (event.key == pygame.K_UP or event.key == pygame.K_w) and snake.dy == 0 and GAME_OVER == False:
-                snake.dy = -MOVEMENT_SPEED
-                if snake.dx == 1:
-                    snake.head_img = pygame.transform.rotate(snake.head_img, 90)
-                else:
-                    snake.head_img = pygame.transform.rotate(snake.head_img, -90)
-                snake.dx = 0
+                snake.move = 3
+                # snake.dy = -MOVEMENT_SPEED
+                # if snake.dx == 1:
+                #     snake.head_img = pygame.transform.rotate(snake.head_img, 90)
+                # else:
+                #     snake.head_img = pygame.transform.rotate(snake.head_img, -90)
+                # snake.dx = 0
+                # #log_file.write("W\n")
+                # log_file.writerow([pygame.time.get_ticks(), str(snake.x), str(snake.y), "W"])
+
 
             #Moving down
             elif (event.key == pygame.K_DOWN or event.key == pygame.K_s) and snake.dy == 0 and GAME_OVER == False:
-                snake.dy = MOVEMENT_SPEED
-                if snake.dx == 1:
-                    snake.head_img = pygame.transform.rotate(snake.head_img, -90)
-                else:
-                    snake.head_img = pygame.transform.rotate(snake.head_img, 90)
-                snake.dx = 0
+                snake.move = 4
+                # snake.dy = MOVEMENT_SPEED
+                # if snake.dx == 1:
+                #     snake.head_img = pygame.transform.rotate(snake.head_img, -90)
+                # else:
+                #     snake.head_img = pygame.transform.rotate(snake.head_img, 90)
+                # snake.dx = 0
+                # #log_file.write("S\n")
+                # log_file.writerow([pygame.time.get_ticks(), str(snake.x), str(snake.y), "S"])
+
 
             #DEBUGGING - add to the snakes tail
             elif event.key == pygame.K_f and GAME_OVER == False: 
@@ -216,6 +177,9 @@ def controls(GAME_OVER):
             #GAME OVER: Press space to try play again
             elif (event.key == pygame.K_SPACE) and GAME_OVER == True:
                 GAME_OVER = False
+
+                log_file.writerow(["---NEW GAME--"])
+                log_file.writerow(["TIME_STAMP", "SCORE", "SNAKE_X", "SNAKE_Y", "INPUT_BUTTON", "FOOD_X", "FOOD_Y"])
 
                 if snake.dx == 1 and snake.dy == 0:
                     #print("going R")
@@ -241,9 +205,10 @@ def controls(GAME_OVER):
 
                 snake.box[0] = snake.head_img.get_rect()
                 snake.box[0].topleft = (0, 0)
-                makeFood()
+                food.make(DISPLAY_HEIGHT, DISPLAY_WIDTH, SCALE, snake)
 
             elif (event.key == pygame.K_q) and GAME_OVER == True:
+                log_file.writerow(["---END---"])
                 GAME_QUIT = True # Not working
                 pygame.quit()
                 quit()
@@ -264,7 +229,7 @@ def controls(GAME_OVER):
 
 
 #Main game loop
-def gameLoop(GAME_QUIT):
+def gameLoop(GAME_QUIT, log_file, start_time):
 
     #initialize starting variable to ensure that the players can retry after a GAME OVER
     score = 0
@@ -279,10 +244,9 @@ def gameLoop(GAME_QUIT):
     while not GAME_QUIT:
         #print("Within the game loop") # DEBUGGING
 
+        #print(pygame.time.get_ticks())
         #Players controls while in the game loop
-        GAME_OVER = controls(GAME_OVER)
-
-        #blue_rect.topleft = pygame.mouse.get_pos()
+        GAME_OVER = controls(GAME_OVER, log_file)
 
         if GAME_OVER:
             #Game over screen
@@ -296,8 +260,10 @@ def gameLoop(GAME_QUIT):
             score_text = myfont.render("Score: " + str(score), True, white)
 
             #Update the snakes positioning
-            #gameUpdate()
-            snake.update(SCALE)
+            #print("Start time:", start_time, "        Time elapsed:" , start_time - pygame.time.get_ticks())
+            if pygame.time.get_ticks() - start_time>= UPDATE_RATE:
+                snake.update(SCALE, pygame, log_file, food, score)
+                start_time = pygame.time.get_ticks()
             
             #Update the snakes tail positions (from back to front)
             if snake.box[0].topleft != (snake.x, snake.y): # if the snake has moved
@@ -326,8 +292,8 @@ def gameLoop(GAME_QUIT):
             gameDisplay.blit(FPS_text, (0, 0))
             gameDisplay.blit(score_text, (DISPLAY_WIDTH - 150, 0))
 
-            DrawBlueDot()
-            DrawSnake()
+            food.draw(gameDisplay)
+            snake.draw(gameDisplay)
             
         pygame.display.update()
         #print(clock.get_rawtime())
@@ -360,14 +326,26 @@ def gameOver(score):
     
 
 snake.box[0].topleft = (snake.x, snake.y)
-makeFood()
+food.make(DISPLAY_HEIGHT, DISPLAY_WIDTH, SCALE, snake)
 
 GAME_QUIT = False
+
 ###############################################
 
+#Visualising the panda of the last game
+df = pd.read_csv("./log_file.csv")
+print(df)
+
 #Infinite game loop, until user presses exit
-while True:       
-    gameLoop(GAME_QUIT)
+
+#Context manager - opens and closes for you
+with open("./log_file.csv", 'w') as f:
+    csv_writer = csv.writer(f, delimiter=",") #default delimiter is a comma
+    csv_writer.writerow(["TIME_STAMP", "SCORE", "SNAKE_X", "SNAKE_Y", "INPUT_BUTTON", "FOOD_X", "FOOD_Y"])
+
+    start_time = pygame.time.get_ticks() 
+    while True:       
+        gameLoop(GAME_QUIT, csv_writer, start_time)
 
 ###############################################
 #fall back safety if something goes wrong
