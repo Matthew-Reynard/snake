@@ -10,8 +10,6 @@ git config --list
 git help VERB
 git VERB --help
 
-git clone URL PATH
-
 git status
 git add -A
 git commit -m "COMMENT"

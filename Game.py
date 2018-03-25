@@ -1,18 +1,21 @@
-#######################################################
-#
-# Simple Snake Game
-#
-# Author: Matthew
-# Purpose: Use Tensorflow to create a RL environment to train this snake to beat the game, i.e. have 1200-1 tail sections
-# Start Date: 5 March 2018
-# Due Date: Before June
-#
-#
-# 1200-1 number comes from 800/20 = 40; 600/20 = 30; 40*30 = 1200 grid blocks; subtract one for the "head"
+'''
 
-# BUGS:
-# To increase the FPS, from 10 to 120, the player is able to press multiple buttons before the snake is updated, mkaing the nsake turn a full 180.
-#######################################################
+Simple Snake Game
+
+@author: Matthew Reynard
+@year: 2018
+
+Purpose: Use Tensorflow to create a RL environment to train this snake to beat the game, i.e. have 1200-1 tail sections
+Start Date: 5 March 2018
+Due Date: Before June
+
+1200-1 number comes from 800/20 = 40; 600/20 = 30; 40*30 = 1200 grid blocks; subtract one for the "head"
+
+BUGS:
+To increase the FPS, from 10 to 120, the player is able to press multiple buttons before the snake is updated, mkaing the nsake turn a full 180.
+
+'''
+
 import numpy as np
 import pygame
 from snake import Snake
@@ -30,8 +33,10 @@ gameOverFont = pygame.font.SysFont('arial', 96)
 #print(pygame.font.get_fonts())
 
 #Window size
-DISPLAY_WIDTH = 800
-DISPLAY_HEIGHT = 600
+DISPLAY_WIDTH = 600
+DISPLAY_HEIGHT = 400
+# DISPLAY_WIDTH = 800
+# DISPLAY_HEIGHT = 600
 
 #Wrap allows snake to wrap around and not crash into the edge of the screen
 ENABLE_WRAP = True
@@ -172,7 +177,7 @@ def controls(GAME_OVER, log_file):
 
                 snake.tail_length += 1
                 snake.box.append(snake.tail_img.get_rect()) #adds a rectangle variable to snake.box array(list)
-                snake.box[snake.tail_length].topleft = tuple(np.subtract(snake.box[snake.tail_length - 1].topleft, (20, 0)))
+                snake.box[snake.tail_length].topleft = (snake.x, snake.y)
 
             #GAME OVER: Press space to try play again
             elif (event.key == pygame.K_SPACE) and GAME_OVER == True:
@@ -275,6 +280,15 @@ def gameLoop(GAME_QUIT, log_file, start_time):
 
                 if ENABLE_WRAP:
                     wrap(snake.x, snake.y)
+                else:
+                    if snake.x > DISPLAY_WIDTH - 20:
+                        GAME_OVER=True
+                    if snake.x < 0:
+                        GAME_OVER=True
+                    if snake.y > DISPLAY_HEIGHT - 20:
+                        GAME_OVER=True
+                    if snake.y < 0:
+                        GAME_OVER=True
 
                 #Update the head position of the snake
                 snake.box[0].topleft = (snake.x, snake.y)
@@ -313,14 +327,14 @@ def gameOver(score):
     try_again_text = myfont.render("Press SPACE to Try Again", True, white)
     quit_text = myfont.render("Press Q to Quit", True, white)
 
-    gameDisplay.blit(game_over_text, (120, 200))
-    gameDisplay.blit(try_again_text, (235, 400))
-    gameDisplay.blit(quit_text, (300, 450))
+    gameDisplay.blit(game_over_text, ((int)(DISPLAY_WIDTH*0.1), (int)(DISPLAY_HEIGHT*0.2))) # 120, 200
+    gameDisplay.blit(try_again_text, ((int)(DISPLAY_WIDTH*0.25), (int)(DISPLAY_HEIGHT*0.55))) #235 400
+    gameDisplay.blit(quit_text,  ((int)(DISPLAY_WIDTH*0.35), (int)(DISPLAY_HEIGHT*0.65))) #300 ,450
 
     score = 0
     snake.x = 0
     snake.y = 0
-    #snake.dx = MOVEMENT_SPEED
+    #snake.dx = MOVEMENT_SPEEDs
     #snake.dy = 0
     return score
     
