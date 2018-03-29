@@ -12,16 +12,16 @@ class Snake:
         self.left = False
         
         white = (255,255,255)
-        self.head_img = pygame.image.load("./Images/Head.png").convert()
+        self.head_img = pygame.image.load("./Images/Snake_Head.png").convert()
         self.head_img.set_colorkey(white) # sets white to alpha
-        # self.head_img = pygame.transform.scale(self.head_img, (20, 20)) # scales it down from a 50x50 image to 20x20
+        self.head_img = pygame.transform.scale(self.head_img, (50, 50)) # scales it down from a 50x50 image to 20x20
         self.head_mask = pygame.mask.from_surface(self.head_img) # creates a mask
         self.head_img = pygame.transform.flip(self.head_img, False, True) #
         self.head_img = pygame.transform.rotate(self.head_img, 90) # Start facing right
 
-        self.tail_img = pygame.image.load("./Images/Tail.png").convert()
+        self.tail_img = pygame.image.load("./Images/Snake_Tail.png").convert()
         self.tail_img.set_colorkey(white)
-        # self.tail_img = pygame.transform.scale(self.tail_img, (20, 20))
+        self.tail_img = pygame.transform.scale(self.tail_img, (50, 50))
 
         self.box = [(0,0)] # List of Rectangles tuples (x,y,width,height) for the snakes tail --> The main one
         self.box[0] = self.head_img.get_rect()
@@ -32,7 +32,7 @@ class Snake:
         self.move = 0; #1 - Left; 2 - Right; 3 - Up; 4 - Down
 
 
-    def update(self, scale, pygame, log_file, food, score):
+    def update(self, scale, pygame, food, score):
 
         # TEST
         # To win the game
@@ -81,8 +81,6 @@ class Snake:
                 self.head_img = pygame.transform.rotate(self.head_img, 90)
             self.dy = 0
             self.move = 0
-            #log_file.write("A\n")
-            log_file.writerow([pygame.time.get_ticks(), str(score), str(self.x), str(self.y), "A", str(food.x), str(food.y)])
 
         #Moving right
         elif self.move == 2:
@@ -93,8 +91,6 @@ class Snake:
                 self.head_img = pygame.transform.rotate(self.head_img, -90)
             self.dy = 0
             self.move = 0
-            #log_file.write("D\n")
-            log_file.writerow([pygame.time.get_ticks(), str(score), str(self.x), str(self.y), "D", str(food.x), str(food.y)])
 
 
         #Moving up
@@ -106,8 +102,6 @@ class Snake:
                 self.head_img = pygame.transform.rotate(self.head_img, -90)
             self.dx = 0
             self.move = 0
-            #log_file.write("W\n")
-            log_file.writerow([pygame.time.get_ticks(), str(score), str(self.x), str(self.y), "W", str(food.x), str(food.y)])
 
 
         #Moving down
@@ -119,8 +113,6 @@ class Snake:
                 self.head_img = pygame.transform.rotate(self.head_img, 90)
             self.dx = 0
             self.move = 0
-            #log_file.write("S\n")
-            log_file.writerow([pygame.time.get_ticks(), str(score), str(self.x), str(self.y), "S", str(food.x), str(food.y)])
 
         self.x += self.dx * scale
         self.y += self.dy * scale

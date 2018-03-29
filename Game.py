@@ -9,6 +9,7 @@ Purpose: Use Tensorflow to create a RL environment to train this snake to beat t
 Start Date: 5 March 2018
 Due Date: Before June
 
+DEPENDING ON THE WINDOW SIZE
 1200-1 number comes from 800/20 = 40; 600/20 = 30; 40*30 = 1200 grid blocks; subtract one for the "head"
 
 BUGS:
@@ -23,6 +24,7 @@ from food import Food
 import sys
 import csv
 import pandas as pd
+import matplotlib.pyplot as plt 
 
 pygame.init()
 
@@ -33,8 +35,8 @@ gameOverFont = pygame.font.SysFont('arial', 96)
 #print(pygame.font.get_fonts())
 
 #Window size
-DISPLAY_WIDTH = 600
-DISPLAY_HEIGHT = 400
+DISPLAY_WIDTH = 120
+DISPLAY_HEIGHT = 120
 # DISPLAY_WIDTH = 800
 # DISPLAY_HEIGHT = 600
 
@@ -56,6 +58,8 @@ UPDATE_RATE = 80 # lower the faster
 gameDisplay = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
 pygame.display.set_caption('My Game')
 clock = pygame.time.Clock()
+
+bg = pygame.image.load("./Images/Grid.png").convert()
 
 #Create and Initialise Snake 
 snake = Snake(pygame)
@@ -243,6 +247,7 @@ def gameLoop(GAME_QUIT, log_file, start_time):
     snake.x = 0 # Snake in top left corner
     snake.y = 0
     GAME_OVER = False
+    YOU_WIN = False
 
     #print("In game loop") # DEBUGGING
 
@@ -256,7 +261,12 @@ def gameLoop(GAME_QUIT, log_file, start_time):
         if GAME_OVER:
             #Game over screen
             score = gameOver(score) 
+        elif YOU_WIN:
+            score = win(score)
         else:
+            if snake.tail_length == ((DISPLAY_WIDTH/SCALE) * (DISPLAY_HEIGHT/SCALE)) - 2:
+                YOU_WIN = True
+
             #In game screen
             FPS_text = myfont.render("FPS: %0.3f" % clock.get_fps(), True, white)  # anti aliasing lowers performance
             
@@ -303,8 +313,10 @@ def gameLoop(GAME_QUIT, log_file, start_time):
                             #print("Try again?")
 
             gameDisplay.fill(black)  #set background
-            gameDisplay.blit(FPS_text, (0, 0))
-            gameDisplay.blit(score_text, (DISPLAY_WIDTH - 150, 0))
+            gameDisplay.blit(bg, (0, 0))
+            pygame.display.set_caption(str(score))
+            # gameDisplay.blit(FPS_text, (0, 0))
+            # gameDisplay.blit(score_text, (DISPLAY_WIDTH - 150, 0))
 
             food.draw(gameDisplay)
             snake.draw(gameDisplay)
@@ -324,6 +336,24 @@ def gameOver(score):
 
     gameDisplay.fill(black)  #set background
     game_over_text = gameOverFont.render("GAME OVER", True, white)
+    try_again_text = myfont.render("Press SPACE to Try Again", True, white)
+    quit_text = myfont.render("Press Q to Quit", True, white)
+
+    gameDisplay.blit(game_over_text, ((int)(DISPLAY_WIDTH*0.1), (int)(DISPLAY_HEIGHT*0.2))) # 120, 200
+    gameDisplay.blit(try_again_text, ((int)(DISPLAY_WIDTH*0.25), (int)(DISPLAY_HEIGHT*0.55))) #235 400
+    gameDisplay.blit(quit_text,  ((int)(DISPLAY_WIDTH*0.35), (int)(DISPLAY_HEIGHT*0.65))) #300 ,450
+
+    score = 0
+    snake.x = 0
+    snake.y = 0
+    #snake.dx = MOVEMENT_SPEEDs
+    #snake.dy = 0
+    return score
+
+def win(score):
+
+    gameDisplay.fill(black)  #set background
+    game_over_text = gameOverFont.render("YOU WIN", True, white)
     try_again_text = myfont.render("Press SPACE to Try Again", True, white)
     quit_text = myfont.render("Press Q to Quit", True, white)
 

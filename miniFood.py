@@ -10,9 +10,9 @@ class Food:
         self.x = 0
         self.y = 0
         white = (255,255,255)
-        self.dot = pygame.image.load("./Images/Food.png").convert()
+        self.dot = pygame.image.load("./Images/BlueDot.png").convert()
         self.dot.set_colorkey(white)
-        # self.dot = pygame.transform.scale(self.dot, (20, 20))
+        self.dot = pygame.transform.scale(self.dot, (50, 50))
         self.mask = pygame.mask.from_surface(self.dot)
 
         self.rect = self.dot.get_rect()
@@ -20,24 +20,32 @@ class Food:
 #Load a food item into the screen at a random location
 #Needs to be updated to not load onto the snake - NB
     def make(self, height, width, scale, snake):
+
+        #So that it can be the same random numbers
+        # random.seed(0)
         made = False
+
         rows = height / scale
         cols = width / scale
 
-        while not made:
-            myRow = random.randint(0, rows-1)
-            myCol = random.randint(0, cols-1)
-            #print(myRow * SCALE, myCol * SCALE) # DEBUGGING
-            self.rect.topleft = (myCol * scale, myRow * scale)
+       
+        # myRow = rows/2
+        # myCol = cols/2
 
-            for i in range(0, snake.tail_length + 1):
-                if self.rect.topleft == snake.box[i].topleft:
-                    made = False
-                    break
-                else:
-                    self.x = myCol * scale
-                    self.y = myRow * scale
-                    made = True # the food is not within the snakes body
+        while not made:
+            myRow = random.randint(0, 5)
+            myCol = random.randint(0, 5)
+
+            if (snake.x, snake.y) != (myCol, myRow):
+                made = True
+
+        # print(myRow,myCol)
+            #print(myRow * SCALE, myCol * SCALE) # DEBUGGING
+        self.rect.topleft = (myCol * scale, myRow * scale)
+
+        
+        self.x = myCol * scale
+        self.y = myRow * scale
     #Draw the food
     def draw(self, display):
         display.blit(self.dot, self.rect.topleft)
