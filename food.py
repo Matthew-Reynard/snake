@@ -19,16 +19,16 @@ class Food:
 
 #Load a food item into the screen at a random location
 #Needs to be updated to not load onto the snake - NB
-    def make(self, height, width, scale, snake):
+    def make(self, grid_size, scale, snake):
         made = False
-        rows = height / scale
-        cols = width / scale
+        rows = grid_size
+        cols = grid_size
 
         while not made:
             myRow = random.randint(0, rows-1)
             myCol = random.randint(0, cols-1)
             #print(myRow * SCALE, myCol * SCALE) # DEBUGGING
-            self.rect.topleft = (myCol * scale, myRow * scale)
+            self.rect.topleft = (myCol * scale, myRow * scale) # multiplying by scale
 
             for i in range(0, snake.tail_length + 1):
                 if self.rect.topleft == snake.box[i].topleft:

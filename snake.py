@@ -32,7 +32,8 @@ class Snake:
         self.move = 0; #1 - Left; 2 - Right; 3 - Up; 4 - Down
 
 
-    def update(self, scale, pygame, log_file, food, score):
+    # def update(self, scale, pygame, log_file, food, score):
+    def update(self, scale, pygame, food, score):
 
         # TEST
         # To win the game
@@ -82,7 +83,7 @@ class Snake:
             self.dy = 0
             self.move = 0
             #log_file.write("A\n")
-            log_file.writerow([pygame.time.get_ticks(), str(score), str(self.x), str(self.y), "A", str(food.x), str(food.y)])
+            # log_file.writerow([pygame.time.get_ticks(), str(score), str(self.x), str(self.y), "A", str(food.x), str(food.y)])
 
         #Moving right
         elif self.move == 2:
@@ -94,7 +95,7 @@ class Snake:
             self.dy = 0
             self.move = 0
             #log_file.write("D\n")
-            log_file.writerow([pygame.time.get_ticks(), str(score), str(self.x), str(self.y), "D", str(food.x), str(food.y)])
+            # log_file.writerow([pygame.time.get_ticks(), str(score), str(self.x), str(self.y), "D", str(food.x), str(food.y)])
 
 
         #Moving up
@@ -107,7 +108,7 @@ class Snake:
             self.dx = 0
             self.move = 0
             #log_file.write("W\n")
-            log_file.writerow([pygame.time.get_ticks(), str(score), str(self.x), str(self.y), "W", str(food.x), str(food.y)])
+            # log_file.writerow([pygame.time.get_ticks(), str(score), str(self.x), str(self.y), "W", str(food.x), str(food.y)])
 
 
         #Moving down
@@ -120,7 +121,7 @@ class Snake:
             self.dx = 0
             self.move = 0
             #log_file.write("S\n")
-            log_file.writerow([pygame.time.get_ticks(), str(score), str(self.x), str(self.y), "S", str(food.x), str(food.y)])
+            # log_file.writerow([pygame.time.get_ticks(), str(score), str(self.x), str(self.y), "S", str(food.x), str(food.y)])
 
         self.x += self.dx * scale
         self.y += self.dy * scale
