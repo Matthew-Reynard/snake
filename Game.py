@@ -26,6 +26,9 @@ import csv
 import pandas as pd
 import matplotlib.pyplot as plt 
 
+#Trying to use DQN with TF instead of the normal Q Learning
+import tensorflow as tf
+
 pygame.init()
 
 pygame.font.init() # you have to call this at the start, if you want to use this module.
@@ -45,7 +48,7 @@ DISPLAY_HEIGHT = GRID_SIZE * SCALE
 # DISPLAY_HEIGHT = 600
 
 #Wrap allows snake to wrap around and not crash into the edge of the screen
-ENABLE_WRAP = False
+ENABLE_WRAP = True
 
 #Not sure what this does
 GAME_QUIT = False
@@ -59,7 +62,7 @@ FPS = 120 # If not set, game tries to max out FPS (last test was 1200 FPS)
 score = 0
 MOVEMENT_SPEED = 1 # Meaning 1 block per timestep
 
-UPDATE_RATE = 100 # lower the faster
+UPDATE_RATE = 50 # lower the faster
 
 gameDisplay = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
 pygame.display.set_caption('SnakeAI')
@@ -382,13 +385,16 @@ def QLearn():
     # use the previous runs Q matrix
     Q = np.loadtxt("q.txt", dtype='float', delimiter=" ")
 
-    # Q = np.zeros((height*width, no_of_actions)) # dimensions: (states, actions)
+    # Reseting the Q matrix to zeroes
+    # Q = np.zeros(((height*width*height*width), no_of_actions)) # dimensions: (states, actions)
 
     # Q.size = 600 x 4
 
-    alpha = 0.1  # learning rate, i.e. which fraction of the Q values should be updated
-    gamma = 0.9  # discount factor, i.e. to which extent the algorithm considers possible future rewards
-    epsilon = 0.2  # probability to choose random action instead of best action
+
+    # Hyper parameters
+    alpha = 0.4  # learning rate, i.e. which fraction of the Q values should be updated
+    gamma = 0.99  # discount factor, i.e. to which extent the algorithm considers possible future rewards
+    epsilon = 0.4  # probability to choose random action instead of best action
 
 
     history = []
@@ -398,14 +404,17 @@ def QLearn():
     myTime = 0
     reward = 0
 
-    for epoch in range(10000000):
+    last_time = 0
+
+    for epoch in range(100000):
         state, myTime = reset(myTime)
         done = False
         food.make(GRID_SIZE, SCALE, snake)
         timestep = 0
 
-        if epoch % 10000 == 0:
-            print(epoch, "last reward:", reward)
+        if epoch % 1000 == 0:
+            print(epoch, "avg timestep:", last_time/1000)
+            last_time = 0
 
         while not done:
             if verbose: print('State {} (index {}),'.format(state, state_index(state)))
@@ -428,9 +437,12 @@ def QLearn():
             
             state = new_state
 
-            if timestep == 30:
+            if timestep == 500:
                 # print("Ended at timestep: ",timestep)
                 done = True
+
+            if done:
+                last_time += timestep
 
             # gameDisplay.fill(white)  #set background
             # gameDisplay.blit(snake.head_img, (snake.x, snake.y))
@@ -439,7 +451,7 @@ def QLearn():
             # #print(clock.get_rawtime())
             # clock.tick() # FPS setting
 
-        history.append(myTime)
+        # history.append(myTime)
         if verbose: print('Finished in {} steps'.format(myTime))
         if verbose: print("")
 
@@ -485,7 +497,9 @@ def step(action, time, state):
     time += 1
     # new_player = (snake.dx, snake.dy)
     reached_food = 0
-    reward = 0
+
+    # initialze to -1 for every time step - find the fastest route
+    reward = -1
 
     #LEFT
     if action == 0: 
@@ -511,7 +525,7 @@ def step(action, time, state):
     snake.y += snake.dy * SCALE
 
     if ENABLE_WRAP:
-        wrap()
+        wrap(snake.x, snake.y)
     else:
         if snake.x > DISPLAY_WIDTH - SCALE:
             reward = -1
@@ -535,15 +549,23 @@ def step(action, time, state):
     # if the snake has reached the food -> done = True
     
 
-    if reward != -1:
-        reached_food = ((snake.x,snake.y)==(food.x, food.y))
-        reward = 100*reached_food / time
-        state[0] = int(snake.x / SCALE)
-        state[1] = int(snake.y / SCALE)
-        state[2] = int(food.x / SCALE)
-        state[3] = int(food.y / SCALE)
+    # if reward != -1:
+    #     reached_food = ((snake.x,snake.y)==(food.x, food.y))
+    #     reward = 100*reached_food / time
+    #     state[0] = int(snake.x / SCALE)
+    #     state[1] = int(snake.y / SCALE)
+    #     state[2] = int(food.x / SCALE)
+    #     state[3] = int(food.y / SCALE)
 
+    reached_food = ((snake.x,snake.y) == (food.x, food.y)) #if snake reached food
     
+    if reached_food:
+        reward = 100
+
+    state[0] = int(snake.x / SCALE)
+    state[1] = int(snake.y / SCALE)
+    state[2] = int(food.x / SCALE)
+    state[3] = int(food.y / SCALE)
 
     return state, reward, reached_food, time
 
@@ -608,7 +630,7 @@ def Qrun():
 
             # print(snake.x, snake.y)
 
-            if np.random.rand() <= 0.1:
+            if np.random.rand() <= 0.0001:
                 action = np.random.randint(4) # 4 actions: left, right, up, down
             else:
                 # print(state_index(state))
@@ -623,7 +645,7 @@ def Qrun():
                 start_time = pygame.time.get_ticks()
 
             if ENABLE_WRAP:
-                wrap()
+                wrap(snake.x, snake.y)
             else:
                 if snake.x > DISPLAY_WIDTH - SCALE:
                     done = True
@@ -636,12 +658,15 @@ def Qrun():
                     
             snake.box[0].topleft = (snake.x, snake.y)
 
-            gameDisplay.fill(black)  #set background
+            gameDisplay.blit(bg, (0, 0))
+            # gameDisplay.fill(black)  #set background
             # gameDisplay.blit(FPS_text, (0, 0))
             # gameDisplay.blit(score_text, (DISPLAY_WIDTH - 150, 0))
 
             food.draw(gameDisplay)
             snake.draw(gameDisplay)
+
+            pygame.display.set_caption("Moves: " + str(timestep))
             
             pygame.display.update()
             #print(clock.get_rawtime())
@@ -651,7 +676,7 @@ def Qrun():
             # timestep += 1
             # print(timestep)
 
-            if timestep == 20:
+            if timestep == 40:
                 # timestep = 0
                 done = True
 
@@ -668,11 +693,11 @@ if __name__ == "__main__":
 
     GAME_QUIT = False
 
-    # QLearn()
+    QLearn()
 
-    start_time = pygame.time.get_ticks() 
+    # start_time = pygame.time.get_ticks() 
 
-    Qrun()
+    # Qrun()
 
     ###############################################
 

@@ -1,7 +1,4 @@
 
-
-
-
 import random
 
 class Food:
