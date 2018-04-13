@@ -37,9 +37,10 @@ n_nodes_hl1 = 500
 n_nodes_hl2 = 500
 n_nodes_hl3 = 500
 
-#Number of classes
+# Number of classes
 n_classes = 10
-#manipulate the weights of 100 inputs at a time
+
+# manipulate the weights of 100 inputs at a time
 batch_size = 100
 
 #28 x 28 = 784 (images in mnist data set)

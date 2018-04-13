@@ -8,14 +8,14 @@ def Qmatrix(x, env):
 	elif x == 1:
 		Q = np.random.rand(height*width, no_of_actions) 
 	elif x == 2:
-		Q = np.loadtxt("Q3.txt", dtype='float', delimiter=" ")
+		Q = np.loadtxt("Q_random_start.txt", dtype='float', delimiter=" ")
 	return Q
 
 def run():
 
 	RENDER_TO_SCREEN = True
 
-	env = Environment(True, rate = 100, render = RENDER_TO_SCREEN)
+	env = Environment(True, rate = 80, render = RENDER_TO_SCREEN)
 
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -26,11 +26,11 @@ def run():
 
 	epsilon = 0.001
 
-	for epoch in range(100):
+	for epoch in range(10):
 		state, mytime = env.reset()
 		done = False
 
-		if epoch % 10 == 0:
+		if epoch % 1 == 0:
 			print(epoch)
 
 		while not done:
@@ -56,6 +56,8 @@ def main():
 
 	RENDER_TO_SCREEN = False
 
+	MAX_TIME = 50
+
 	env = Environment(True, rate = 10, render = RENDER_TO_SCREEN)
 
 	if RENDER_TO_SCREEN:
@@ -74,7 +76,7 @@ def main():
 	print_episode = 10000
 
 	for episode in range(10000000):
-		state, mytime = env.reset()
+		state, myTime = env.reset()
 		done = False
 
 		if episode % print_episode == 0:
@@ -96,16 +98,28 @@ def main():
 
 			state = new_state
 
-			if myTime == 50:
+			if myTime == MAX_TIME:
 				done = True
 
 			if done:
 				avg_time += myTime
 
-	np.savetxt("Q3.txt", Q.astype(np.float), fmt='%f', delimiter = " ")
+	np.savetxt("Q_random_start.txt", Q.astype(np.float), fmt='%f', delimiter = " ")
+
+def play():
+
+	RENDER_TO_SCREEN = True
+
+	env = Environment(True, rate = 100, render = RENDER_TO_SCREEN)
+
+	env.play()
 
 
 if __name__ == '__main__':
-	# main()
-	run()
+
+	# main() # training
+
+	# run()
+
+	play()
 

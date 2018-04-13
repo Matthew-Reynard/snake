@@ -1,4 +1,4 @@
-
+# Maybe can use numpy.random instead of this
 import random
 
 class Food:
@@ -9,37 +9,27 @@ class Food:
 
         self.food_img = None
 
-        self.mask = None
+        # self.mask = None
 
-        self.rect = None
+        # self.rect = None
 
         self.pos = (self.x, self.y)
 
-        # PYGAME 
-
-        # white = (255,255,255)
-        # self.food_img = pygame.image.load("./Images/Food.png").convert()
-        # self.food_img.set_colorkey(white)
-
-        # self.mask = pygame.mask.from_surface(self.food_img)
-
-        # # If the image isn't 20x20 pixels
-        # # self.food_img = pygame.transform.scale(self.food_img, (20, 20))
-
-        # self.rect = self.food_img.get_rect()
-
+    # Create the Pygame sections of the food to render it
     def create(self, pygame):
+
+        # PYGAME STUFF
 
         white = (255,255,255)
         self.food_img = pygame.image.load("./Images/Food.png").convert()
         self.food_img.set_colorkey(white)
 
-        self.mask = pygame.mask.from_surface(self.food_img)
+        # self.mask = pygame.mask.from_surface(self.food_img)
 
         # If the image isn't 20x20 pixels
         # self.food_img = pygame.transform.scale(self.food_img, (20, 20))
 
-        self.rect = self.food_img.get_rect()
+        # self.rect = self.food_img.get_rect()
 
     #Load a food item into the screen at a random location
     def make(self, grid_size, scale, snake):
@@ -52,12 +42,10 @@ class Food:
             myCol = random.randint(0, cols-1)
 
             # Making the food only in one position - Test 1
-
             # myRow = 7
             # myCol = 7
 
             # Making the food only in one of three positions - Test 2
-
             # r = random.randint(0,2)
             # if r == 0:
             #     myRow = 1
@@ -73,12 +61,12 @@ class Food:
 
             for i in range(0, snake.tail_length + 1):
                 if self.pos == (snake.x,snake.y):
-                    made = False
+                    made = False # the food IS within the snakes body
                     break
                 else:
                     self.x = myCol * scale
                     self.y = myRow * scale
-                    made = True # the food is not within the snakes body
+                    made = True # the food IS NOT within the snakes body
 
     #Draw the food
     def draw(self, display):
