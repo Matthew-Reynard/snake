@@ -1,3 +1,23 @@
+'''
+Simple SnakeAI Game 
+
+INFO:
+@author: Matthew Reynard
+@year: 2018
+
+QLearn.py is a a simple implementation of a Q learning algorithm with a lookup table of Q values
+You can change the code in the main() function to either train(), run(), or play() 
+- with the latter being just for fun and to explore the world and see whats happening and
+what the computer is learning to do
+
+TO DO LIST:
+- Comment all the code
+- Make a more user friendly method to change between the train, run and play methods
+- Add a score
+-
+
+'''
+
 import numpy as np 
 from SnakeGame import Environment
 
@@ -8,7 +28,7 @@ def Qmatrix(x, env):
 	elif x == 1:
 		Q = np.random.rand(height*width, no_of_actions) 
 	elif x == 2:
-		Q = np.loadtxt("Q_random_start.txt", dtype='float', delimiter=" ")
+		Q = np.loadtxt("./Data/Q_random_start.txt", dtype='float', delimiter=" ")
 	return Q
 
 def run():
@@ -65,7 +85,7 @@ def main():
 
 	# env.reset()
 
-	Q = Qmatrix(2, env) # 0 - zeros, 1 - random, 2 - textfile
+	Q = Qmatrix(0, env) # 0 - zeros, 1 - random, 2 - textfile
 
 	alpha = 0.2  # learning rate, i.e. which fraction of the Q values should be updated
 	gamma = 0.99  # discount factor, i.e. to which extent the algorithm considers possible future rewards
@@ -104,7 +124,7 @@ def main():
 			if done:
 				avg_time += myTime
 
-	np.savetxt("Q_random_start.txt", Q.astype(np.float), fmt='%f', delimiter = " ")
+	np.savetxt("./Data/Q_test.txt", Q.astype(np.float), fmt='%f', delimiter = " ")
 
 def play():
 
