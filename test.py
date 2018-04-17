@@ -1,7 +1,7 @@
 # Python
 # import tensorflow as tf
-# import numpy as np
-from SnakeGame import Environment
+import numpy as np
+# from SnakeGame import Environment
 
 
 # #Creates tf constants. Not a normal Python variable
@@ -49,14 +49,14 @@ from SnakeGame import Environment
 # 	x = A(2)
 # 	print(x.a, x.b)
 
-env = Environment(True)
+# env = Environment(True)
 
-for i in range(10):
-	for j in range(10):
-		for k in range(10):
-			for l in range(10):
-				s = [i,j,k,l]
-				print(env.state_index(s))
+# for i in range(10):
+# 	for j in range(10):
+# 		for k in range(10):
+# 			for l in range(10):
+# 				s = [i,j,k,l]
+# 				print(env.state_index(s))
 
 
 # env.prerender()
@@ -72,3 +72,18 @@ for i in range(10):
 # print(time)
 
 # env.end()
+
+# info = {"a":2, "b": 3}
+
+# print(info["a"])
+
+# total_episodes = 100
+# epsilon = 1
+
+# for episode in range(total_episodes):
+# 	epsilon = (-0.9 / (0.2*total_episodes)) * episode + 1
+# 	if epsilon < 0.1: 
+# 		epsilon = 0.1
+# 	print(epsilon)
+
+print(np.sqrt((0-9)**2 + (0-9)**2))

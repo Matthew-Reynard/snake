@@ -12,11 +12,11 @@ class Snake:
 
         self.tail_img = None
 
-        # List of Position tuples (x,y) for the snakes body --> The main one
+        # List of position tuples (x,y) for the snakes body 
         # self.box[0] => the head of the snake
-        self.box = [(0,0)] 
+        self.box = [(self.x, self.y)] 
 
-        self.tail_length = 0 # basically len(snake.box) - 1
+        self.tail_length = 0 # basically len(self.box) - 1
 
 
     def create(self, pygame):
@@ -99,6 +99,14 @@ class Snake:
         # Updating positions using velocity
         self.x += self.dx * scale
         self.y += self.dy * scale
+
+        # Update the head position of the snake
+        self.box[0] = (self.x, self.y)
+
+        # Update the snakes tail positions (from back to front)
+        if self.tail_length > 0:
+            for i in range(self.tail_length, 0, -1):
+                self.box[i] = self.box[i-1]
 
     def draw(self, display):
 

@@ -33,20 +33,19 @@ import sys
 class Environment:
 
     # Initialise the Game Environment
-    def __init__(self, wrap, grid_size = 10, rate = 100, render = False):
+    def __init__(self, wrap = False, grid_size = 10, rate = 100, max_time = 50):
 
         # self.FPS = 120 # NOT USED YET
         self.UPDATE_RATE = rate
-        self.SCALE = 20 # scale of the snake body 20x20 pixels  
-        self.state = 0
+        self.SCALE = 20 # scale of the snake body 20x20 pixels
         self.GRID_SIZE = grid_size
         self.ENABLE_WRAP = wrap
-        self.RENDER = render
         
-        # self.score = 0 # NOT IMPLEMENTED YET
-
         self.DISPLAY_WIDTH = self.GRID_SIZE * self.SCALE
         self.DISPLAY_HEIGHT = self.GRID_SIZE * self.SCALE
+
+        # Maximum timesteps before an episode is stopped
+        self.MAX_TIME_PER_EPISODE = max_time
 
         # Create and Initialise Snake 
         self.snake = Snake()
@@ -54,8 +53,8 @@ class Environment:
         # Create Food 
         self.food = Food()
 
+        self.score = 0
         self.time = 0
-
         self.state = np.zeros(4)
 
         self.display = None
@@ -77,43 +76,55 @@ class Environment:
         # Creates visual Food 
         self.food.create(pygame)
 
+        # Creates the grid background
         self.bg = pygame.image.load("./Images/Grid10.png").convert()
 
     def reset(self):
+
+        # Reset the score to 0
+        self.score = 0
+
         # Starting at random positions
-        self.snake.x = np.random.randint(0,10) * self.SCALE
-        self.snake.y = np.random.randint(0,10) * self.SCALE
+        # self.snake.x = np.random.randint(0,10) * self.SCALE
+        # self.snake.y = np.random.randint(0,10) * self.SCALE
 
         # Starting at the same spot
-        # self.snake.x = 3 * self.SCALE
-        # self.snake.y = 3 * self.SCALE
+        self.snake.x = 4 * self.SCALE
+        self.snake.y = 4 * self.SCALE
 
+        # Initialise the movement to the right
         self.snake.dx = 1
         self.snake.dy = 0
 
         # Update the head position of the snake
-        if self.RENDER:
-            self.snake.box[0] = (self.snake.x, self.snake.y)
+        self.snake.box[0] = (self.snake.x, self.snake.y)
 
+        # Create a piece of food that is not within the snake
         self.food.make(self.GRID_SIZE, self.SCALE, self.snake)
 
+        # Fill the state array with the snake and food coordinates on the grid
         self.state[0] = int(self.snake.x / self.SCALE)
         self.state[1] = int(self.snake.y / self.SCALE)
         self.state[2] = int(self.food.x / self.SCALE)
         self.state[3] = int(self.food.y / self.SCALE)
 
+        # Reset the time
         self.time = 0
 
-        return self.state, self.time
+        # A dictionary of information that can be useful
+        info = {"time":self.time, "score":self.score}
+
+        return self.state, info
 
 
     # Renders ONLY the CURRENT state
     def render(self):
-        
-        score = 0 # NOT IMPLEMENTED YET
 
         # Mainly to close the window and stop program when it's running
         action = self.controls()
+
+        # Set the window caption to the score
+        pygame.display.set_caption("Score: " + str(self.score))
 
         # Draw the background, the snake and the food
         self.display.blit(self.bg, (0, 0))
@@ -140,7 +151,7 @@ class Environment:
         sys.exit(0) # safe backup  
 
 
-    #If the snake goes out of the screen bounds, wrap it around
+    # If the snake goes out of the screen bounds, wrap it around
     def wrap(self):
         if self.snake.x > self.DISPLAY_WIDTH - self.SCALE:
             self.snake.x = 0;
@@ -157,59 +168,85 @@ class Environment:
     def step(self, action):
         self.time += 1
 
+        # Test
+        # self.score += 1
+
+        # If the snake has reached the food
         reached_food = False
 
-        # Initialze to -1 for every time step - find the fastest route
-        reward = -1
+        # If the episode is finished - after a certain amount of timesteps or it crashed
+        done = False
 
+        # Initialze to -1 for every time step - to find the fastest route
+        reward = -10
+
+        # Update the position of the snake head and tail
         self.snake.update(self.SCALE, action)
 
         if self.ENABLE_WRAP:
             self.wrap()
         else:
             if self.snake.x > self.DISPLAY_WIDTH - self.SCALE:
-                reward = -10
-                reached_food = True
+                reward = -100
+                done = True 
             if self.snake.x < 0:
-                reward = -10
-                reached_food = True
+                reward = -100
+                done = True
             if self.snake.y > self.DISPLAY_HEIGHT - self.SCALE:
-                reward = -10
-                reached_food = True
+                reward = -100
+                done = True
             if self.snake.y < 0:
-                reward = -10
-                reached_food = True
+                reward = -100
+                done = True
 
-        # Update the head position of the snake
-        if self.RENDER:
-            self.snake.box[0] = (self.snake.x, self.snake.y)
+        reached_food = ((self.snake.x, self.snake.y) == (self.food.x, self.food.y)) 
 
-        reached_food = ((self.snake.x, self.snake.y) == (self.food.x, self.food.y)) #if snake reached food
+        # Reward: Including the distance between them
+        # reward = 100 / (np.sqrt((self.snake.x-self.food.x)**2 + (self.snake.y-self.food.y)**2) + 1)**2 
         
+        # If the snake reaches the food, increment score (and increase snake tail length)
         if reached_food:
-            reward = 1000 / self.time
+            self.score += 1 # Increment score
 
-        new_state = np.zeros(4)
-        new_state[0] = int(self.snake.x / self.SCALE)
-        new_state[1] = int(self.snake.y / self.SCALE)
-        new_state[2] = int(self.food.x / self.SCALE)
-        new_state[3] = int(self.food.y / self.SCALE)
+            # Create a piece of food that is not within the snake
+            self.food.make(self.GRID_SIZE, self.SCALE, self.snake)
 
-        info = self.time
+            # Reward functions
+            reward = 1000
+            # reward = 100 / (np.sqrt((self.snake.x-self.food.x)**2 + (self.snake.y-self.food.y)**2) + 1) # Including the distance between them
+            # reward = 1000 * self.score
+            # reward = 1000 / self.time # Including the time in the reward function
+            done = True
 
-        return new_state, reward, reached_food, info
+        # If the episode takes longer than the max time, it ends
+        if self.time == self.MAX_TIME_PER_EPISODE:
+            done = True
+
+        # Create the new_state array/list
+        new_state = np.zeros(4) # Does this increase programming time dramatically?
+        if not done:
+            new_state[0] = int(self.snake.x / self.SCALE)
+            new_state[1] = int(self.snake.y / self.SCALE)
+            new_state[2] = int(self.food.x / self.SCALE)
+            new_state[3] = int(self.food.y / self.SCALE)
+
+        # A dictionary of information that can be useful
+        info = {"time":self.time, "score":self.score}
+
+        return new_state, reward, done, info
 
     # Given the state array, return the index of that state as an integer
     def state_index(self, state_array):
         return int((self.GRID_SIZE**3)*state_array[0]+(self.GRID_SIZE**2)*state_array[1]+(self.GRID_SIZE**1)*state_array[2]+(self.GRID_SIZE**0)*state_array[3])
 
 
-        #random action generator
+    # Random action generator
     def sample(self):
         action = np.random.randint(0,3)
         return action
 
 
+    # Set the environment to a particular state
     def set_state(self, state):
         self.state = state
 
@@ -236,20 +273,20 @@ class Environment:
             # CAN'T IMPLEMENT TAIL WITH Q LEARNING ALGORITHM
 
             # snake.tail_length += 1
-            # snake.box.append(snake.tail_img.get_rect()) #adds a rectangle variable to snake.box array(list)
+            # snake.box.append((0,0)) #adds a rectangle variable to snake.box array(list)
 
             # Create the new tail section by the head, and let it get updated tp the end with snake.update()
             # if snake.dx > 0: #RIGHT
-            #     snake.box[snake.tail_length].topleft = (snake.x, snake.y)
+            #     snake.box[snake.tail_length] = (snake.x, snake.y)
 
             # if snake.dx < 0:#LEFT
-            #     snake.box[snake.tail_length].topleft = (snake.x, snake.y)
+            #     snake.box[snake.tail_length] = (snake.x, snake.y)
 
             # if snake.dy > 0:#DOWN
-            #     snake.box[snake.tail_length].topleft = (snake.x, snake.y)
+            #     snake.box[snake.tail_length] = (snake.x, snake.y)
 
             # if snake.dy < 0:#UP
-            #     snake.box[snake.tail_length].topleft = (snake.x, snake.y)
+            #     snake.box[snake.tail_length] = (snake.x, snake.y)
 
 
     # Defines all the players controls during the game
@@ -363,7 +400,7 @@ class Environment:
 
         self.end()
 
-
+# If I run this file by accident :P
 if __name__ == "__main__":
 
     print("This file does not have a main method")
