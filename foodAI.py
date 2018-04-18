@@ -38,29 +38,31 @@ class Food:
         cols = grid_size
 
         while not made:
-            # myRow = random.randint(0, rows-1)
-            # myCol = random.randint(0, cols-1)
+            myRow = random.randint(0, rows-1)
+            myCol = random.randint(0, cols-1)
 
             # Making the food only in one position - Test 1
             # myRow = 7
             # myCol = 7
 
             # Making the food only in one of three positions - Test 2
-            r = random.randint(0,2)
-            if r == 0:
-                myRow = 1
-                myCol = 9
-            if r == 1:
-                myRow = 8
-                myCol = 8
-            if r == 2:
-                myRow = 9
-                myCol = 1
+            # r = random.randint(0,2)
+            # if r == 0:
+            #     myRow = 1
+            #     myCol = 9
+            # if r == 1:
+            #     myRow = 8
+            #     myCol = 8
+            # if r == 2:
+            #     myRow = 9
+            #     myCol = 1
 
             self.pos = (myCol * scale, myRow * scale) # multiplying by scale
 
             for i in range(0, snake.tail_length + 1):
+                # print("making food")
                 # Need to change this to the whole body of the snake
+                # if self.pos == snake.box[i]:
                 if self.pos == (snake.x, snake.y):
                     made = False # the food IS within the snakes body
                     break

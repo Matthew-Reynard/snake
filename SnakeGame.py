@@ -15,6 +15,16 @@ DEPENDING ON THE WINDOW SIZE
 BUGS:
 To increase the FPS, from 10 to 120, the player is able to press multiple buttons before the snake is updated, mkaing the nsake turn a full 180.
 
+NOTES:
+Action space with a tail can be 3 - forward, left, right
+Action space without a tail can be 4 - up, down, left, right
+
+This is because with 4 actions and a tail, it is possible to go backwards and over your tail
+This could just end the game (but that wont work well.. i think)
+
+Also, when having 3 actions, the game needs to know what forward means, and at this point, with just
+a head and a food, its doesn't 
+
 '''
 
 import numpy as np
@@ -22,6 +32,7 @@ import pygame
 from snakeAI import Snake
 from foodAI import Food
 import sys
+import math # Only used for infinity game time
 
 # import csv
 # import pandas as pd
@@ -32,14 +43,15 @@ import sys
 
 class Environment:
 
-    # Initialise the Game Environment
-    def __init__(self, wrap = False, grid_size = 10, rate = 100, max_time = 50):
+    # Initialise the Game Environment with default values
+    def __init__(self, wrap = False, grid_size = 10, rate = 100, max_time = math.inf, tail = False):
 
         # self.FPS = 120 # NOT USED YET
         self.UPDATE_RATE = rate
         self.SCALE = 20 # scale of the snake body 20x20 pixels
         self.GRID_SIZE = grid_size
         self.ENABLE_WRAP = wrap
+        self.ENABLE_TAIL = tail
         
         self.DISPLAY_WIDTH = self.GRID_SIZE * self.SCALE
         self.DISPLAY_HEIGHT = self.GRID_SIZE * self.SCALE
@@ -77,7 +89,7 @@ class Environment:
         self.food.create(pygame)
 
         # Creates the grid background
-        self.bg = pygame.image.load("./Images/Grid10.png").convert()
+        self.bg = pygame.image.load("./Images/Grid20.png").convert()
 
     def reset(self):
 
@@ -199,6 +211,24 @@ class Environment:
                 reward = -100
                 done = True
 
+        # Update the snakes tail positions (from back to front)
+        if self.snake.tail_length > 0:
+            for i in range(self.snake.tail_length, 0, -1):
+                self.snake.box[i] = self.snake.box[i-1]
+
+        # Update the head position of the snake for the draw method
+        self.snake.box[0] = (self.snake.x, self.snake.y)
+
+        # The snake can only start crashing into itself after the tail length it greater than 3
+        if self.snake.tail_length >= 3:
+            # print(snake.tail_length) # DEBUGGING
+            for i in range(1, self.snake.tail_length + 1):
+                if(self.snake.box[0] == (self.snake.box[i])):
+                    done = True
+                    #DEBUGGING
+                    print("Crashed")
+                    #print("Try again?")
+
         reached_food = ((self.snake.x, self.snake.y) == (self.food.x, self.food.y)) 
 
         # Reward: Including the distance between them
@@ -208,15 +238,21 @@ class Environment:
         if reached_food:
             self.score += 1 # Increment score
 
+            # CHOOSE 1 OF THE 2 BELOW:
             # Create a piece of food that is not within the snake
             self.food.make(self.GRID_SIZE, self.SCALE, self.snake)
+            # Test for one food item at a time
+            # done = True 
+
+            if self.ENABLE_TAIL:
+                self.snake.tail_length += 1
+                self.snake.box.append((self.snake.x, self.snake.y)) #adds a rectangle variable to snake.box array(list)
 
             # Reward functions
-            reward = 1000
+            reward = 100
             # reward = 100 / (np.sqrt((self.snake.x-self.food.x)**2 + (self.snake.y-self.food.y)**2) + 1) # Including the distance between them
             # reward = 1000 * self.score
             # reward = 1000 / self.time # Including the time in the reward function
-            done = True
 
         # If the episode takes longer than the max time, it ends
         if self.time == self.MAX_TIME_PER_EPISODE:
@@ -242,7 +278,10 @@ class Environment:
 
     # Random action generator
     def sample(self):
-        action = np.random.randint(0,3)
+
+        # Can't use this with a tail, else it will have a double chance of doing nothing
+        action = np.random.randint(0,4) 
+        # action = np.random.randint(0,3)
         return action
 
 
@@ -258,7 +297,12 @@ class Environment:
 
     # Number of actions that can be taken
     def number_of_actions(self):
-        return 3
+
+        # forward, left, right
+        # return 3
+
+        # up, down, left, right
+        return 4
 
 
     # If the snake eats the food, increment score and increase snake tail length
@@ -304,6 +348,10 @@ class Environment:
 
             if event.type == pygame.KEYDOWN:
                 # print(event.key) #DEBUGGING
+
+                # In order to stop training and still save the Q txt file
+                if (event.key == pygame.K_q):
+                    self.end()
 
                 # Moving left
                 if (event.key == pygame.K_LEFT or event.key == pygame.K_a) and GAME_OVER == False:
@@ -397,6 +445,12 @@ class Environment:
 
             # When the snake touches the food, game ends
             s, r, GAME_OVER, i = self.step(action)
+
+            # For the snake to look like it ate the food, render needs to be last
+            # Next piece of code if very BAD programming
+            if GAME_OVER:
+                print("Game Over")
+                # self.render()
 
         self.end()
 

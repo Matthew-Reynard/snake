@@ -45,68 +45,96 @@ class Snake:
 
     def update(self, scale, action):
 
-        # Moving forward / Do nothing
+        # ACTION SPACE OF 4 - Up, Down, Left, Right
+        # This is for when just using the head and food
+
+        # Up
         if action == 0:
-            pass
+            self.dy = -1 # move up
+            self.dx = 0
 
-        # Moving left
+        # Down
         elif action == 1:
+            self.dy = 1 # move down
+            self.dx = 0
 
-            # moving up or down
-            if self.dy != 0:
-                # moving down
-                if self.dy == 1:
-                    self.dx = 1 # move right
-                # moving up
-                elif self.dy == -1:
-                    self.dx = -1 # move left
-                self.dy = 0
-
-            # moving left or right
-            elif self.dx != 0:
-                # moving left
-                if self.dx == -1:
-                    self.dy = 1 # move down
-                # moving right
-                elif self.dx == 1:
-                    self.dy = -1 # move up
-                self.dx = 0
-
-
-        # Moving right
+        # Left
         elif action == 2:
+            self.dx = -1 # move left
+            self.dy = 0
 
-            # moving up or down
-            if self.dy != 0:
-                # moving down
-                if self.dy == 1:
-                    self.dx = -1 # move left
-                # moving up
-                elif self.dy == -1:
-                    self.dx = 1 # move right
-                self.dy = 0
+        # Right
+        elif action == 3:
+            self.dx = 1 # move right
+            self.dy = 0
 
-            # moving left or right
-            elif self.dx != 0:
-                # moving left
-                if self.dx == -1:
-                    self.dy = -1 # move up
-                # moving right
-                elif self.dx == 1:
-                    self.dy = 1 # move down
-                self.dx = 0
+
+        # ACTION SPACE OF 3 - Forward, Left, Right
+        # This is for when using the tail
+        # NOTE: when using the tail, the game knows what "forward" means, as the tail is behind
+
+        # # Moving forward / Do nothing
+        # if action == 0:
+        #     pass
+
+        # # Moving left
+        # elif action == 1:
+
+        #     # moving up or down
+        #     if self.dy != 0:
+        #         # moving down
+        #         if self.dy == 1:
+        #             self.dx = 1 # move right
+        #         # moving up
+        #         elif self.dy == -1:
+        #             self.dx = -1 # move left
+        #         self.dy = 0
+
+        #     # moving left or right
+        #     elif self.dx != 0:
+        #         # moving left
+        #         if self.dx == -1:
+        #             self.dy = 1 # move down
+        #         # moving right
+        #         elif self.dx == 1:
+        #             self.dy = -1 # move up
+        #         self.dx = 0
+
+
+        # # Moving right
+        # elif action == 2:
+
+        #     # moving up or down
+        #     if self.dy != 0:
+        #         # moving down
+        #         if self.dy == 1:
+        #             self.dx = -1 # move left
+        #         # moving up
+        #         elif self.dy == -1:
+        #             self.dx = 1 # move right
+        #         self.dy = 0
+
+        #     # moving left or right
+        #     elif self.dx != 0:
+        #         # moving left
+        #         if self.dx == -1:
+        #             self.dy = -1 # move up
+        #         # moving right
+        #         elif self.dx == 1:
+        #             self.dy = 1 # move down
+        #         self.dx = 0
             
         # Updating positions using velocity
         self.x += self.dx * scale
         self.y += self.dy * scale
 
-        # Update the head position of the snake
-        self.box[0] = (self.x, self.y)
+        # # Update the head position of the snake
+        # self.box[0] = (self.x, self.y)
 
-        # Update the snakes tail positions (from back to front)
-        if self.tail_length > 0:
-            for i in range(self.tail_length, 0, -1):
-                self.box[i] = self.box[i-1]
+        # # Update the snakes tail positions (from back to front)
+        # if self.tail_length > 0:
+        #     for i in range(self.tail_length, 0, -1):
+        #         self.box[i] = self.box[i-1]
 
     def draw(self, display):
 

@@ -39,16 +39,14 @@ def train():
 
 	RENDER_TO_SCREEN = False
 
-	# MAX_TIME = 50
-
-	env = Environment(wrap = False, rate = 0, max_time = 30)
+	env = Environment(wrap = False, grid_size = 10, rate = 0, max_time = 100)
 
 	if RENDER_TO_SCREEN:
 		env.prerender()
 
 	# env.reset()
 
-	Q = Qmatrix(0, env) # 0 - zeros, 1 - random, 2 - textfile
+	Q = Qmatrix(2, env) # 0 - zeros, 1 - random, 2 - textfile
 
 	alpha = 0.15  # Learning rate, i.e. which fraction of the Q values should be updated
 	gamma = 0.99  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
@@ -62,9 +60,9 @@ def train():
 	avg_time = 0
 	avg_score = 0
 
-	total_episodes = 1000000
+	total_episodes = 100000000
 
-	print_episode = 0.01*total_episodes
+	print_episode = 10000
 
 	for episode in range(total_episodes):
 		# Reset the environment
@@ -72,28 +70,40 @@ def train():
 		done = False
 
 		# Test for an Epsilon linear function
-		# epsilon = (-0.9 / (0.3*total_episodes)) * episode + 1
-		# if epsilon < 0.05: 
-			# epsilon = 0.05
+		# epsilon = (-0.9 / (0.2*total_episodes)) * episode + 1
+		# if epsilon < 0.1: 
+		# 	epsilon = 0.1
 
 		while not done:
-			if RENDER_TO_SCREEN:
-				env.render()
 
-			if np.random.rand() <= epsilon:
-				action = env.sample()
-			else:
-				action = np.argmax(Q[env.state_index(state)])
+			# Testing with try except in loop
+			# Might not be the best implementation of training and ensuring saving Q to a .txt file
+			try:
+				if RENDER_TO_SCREEN:
+					env.render()
 
-			new_state, reward, done, info = env.step(action)
+				if np.random.rand() <= epsilon:
+					action = env.sample()
+				else:
+					action = np.argmax(Q[env.state_index(state)])
 
-			Q[env.state_index(state), action] += alpha * (reward + gamma * np.max(Q[env.state_index(new_state)]) - Q[env.state_index(state), action])
+				new_state, reward, done, info = env.step(action)
 
-			state = new_state
+				Q[env.state_index(state), action] += alpha * (reward + gamma * np.max(Q[env.state_index(new_state)]) - Q[env.state_index(state), action])
 
-			if done:
-				avg_time += info["time"]
-				avg_score += info["score"]
+				state = new_state
+
+				if done:
+					avg_time += info["time"]
+					avg_score += info["score"]
+					
+			except KeyboardInterrupt as e:
+				# Test to see if I can write teh Q file during runtime
+				np.savetxt(Q_textfile_path_save, Q.astype(np.float), fmt='%f', delimiter = " ")
+				print("Saved Q matrix to text file")
+				raise e
+
+			
 
 		if episode % print_episode == 0:
 			print("Episode:", episode, "   time:", avg_time/print_episode, "   score:", avg_score/print_episode)
@@ -107,7 +117,7 @@ def run():
 
 	RENDER_TO_SCREEN = True
 
-	env = Environment(wrap = False, rate = 50, max_time = 80)
+	env = Environment(wrap = False, grid_size = 10, rate = 50, max_time = 100)
 
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -115,7 +125,7 @@ def run():
 	Q = Qmatrix(2, env) # 0 - zeros, 1 - random, 2 - textfile
 
 	# Minimise the overfitting during testing
-	epsilon = 0.01
+	epsilon = 0.005
 
 	for episode in range(100):
 		state, info = env.reset()
@@ -143,16 +153,16 @@ def run():
 # Play the game yourself
 def play():
 
-	env = Environment(wrap = False, rate = 100, max_time = 100)
+	env = Environment(wrap = True, grid_size = 10, rate = 100, tail = False)
 
 	env.play()
 
 
 if __name__ == '__main__':
 
-	# train() 
+	train() 
 
-	run()
+	# run()
 
 	# play()
 
