@@ -96,7 +96,7 @@ def train():
 				if done:
 					avg_time += info["time"]
 					avg_score += info["score"]
-					
+
 			except KeyboardInterrupt as e:
 				# Test to see if I can write teh Q file during runtime
 				np.savetxt(Q_textfile_path_save, Q.astype(np.float), fmt='%f', delimiter = " ")
@@ -117,7 +117,7 @@ def run():
 
 	RENDER_TO_SCREEN = True
 
-	env = Environment(wrap = False, grid_size = 10, rate = 50, max_time = 100)
+	env = Environment(wrap = False, grid_size = 10, rate = 50, max_time = 1000, tail = False)
 
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -127,6 +127,7 @@ def run():
 	# Minimise the overfitting during testing
 	epsilon = 0.005
 
+	# Testing for a certain amount of episodes
 	for episode in range(100):
 		state, info = env.reset()
 		done = False

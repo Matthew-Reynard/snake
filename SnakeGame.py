@@ -114,6 +114,11 @@ class Environment:
         # Create a piece of food that is not within the snake
         self.food.make(self.GRID_SIZE, self.SCALE, self.snake)
 
+        # Reset snakes tail
+        self.snake.tail_length = 0
+        self.snake.box.clear()
+        self.snake.box = [(self.snake.x, self.snake.y)] 
+
         # Fill the state array with the snake and food coordinates on the grid
         self.state[0] = int(self.snake.x / self.SCALE)
         self.state[1] = int(self.snake.y / self.SCALE)
@@ -189,7 +194,7 @@ class Environment:
         # If the episode is finished - after a certain amount of timesteps or it crashed
         done = False
 
-        # Initialze to -1 for every time step - to find the fastest route
+        # Initialze to -1 for every time step - to find the fastest route (can be a more negative reward)
         reward = -10
 
         # Update the position of the snake head and tail
@@ -199,7 +204,7 @@ class Environment:
             self.wrap()
         else:
             if self.snake.x > self.DISPLAY_WIDTH - self.SCALE:
-                reward = -100
+                reward = -100 # very negative reward, to ensure that it never crashes into the side
                 done = True 
             if self.snake.x < 0:
                 reward = -100
@@ -224,11 +229,12 @@ class Environment:
             # print(snake.tail_length) # DEBUGGING
             for i in range(1, self.snake.tail_length + 1):
                 if(self.snake.box[0] == (self.snake.box[i])):
-                    done = True
+                    # done = True
                     #DEBUGGING
                     print("Crashed")
                     #print("Try again?")
 
+        # Checking if the snake has reached the food
         reached_food = ((self.snake.x, self.snake.y) == (self.food.x, self.food.y)) 
 
         # Reward: Including the distance between them
@@ -239,6 +245,7 @@ class Environment:
             self.score += 1 # Increment score
 
             # CHOOSE 1 OF THE 2 BELOW:
+
             # Create a piece of food that is not within the snake
             self.food.make(self.GRID_SIZE, self.SCALE, self.snake)
             # Test for one food item at a time
