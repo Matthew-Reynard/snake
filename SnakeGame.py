@@ -251,6 +251,7 @@ class Environment:
             # Test for one food item at a time
             # done = True 
 
+            # Can't implement tail with Q learning algorithm
             if self.ENABLE_TAIL:
                 self.snake.tail_length += 1
                 self.snake.box.append((self.snake.x, self.snake.y)) #adds a rectangle variable to snake.box array(list)
@@ -311,57 +312,28 @@ class Environment:
         # up, down, left, right
         return 4
 
+    # The state represented at a onehot 1D vector
     def state_vector(self):
-
         # (rows, columns)
         state = np.zeros(((self.GRID_SIZE**2),3))
-        # print(state.size) # DEBUGGING
         
         # Probabily very inefficient - TODO, find a better implementation
         # This is for the HEAD and the FOOD and EMPTY, need to add a column for a TAIL later [H, T, F, E]
         for i in range(self.GRID_SIZE): # rows
             for j in range(self.GRID_SIZE): # columns
                 if ((self.snake.x/self.SCALE) == j and (self.snake.y/self.SCALE) == i):
-                    state[j*self.GRID_SIZE+i] = [1,0,0]
-                    print(j*self.GRID_SIZE+i)
+                    state[i*self.GRID_SIZE+j] = [1,0,0]
+                    print(i*self.GRID_SIZE+j)
                 elif ((self.food.x/self.SCALE) == j and (self.food.y/self.SCALE) == i):
-                    state[j*self.GRID_SIZE+i] = [0,1,0]
-                    print(j*self.GRID_SIZE+i)
+                    state[i*self.GRID_SIZE+j] = [0,1,0]
+                    print(i*self.GRID_SIZE+j)
                 else:
-                    state[j*self.GRID_SIZE+i] = [0,0,1]
+                    state[i*self.GRID_SIZE+j] = [0,0,1]
 
+        # Flatten the vector to a 1 dimensional vector for the input layer to the NN
         state = state.flatten()
-        # state = np.reshape(state,4)
 
         return state
-
-
-    # If the snake eats the food, increment score and increase snake tail length
-    # NOT IMPLEMENTED YET
-    def eatsFood(self):
-
-        if ((self.snake.x, self.snake.y) == (self.food.x, self.food.y)):
-
-            # score += 1 # NOT IMPLEMENTED YET
-            food.make(self.GRID_SIZE, self.SCALE, self.snake)
-
-            # CAN'T IMPLEMENT TAIL WITH Q LEARNING ALGORITHM
-
-            # snake.tail_length += 1
-            # snake.box.append((0,0)) #adds a rectangle variable to snake.box array(list)
-
-            # Create the new tail section by the head, and let it get updated tp the end with snake.update()
-            # if snake.dx > 0: #RIGHT
-            #     snake.box[snake.tail_length] = (snake.x, snake.y)
-
-            # if snake.dx < 0:#LEFT
-            #     snake.box[snake.tail_length] = (snake.x, snake.y)
-
-            # if snake.dy > 0:#DOWN
-            #     snake.box[snake.tail_length] = (snake.x, snake.y)
-
-            # if snake.dy < 0:#UP
-            #     snake.box[snake.tail_length] = (snake.x, snake.y)
 
 
     # Defines all the players controls during the game
