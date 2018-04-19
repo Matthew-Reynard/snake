@@ -21,17 +21,18 @@ import tensorflow as tf
 from Environment_for_DQN import Environment
 
 # First we need our environment form Environment_for_DQN.py
-env = Environment()
+# env = Environment()
 
 # Then we need our data
-input_data = env.input_data()
+# input_data = env.input_data()
 
 # Number of nodes at input layer
-input_nodes = 400
+n_input_nodes = 300
+
 # Number of hidden layer nodes - 3 Hidden layers => 5 layers in total
 n_nodes_hl1 = 500
 n_nodes_hl2 = 500
-n_nodes_hl3 = 500
+# n_nodes_hl3 = 500
 
 # Number of actions - Up, down, left, right
 n_actions = 4
@@ -45,23 +46,29 @@ batch_size = 100
 # but TF will throw an error if you give it something different.
 # Otherwise without the values, it wont throw an error.
 # So it's just safety incase something of not that shape is given in there
-x = tf.placeholder('float', [None, input_nodes])
-y = tf.placeholder('float')
+# x = tf.placeholder('float', [None, n_input_nodes])
 
+# x = tf.placeholder(tf.float32, [n_input_nodes, None])
+
+x = tf.placeholder(tf.float32, shape=(n_input_nodes, n_input_nodes))
+
+y = tf.placeholder(tf.float32, [n_actions, None])
+
+z = tf.matmul(x,x)
 
 def createModel(data):
 
 	# will create an array (tensor) of your weights - initialized to random values
-	hidden_1_layer = {'weights':tf.Variable(tf.random_normal([input_nodes, n_nodes_hl1])),
+	hidden_1_layer = {'weights':tf.Variable(tf.random_normal([n_input_nodes, n_nodes_hl1])),
 					  'biases': tf.Variable(tf.random_normal([n_nodes_hl1]))}
 
 	hidden_2_layer = {'weights':tf.Variable(tf.random_normal([n_nodes_hl1, n_nodes_hl2])),
 					  'biases': tf.Variable(tf.random_normal([n_nodes_hl2]))} 
 
-	hidden_3_layer = {'weights':tf.Variable(tf.random_normal([n_nodes_hl2, n_nodes_hl3])),
-					  'biases': tf.Variable(tf.random_normal([n_nodes_hl3]))}
+	# hidden_3_layer = {'weights':tf.Variable(tf.random_normal([n_nodes_hl2, n_nodes_hl3])),
+	# 				  'biases': tf.Variable(tf.random_normal([n_nodes_hl3]))}
 
-	output_layer = {'weights':tf.Variable(tf.random_normal([n_nodes_hl3, n_actions])),
+	output_layer = {'weights':tf.Variable(tf.random_normal([n_nodes_hl2, n_actions])),
 					  'biases': tf.Variable(tf.random_normal([n_actions]))}
 
 	# (input data * weights) + biases
@@ -71,10 +78,10 @@ def createModel(data):
 	l2 = tf.add(tf.matmul(l1,hidden_2_layer['weights']), hidden_2_layer['biases'])
 	l2 = tf.nn.relu(l2)
 
-	l3 = tf.add(tf.matmul(l2,hidden_3_layer['weights']), hidden_3_layer['biases'])
-	l3 = tf.nn.relu(l3)
+	# l3 = tf.add(tf.matmul(l2,hidden_3_layer['weights']), hidden_3_layer['biases'])
+	# l3 = tf.nn.relu(l3)
 
-	output = tf.matmul(l3,output_layer['weights']) + output_layer['biases']
+	output = tf.matmul(l2,output_layer['weights']) + output_layer['biases']
 
 	return output
 
@@ -115,11 +122,64 @@ def deep_q_learning(x):
 		print('Accuracy:', accuracy.eval({x:mnist.test.images, y:mnist.test.labels}))
 	
 
-
+# Main function
 def main():
+
 	print("Running the Deep Q-Learning Model")
 
-	deep_q_learning(x)
+	RENDER_TO_SCREEN = True
+
+	env = Environment(wrap = True, grid_size = 10, rate = 100, max_time = 100, tail = False)
+	
+	if RENDER_TO_SCREEN:
+		env.prerender()
+
+	env.reset()
+
+	# The Model
+	# Q_values = createModel(x)
+
+	print(env.state_vector().shape)
+
+	epsilon = 1.0
+
+	#Session can start running
+	with tf.Session() as sess:
+		#sess.run(tf.initialize_all_variables()) #depricated
+		sess.run(tf.global_variables_initializer())
+
+		r = np.random.rand(n_input_nodes, n_input_nodes)
+
+		sess.run(z, feed_dict={x: r})
+
+		a = tf.argmax(z,1)
+
+		print(tf.equal(a,a))
+
+
+		# # Testing my DQN model with random values
+		# for episode in range(10):
+		# 	state, info = env.reset()
+		# 	done = False
+
+		# 	while not done:
+		# 		if RENDER_TO_SCREEN:
+		# 			env.render()
+
+		# 		if np.random.rand() <= epsilon:
+		# 			action = env.sample()
+		# 		else:
+		# 			action = 0
+		# 			# action = np.argmax(Q[env.state_index(state)])
+
+		# 		new_state, reward, done, info = env.step(action)
+
+		# 		# Q[env.state_index(state), action] += alpha * (reward + gamma * np.max(Q[env.state_index(new_state)]) - Q[env.state_index(state), action])
+
+		# 		state = new_state
+
+		# 	if episode % 1 == 0:
+		# 		print("Episode:", episode, "   Score:", info["score"])
 
 
 if __name__ == '__main__':

@@ -152,17 +152,17 @@ def run():
 # Play the game yourself
 def play():
 
-	env = Environment(wrap = True, grid_size = 5, rate = 10000, tail = False)
+	env = Environment(wrap = True, grid_size = 5, rate = 1000, tail = False)
 
 	# env.play()
 
-	env.prerender()
+	# env.prerender()
 
 	env.reset()
 
 	print(env.state_vector())
 
-	env.render()
+	# env.render()
 
 
 if __name__ == '__main__':

@@ -323,15 +323,17 @@ class Environment:
             for j in range(self.GRID_SIZE): # columns
                 if ((self.snake.x/self.SCALE) == j and (self.snake.y/self.SCALE) == i):
                     state[i*self.GRID_SIZE+j] = [1,0,0]
-                    print(i*self.GRID_SIZE+j)
+                    # print(i*self.GRID_SIZE+j)
                 elif ((self.food.x/self.SCALE) == j and (self.food.y/self.SCALE) == i):
                     state[i*self.GRID_SIZE+j] = [0,1,0]
-                    print(i*self.GRID_SIZE+j)
+                    # print(i*self.GRID_SIZE+j)
                 else:
                     state[i*self.GRID_SIZE+j] = [0,0,1]
 
         # Flatten the vector to a 1 dimensional vector for the input layer to the NN
         state = state.flatten()
+
+        state = np.transpose(state)
 
         return state
 
