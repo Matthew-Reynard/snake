@@ -39,14 +39,13 @@ def train():
 
 	RENDER_TO_SCREEN = False
 
-	env = Environment(wrap = False, grid_size = 10, rate = 0, max_time = 100)
+	# rate should be 0 when not rendering, else it will lengthen training time unnecessarily
+	env = Environment(wrap = True, grid_size = 6, rate = 0, max_time = 100)
 
 	if RENDER_TO_SCREEN:
 		env.prerender()
 
-	# env.reset()
-
-	Q = Qmatrix(2, env) # 0 - zeros, 1 - random, 2 - textfile
+	Q = Qmatrix(0, env) # 0 - zeros, 1 - random, 2 - textfile
 
 	alpha = 0.15  # Learning rate, i.e. which fraction of the Q values should be updated
 	gamma = 0.99  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
@@ -103,7 +102,6 @@ def train():
 				print("Saved Q matrix to text file")
 				raise e
 
-			
 
 		if episode % print_episode == 0:
 			print("Episode:", episode, "   time:", avg_time/print_episode, "   score:", avg_score/print_episode)
@@ -117,7 +115,7 @@ def run():
 
 	RENDER_TO_SCREEN = True
 
-	env = Environment(wrap = False, grid_size = 10, rate = 50, max_time = 1000, tail = False)
+	env = Environment(wrap = True, grid_size = 6, rate = 50, max_time = 100, tail = False)
 
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -128,7 +126,7 @@ def run():
 	epsilon = 0.005
 
 	# Testing for a certain amount of episodes
-	for episode in range(100):
+	for episode in range(10):
 		state, info = env.reset()
 		done = False
 
@@ -156,14 +154,18 @@ def play():
 
 	env = Environment(wrap = True, grid_size = 10, rate = 100, tail = False)
 
-	env.play()
+	# env.play()
+
+	env.reset()
+
+	print(env.state_vector())
 
 
 if __name__ == '__main__':
 
-	train() 
+	# train() 
 
 	# run()
 
-	# play()
+	play()
 

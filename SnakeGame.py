@@ -182,7 +182,7 @@ class Environment:
 
     # Step through the game, one state at a time.
     # Return the reward, the new_state, whether its reached_food or not, and the time
-    def step(self, action):
+    def step(self, action, action_space = 4):
         self.time += 1
 
         # Test
@@ -198,7 +198,7 @@ class Environment:
         reward = -10
 
         # Update the position of the snake head and tail
-        self.snake.update(self.SCALE, action)
+        self.snake.update(self.SCALE, action, action_space)
 
         if self.ENABLE_WRAP:
             self.wrap()
@@ -310,6 +310,30 @@ class Environment:
 
         # up, down, left, right
         return 4
+
+    def state_vector(self):
+
+        # (rows, columns)
+        state = np.zeros(((self.GRID_SIZE**2),3))
+        # print(state.size) # DEBUGGING
+        
+        # Probabily very inefficient - TODO, find a better implementation
+        # This is for the HEAD and the FOOD and EMPTY, need to add a column for a TAIL later [H, T, F, E]
+        for i in range(self.GRID_SIZE): # rows
+            for j in range(self.GRID_SIZE): # columns
+                if ((self.snake.x/self.SCALE) == j and (self.snake.y/self.SCALE) == i):
+                    state[j*self.GRID_SIZE+i] = [1,0,0]
+                    print(j*self.GRID_SIZE+i)
+                elif ((self.food.x/self.SCALE) == j and (self.food.y/self.SCALE) == i):
+                    state[j*self.GRID_SIZE+i] = [0,1,0]
+                    print(j*self.GRID_SIZE+i)
+                else:
+                    state[j*self.GRID_SIZE+i] = [0,0,1]
+
+        state = state.flatten()
+        # state = np.reshape(state,4)
+
+        return state
 
 
     # If the snake eats the food, increment score and increase snake tail length
@@ -451,7 +475,9 @@ class Environment:
             action = self.render()
 
             # When the snake touches the food, game ends
-            s, r, GAME_OVER, i = self.step(action)
+            # action_space has to be 3 for the players controls, 
+            # because they know that the snake can't go backwards
+            s, r, GAME_OVER, i = self.step(action, action_space = 3)
 
             # For the snake to look like it ate the food, render needs to be last
             # Next piece of code if very BAD programming
