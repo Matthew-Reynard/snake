@@ -115,7 +115,7 @@ def run():
 
 	RENDER_TO_SCREEN = True
 
-	env = Environment(wrap = True, grid_size = 10, rate = 50, max_time = 1000, tail = False)
+	env = Environment(wrap = False, grid_size = 10, rate = 50, max_time = 1000, tail = False)
 
 	if RENDER_TO_SCREEN:
 		env.prerender()
