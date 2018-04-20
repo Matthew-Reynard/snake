@@ -1,11 +1,17 @@
 '''
+Simple SnakeAI Game with a Deep Q Network
 
+INFO:
+@author: Matthew Reynard
+@year: 2018
+
+DESCRIPTION:
 This is using the code for my first NN.
 Code from sentdex (YouTube) TensorFlow tutorial - https://www.youtube.com/watch?v=BhpvH5DuVu8
 
-input > weight > hl1 (activation function) > weights > hl2 > weights > output
+input > weight > hl1 (activation function) > weights > hl2 (activation function) > weights > output
 
-NOT FOR Q LEARNING
+--- NOT FOR Q LEARNING ---
 compare output to intended output (label) > cost function - NOT FOR Q LEARNING
 optimization functions (optimizer) > minimise cost (AdamOptimizer... SGD (Stochatis Gradient Descent), AdaGrad)
 
@@ -13,31 +19,34 @@ backpropagation - but where?
 
 Feed forward + backprop = epoch (We will do 10 epochs in this example)
 
+TO DO LIST:
+- Learn how to train the RL Model
+
+
+NOTES:
+- Random weights and biases are used for the baseline
+
+BUGS:
+- None... yet
+
 '''
 
 import numpy as np
 import tensorflow as tf
-
 from Environment_for_DQN import Environment
-
-# First we need our environment form Environment_for_DQN.py
-# env = Environment()
-
-# Then we need our data
-# input_data = env.input_data()
 
 # Number of nodes at input layer
 n_input_nodes = 300
 
 # Number of hidden layer nodes - 3 Hidden layers => 5 layers in total
 n_nodes_hl1 = 200
-# n_nodes_hl2 = 500
-# n_nodes_hl3 = 500
+# n_nodes_hl2 = 200
+# n_nodes_hl3 = 200
 
 # Number of actions - Up, down, left, right
 n_actions = 4
 
-# manipulate the weights of 100 inputs at a time
+# manipulate the weights of 100 inputs at a time - NOT SURE HOW TO UPDATE WEIGHTS FOR RL
 batch_size = 100
 
 # 10 x 10 x 4 = 400 (input nodes)
@@ -49,13 +58,18 @@ batch_size = 100
 
 x = tf.placeholder(tf.float32, [1, n_input_nodes])
 
-# x = tf.placeholder(tf.float32, [n_input_nodes, 1]) # Dont understand the None
-
-# x = tf.placeholder(tf.float32, shape=(n_input_nodes, n_input_nodes))
+# x = tf.placeholder(tf.float32, [n_input_nodes, None]) # Dont understand the None
 
 # y = tf.placeholder(tf.float32, [n_actions, None])
 
-# z = tf.matmul(x,x)
+# This creates the NN model
+# Parameters:
+# Input layer: (300)	
+# Hidden layer: (200)
+# Output layer (4)
+
+# Full Matrix diagram:
+# Input_Layer(1,300) x Weights1(300,200) -> Hidden_Layer(1,200) x Weights2(200,4) -> Output_Layer(1,4)
 
 def createModel(data):
 
@@ -94,105 +108,44 @@ def createModel(data):
 
 	return output
 
-def deep_q_learning(x):
-
-	Q_values = createModel(x)
-	
-	# Need to alter the code below to do Deep Q Learning
-
-
-	#cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits = prediction,labels = y)) # depricated function tf.nn.softmax_cross_entropy_with_logits()
-	cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits = prediction,labels = y))
-	optimizer = tf.train.AdamOptimizer().minimize(cost) # AdamOptimizer has a parameter learning rate (defaults to 0.001)
-
-	#cycles of feed forward + backprop
-	hm_epochs = 10
-
-	#Session can start running
-	with tf.Session() as sess:
-		#sess.run(tf.initialize_all_variables()) #depricated
-		sess.run(tf.global_variables_initializer())
-
-		for epoch in range(hm_epochs):
-			epoch_loss = 0
-			# _ variable is shorthand for "varible we dont care about"
-			for _ in range(int(mnist.train.num_examples/batch_size)):
-				epoch_x, epoch_y = mnist.train.next_batch(batch_size) # lots of helper functions like this in TF
-				_, c = sess.run([optimizer, cost], feed_dict = {x: epoch_x, y: epoch_y})
-				epoch_loss += c
-
-			print('Epoch', epoch, 'completed out of', hm_epochs, '. Loss:', epoch_loss)
-
-		#tf.argmax returns the max value in the array
-		correct = tf.equal(tf.argmax(prediction,1), tf.argmax(y,1))
-
-		accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
-
-		print('Accuracy:', accuracy.eval({x:mnist.test.images, y:mnist.test.labels}))
-	
-
 # Main function
 def main():
 
+	# Testing
 	print("Running the Deep Q-Learning Model")
 
+	# Decide whether or not to render to the screen or not
 	RENDER_TO_SCREEN = True
 
+	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
 	env = Environment(wrap = True, grid_size = 10, rate = 1000, max_time = 100, tail = False)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
 
-	# env.reset()
+	# Not used yet
+	alpha = 0.15  # Learning rate, i.e. which fraction of the Q values should be updated
+	gamma = 0.99  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
 
-	# my_input = env.state_vector()
+	epsilon = 0.0  # Probability to choose random action instead of best action
 
-
-	# The Model
-	# Q_values = createModel(x)
-
-	# print(env.state_vector().shape)
-
-	# print(" ")
-
-	epsilon = 0.0
-
+	# Random tests
 	# x1 = tf.placeholder(tf.float32, [n_input_nodes, 1])
 	# x2 = tf.placeholder(tf.float32, [1, 1])
-
-	# a = tf.placeholder(tf.float32)
-
 	# z = tf.matmul(x1,x2)
 
-	#Session can start running
 	# with tf.Session() as sess:
 
-		#sess.run(tf.initialize_all_variables()) #depricated
 		# sess.run(tf.global_variables_initializer())
 
 		# r1 = np.random.rand(n_input_nodes, 1)
 		# r2 = np.random.rand(1, 1)
 
-		# a = tf.argmax(z,1)
-
 		# m = sess.run(z, feed_dict={x1: env.state_vector(), x2: r2})
-		# q = sess.run(Q_values, feed_dict={x: env.state_vector()})
-
 		# print(m)
-		# print(q)
-
 		# print("size:", sess.run(tf.shape(z)))
-		# print("size:", sess.run(tf.shape(q)))
-
 		# print("index of max:", sess.run(tf.argmax(m, axis=0)))
-		# print("index of max:", sess.run(tf.argmax(q, axis=1)))
-
-		# a = tf.argmax(z,1)
-
-		# print(sess.run(a))
-
-		# print(tf.equal(a,a))
 
 
 	# Testing my DQN model with random values
@@ -204,8 +157,10 @@ def main():
 		Q_values = createModel(x)
 
 		# Open a new session with each new episode - NOT SURE WHY I'M CHOOSING TO DO THIS
+		# Session can start running
 		with tf.Session() as sess:
 
+			# Need this for something - won't work without it
 			sess.run(tf.global_variables_initializer())
 
 			while not done:
@@ -214,8 +169,9 @@ def main():
 
 				# Retrieve the Q values from the NN
 				q = sess.run(Q_values, feed_dict={x: env.state_vector()})
-				print(q)
+				print(q) # DEBUGGING
 
+				# Deciding one which action to take
 				if np.random.rand() <= epsilon:
 					action = env.sample()
 				else:

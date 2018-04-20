@@ -1,10 +1,11 @@
 '''
-Simple SnakeAI Game 
+Simple SnakeAI Game with basic Q Learning
 
 INFO:
 @author: Matthew Reynard
 @year: 2018
 
+DESCRIPTION:
 QLearn.py is a a simple implementation of a Q learning algorithm with a lookup table of Q values
 You can change the code in the main() function to either train(), run(), or play() 
 - with the latter being just for fun and to explore the world and see whats happening and
@@ -149,7 +150,7 @@ def run():
 			print("Episode:", episode, "   Score:", info["score"])
 
 
-# Play the game yourself
+# Play the game yourself :)
 def play():
 
 	env = Environment(wrap = True, grid_size = 10, rate = 100, tail = False)
@@ -165,6 +166,8 @@ def play():
 
 
 if __name__ == '__main__':
+
+	# CHOOSE 1 OF THE 3
 
 	# train() 
 
