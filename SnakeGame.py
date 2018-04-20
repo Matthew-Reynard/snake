@@ -333,7 +333,8 @@ class Environment:
         # Flatten the vector to a 1 dimensional vector for the input layer to the NN
         state = state.flatten()
 
-        state = np.transpose(state)
+        # Reshape into a column vector instead of a row vector - NOT SURE HOW
+        # state = state.reshape(-1,1)
 
         return state
 
