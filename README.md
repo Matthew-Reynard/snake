@@ -1,32 +1,36 @@
 # snake
 Snake game using Reinforcement Learning (RL) and TensorFlow
 
-This is the README.md file in my first Github repository
-
 ---
 
 ### LIBRARIES USED:
-virtualenv
-numpy
-tensorflow
-pandas
+virtualenv (helpful, but not necessary)  
+numpy  
+pygame  
+pandas  
+tensorflow  
 
 ### ABOUT:
-The simple snake game that we all know and love will now be controlled by a machine. 
-Using RL, the snake will wiggle its way to victory by covering all of the squares (grid blocks).
+The simple snake game that we all know and love will now be controlled by a machine.   
+Using RL, the snake will learn about its environment and learn to choose the best posible action for the current state.
 
 ### TWO METHODS:
-RL - The standard RL that makes the snake to many simulations of the game until it optimises its reward and wins
-IRL - Using data gathered from "experts" to train the snake to win the game (using log files)
+RL - The standard RL that makes the snake do many simulations of the game until it optimises its reward and wins.  
+Inverse RL (IRL) - Using data gathered from "experts" to train the snake to win the game (using log files).
+
+### RL:
+Q learning - The first method that I implemented was a simple Q learning lookup table where each possible state was allowed 3 actions in the Q matrix. Because the state space can get rather large rather fast, this wont work for the full snake game, therefore it was implemented with just a snakes head and the food. This can be found in QLearn.py  
+Deep Q Network - The second method is using a Deep Neural Network (NN) to approximate the Q values and decide which action would be the best one given the current state. This can be found in DQN.py (STILL A WORK IN PROGRESS)
 
 ### COMPLETED:
-The basics of the snake game is done.
-The creation of log files
+The basics of the snake game is done.  
+The creation of log files.  
+QLearning (Lookup table) - can run without Tensorflow
 
 ### FUTURE PLANS:
-Need to implement a victory screen.
+Implement the DQN using TensorFlow  
+Create an IRL environment  
 Create an executable file (with GUI)
-Implement the RL using TensorFlow
 
 ### BUGS:
-The controls aren't as responsive as I'd like - it only executes the last button (input) click of the frame. 
+The controls aren't as responsive as I'd like - it only executes the last button (input) click of the frame.  
