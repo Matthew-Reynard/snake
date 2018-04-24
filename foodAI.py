@@ -38,12 +38,12 @@ class Food:
         cols = grid_size
 
         while not made:
-            myRow = random.randint(0, rows-1)
-            myCol = random.randint(0, cols-1)
+            # myRow = random.randint(0, rows-1)
+            # myCol = random.randint(0, cols-1)
 
             # Making the food only in one position - Test 1
-            # myRow = 7
-            # myCol = 7
+            myRow = 6
+            myCol = 6
 
             # Making the food only in one of three positions - Test 2
             # r = random.randint(0,2)

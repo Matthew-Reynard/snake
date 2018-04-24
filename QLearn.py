@@ -22,7 +22,7 @@ TO DO LIST:
 import numpy as np 
 from SnakeGame import Environment
 
-Q_textfile_path_load = "./Data/Q_10x10_no wrap.txt"
+Q_textfile_path_load = "./Data/Q_test.txt"
 Q_textfile_path_save = "./Data/Q_test.txt"
 
 # dimensions: (states, actions)
@@ -41,7 +41,7 @@ def train():
 	RENDER_TO_SCREEN = False
 
 	# rate should be 0 when not rendering, else it will lengthen training time unnecessarily
-	env = Environment(wrap = True, grid_size = 6, rate = 0, max_time = 100)
+	env = Environment(wrap = False, grid_size = 10, rate = 0, max_time = 20)
 
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -60,9 +60,9 @@ def train():
 	avg_time = 0
 	avg_score = 0
 
-	total_episodes = 100000000
+	total_episodes = 10000
 
-	print_episode = 10000
+	print_episode = 1000
 
 	for episode in range(total_episodes):
 		# Reset the environment
@@ -116,7 +116,7 @@ def run():
 
 	RENDER_TO_SCREEN = True
 
-	env = Environment(wrap = False, grid_size = 10, rate = 50, max_time = 1000, tail = False)
+	env = Environment(wrap = False, grid_size = 10, rate = 50, max_time = 50, tail = False)
 
 	if RENDER_TO_SCREEN:
 		env.prerender()

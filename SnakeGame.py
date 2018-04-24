@@ -101,8 +101,8 @@ class Environment:
         # self.snake.y = np.random.randint(0,10) * self.SCALE
 
         # Starting at the same spot
-        self.snake.x = 4 * self.SCALE
-        self.snake.y = 4 * self.SCALE
+        self.snake.x = 3 * self.SCALE
+        self.snake.y = 3 * self.SCALE
 
         # Initialise the movement to the right
         self.snake.dx = 1
@@ -195,7 +195,7 @@ class Environment:
         done = False
 
         # Initialze to -1 for every time step - to find the fastest route (can be a more negative reward)
-        reward = -10
+        reward = -1
 
         # Update the position of the snake head and tail
         self.snake.update(self.SCALE, action, action_space)
@@ -247,9 +247,9 @@ class Environment:
             # CHOOSE 1 OF THE 2 BELOW:
 
             # Create a piece of food that is not within the snake
-            self.food.make(self.GRID_SIZE, self.SCALE, self.snake)
+            # self.food.make(self.GRID_SIZE, self.SCALE, self.snake)
             # Test for one food item at a time
-            # done = True 
+            done = True 
 
             # Can't implement tail with Q learning algorithm
             if self.ENABLE_TAIL:
