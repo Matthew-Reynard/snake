@@ -171,7 +171,7 @@ if __name__ == '__main__':
 
 	# train() 
 
-	run()
+	# run()
 
-	# play()
+	play()
 

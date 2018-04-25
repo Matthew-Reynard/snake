@@ -101,8 +101,8 @@ class Environment:
         # self.snake.y = np.random.randint(0,10) * self.SCALE
 
         # Starting at the same spot
-        self.snake.x = 4 * self.SCALE
-        self.snake.y = 4 * self.SCALE
+        self.snake.x = 1 * self.SCALE
+        self.snake.y = 1 * self.SCALE
 
         # Initialise the movement to the right
         self.snake.dx = 1
@@ -333,7 +333,7 @@ class Environment:
         # Flatten the vector to a 1 dimensional vector for the input layer to the NN
         state = state.flatten()
 
-        state = state.reshape(1,300)
+        state = state.reshape(1,(self.GRID_SIZE**2)*3)
 
         # state = np.transpose(state)
 

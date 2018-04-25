@@ -27,7 +27,7 @@ NOTES:
 - Random weights and biases are used for the baseline
 
 BUGS:
-- Not learning fast enough or at all
+- Not learning at all
 
 '''
 
@@ -35,14 +35,20 @@ import numpy as np
 import tensorflow as tf
 from Environment_for_DQN import Environment
 
-modelpath_save = "./tmp/model_2.ckpt"
-modelpath_load = "./tmp/model_2.ckpt"
+# Global Variables
+MODEL_PATH_SAVE = "./tmp/model_2.ckpt"
+MODEL_PATH_LOAD = "./tmp/model_2.ckpt"
+
+LOGDIR = "./tmp/demo/3"
+
+GRID_SIZE = 5
+
 
 # Number of nodes at input layer
-n_input_nodes = 300
+n_input_nodes = (GRID_SIZE**2)*3
 
 # Number of hidden layer nodes - 3 Hidden layers => 5 layers in total
-n_nodes_hl1 = 200
+n_nodes_hl1 = 50
 # n_nodes_hl2 = 200
 # n_nodes_hl3 = 200
 
@@ -50,7 +56,7 @@ n_nodes_hl1 = 200
 n_actions = 4
 
 # manipulate the weights of 100 inputs at a time - NOT SURE HOW TO UPDATE WEIGHTS FOR RL
-batch_size = 100
+# batch_size = 100
 
 # 10 x 10 x 4 = 400 (input nodes)
 
@@ -60,10 +66,12 @@ batch_size = 100
 # So it's just safety incase something of not that shape is given in there
 
 # input
-x = tf.placeholder(tf.float32, [1, n_input_nodes])
+x = tf.placeholder(tf.float32, [1, n_input_nodes], name="Input")
 
 # output
-y = tf.placeholder(tf.float32, [1, n_actions])
+y = tf.placeholder(tf.float32, [1, n_actions], name="Output")
+
+# Q_values2 = createModel(x)
 
 # Error function
 # error = tf.reduce_mean(tf.square(Q_values - y))
@@ -75,9 +83,9 @@ y = tf.placeholder(tf.float32, [1, n_actions])
 # y_prime = tf.reduce_max(y, axis=1)
 
 # action at time t - made a global variable for run() function
-action_t = tf.argmax(y, axis=1)
+# action_t = tf.argmax(y, axis=1)
 
-# x = tf.placeholder(tf.float32, [n_input_nodes, None]) # Dont understand the None
+# x = tf.placeholder(tf.float32, [n_input_nodes, None]) # None means an arbitary size
 
 # y = tf.placeholder(tf.float32, [n_actions, None])
 
@@ -95,14 +103,14 @@ def createModel(data):
 
 	# The structure of the model:
 
-	# hidden_1_layer is simply a python dictionary (right?)
+	# hidden_1_layer is simply a python dictionary
 	# will create an array (tensor) of your weights - initialized to random values
 
 	# hidden_1_layer = {'weights': tf.Variable(tf.random_uniform([n_input_nodes, n_nodes_hl1], minval=0, maxval=None)),
 	# 				  'biases': tf.Variable(tf.random_uniform([n_nodes_hl1], minval=0, maxval=1))}
 
-	hidden_1_layer = {'weights': tf.Variable(tf.random_normal([n_input_nodes, n_nodes_hl1])),
-					  'biases': tf.Variable(tf.random_normal([n_nodes_hl1]))}
+	hidden_1_layer = {'weights': tf.Variable(tf.random_normal([n_input_nodes, n_nodes_hl1]), name = "Weights1"),
+					  'biases': tf.Variable(tf.random_normal([n_nodes_hl1]), name = "Biases1")}
 
 	# hidden_2_layer = {'weights':tf.Variable(tf.random_normal([n_nodes_hl1, n_nodes_hl2])),
 	# 				  'biases': tf.Variable(tf.random_normal([n_nodes_hl2]))} 
@@ -112,8 +120,8 @@ def createModel(data):
 
 	# output_layer = {'weights': tf.Variable(tf.random_uniform([n_nodes_hl1, n_actions], minval=0, maxval=None)),
 					# 'biases': tf.Variable(tf.random_uniform([n_actions], minval=0, maxval=1))}
-	output_layer = {'weights': tf.Variable(tf.random_normal([n_nodes_hl1, n_actions])),
-					'biases': tf.Variable(tf.random_normal([n_actions]))}
+	output_layer = {'weights': tf.Variable(tf.random_normal([n_nodes_hl1, n_actions]), name = "Weights2"),
+					'biases': tf.Variable(tf.random_normal([n_actions]), name = "Biases2")}
 
 	# The formula of whats happening below:
 	# (input data * weights) + biases
@@ -149,54 +157,70 @@ def train():
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = False, grid_size = 10, rate = 0, max_time = 20, tail = False)
+	env = Environment(wrap = False, grid_size = GRID_SIZE, rate = 0, max_time = 20, tail = False)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
 
 	# Hyper-parameters
-	alpha = 0.3  # Learning rate, i.e. which fraction of the Q values should be updated
+	alpha = 0.5  # Learning rate, i.e. which fraction of the Q values should be updated
 	
-	gamma = 0.95  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
+	gamma = 0.99  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
 
-	epsilon = 1.0  # Probability to choose random action instead of best action
+	epsilon = 0.1  # Probability to choose random action instead of best action
 
 	# Create NN model
-	Q_values = createModel(x)
+	with tf.name_scope('Model'):
+		Q_values = createModel(x)
 
 	# Error / Loss function 
 	# Not sure why its reduce_mean, it reduces the [1,4] tensor to a scalar of the mean value
-	error = tf.reduce_mean(tf.square(Q_values - y))
+	with tf.name_scope('Error'):
+		e1 = tf.subtract(y, Q_values)
+		e2 = tf.square(e1)
+		error = tf.reduce_max(e2)
+		# error = tf.square(tf.subtract(y, Q_values))
 
 	# Gradient descent optimizer - minimizes error/loss function
-	optimizer = tf.train.GradientDescentOptimizer(alpha).minimize(error)
+	with tf.name_scope('Optimizer'):
+		optimizer = tf.train.GradientDescentOptimizer(alpha).minimize(error)
+		# optimizer = tf.train.AdamOptimizer(alpha).minimize(error)
 
 	# The next states action-value [1,4] tensor, reduced to a scalar of the max value
-	y_prime = tf.reduce_max(y, axis=1)
+	with tf.name_scope('y_prime_max'):
+		y_prime_max = tf.reduce_max(y, axis=1)
 
 	# Action at time t, the index of the max value in the action-value tensor (Made a global variable)
-	# action_t = tf.argmax(y, axis=1)
+
+	action_t = tf.argmax(y, axis=1)
 
 	avg_time = 0
 	avg_score = 0
-	got_food = 0
-	avg_loss = 0
+	# avg_error = 0
 
 	print_episode = 1000
-	total_episodes = 50000
+	total_episodes = 10000
 
 	# Saving model capabilities
 	saver = tf.train.Saver()
+
+	# Initialising all variables (weights and biases)
+	model = tf.global_variables_initializer()
+
+	# Tensorboard capabilties
+	writer = tf.summary.FileWriter("./tmp/demo/2")
 
 	# Session can start running
 	with tf.Session() as sess:
 
 		# Restore the model, to keep training
 		if USE_SAVED_MODEL_FILE:
-			saver.restore(sess, modelpath_load)
+			saver.restore(sess, MODEL_PATH_LOAD)
 			print("Model restored.")
 
-		sess.run(tf.global_variables_initializer())
+		sess.run(model)
+
+		writer.add_graph(sess.graph)
 
 		# variables_names = [v.name for v in tf.trainable_variables()]
 		# values = sess.run(variables_names)
@@ -212,7 +236,7 @@ def train():
 
 			# Test for an Epsilon linear function - start at 0.9 random, 
 			# and for 30% of the episodes, decrease down to 0.1 random
-			epsilon = (-0.9 / (0.3*total_episodes)) * episode + 1
+			epsilon = (-0.9 / (0.6*total_episodes)) * episode + 1
 			if epsilon < 0.1: 
 				epsilon = 0.1
 
@@ -225,7 +249,7 @@ def train():
 
 				# Retrieve the Q values from the NN in vector form
 				Q_vector = sess.run(Q_values, feed_dict={x: state_vector})
-				# print(Q_vector) # DEBUGGING
+				# print("Qvector",Q_vector) # DEBUGGING
 
 				# Deciding one which action to take
 				if np.random.rand() <= epsilon:
@@ -239,48 +263,45 @@ def train():
 
 				state = new_state
 
-
-				# Gathering our "previous" states action-value vector
-				old_Q = Q_vector
 				# Gathering our now current states action-value vector
 				new_state_vector = env.state_vector()
-				y_next = sess.run(Q_values, feed_dict={x: new_state_vector})
+				y_prime = sess.run(Q_values, feed_dict={x: new_state_vector})
 
 				# Equation for training
-				# print("action:",action)
-				maxq = sess.run(y_prime, feed_dict={y:y_next})
-				# print("max q value:", maxq)
-				# print("x:", old_Q, "    y:", Q_vector)
+				maxq = sess.run(y_prime_max, feed_dict={y:y_prime})
+
 				Q_vector[:,action] = reward + (gamma * maxq)
 
-				# sess.run(optimizer, feed_dict={x: state_vector, y: Q_vector})
-				_, c = sess.run([optimizer, error], feed_dict={x: state_vector, y: Q_vector})
-				# print("loss:",c)
-
-				# print("x2:", old_Q, "    y2:", Q_vector)
-
-				if reward == 100:
-					got_food += 1
+				_, e = sess.run([optimizer, error], feed_dict={x:state_vector, y:Q_vector})
+				# _ = sess.run(optimizer, feed_dict={x: state_vector, y: Q_vector})
+				# e = sess.run(error,feed_dict={x:state_vector, y:Q_vector})
+				# sess.run(optimizer)
+				
+				# DEBUGGING
+				# print("action:",action)
+				# print("y_prime:", y_prime)
+				# print("max q value:", maxq)
+				# print("new Q_vector:", Q_vector)
+				# print("error tensor:", e)
 
 				if done:
 					avg_time += info["time"]
 					avg_score += info["score"]
-					avg_loss += c
+					# avg_error += e
 
-			if episode % print_episode == 0:
+			if episode % print_episode == 0 and episode != 0:
 				# print("Episode:", episode, "   Score:", info["score"])
-				print("Episode:", episode, "   time:", avg_time/print_episode, "   score:", avg_score/print_episode, "    Got food", got_food, "times")
-				print("loss:",avg_loss)
+				print("Episode:", episode, "   time:", avg_time/print_episode, "   score:", avg_score/print_episode, "    Error", e)
+				# print("error tensor:", e)
 				avg_time = 0
 				avg_score = 0
-				got_food = 0
-				avg_loss = 0
+				# avg_error = 0
 
-		save_path = saver.save(sess, modelpath_save)
+		save_path = saver.save(sess, MODEL_PATH_SAVE)
 		print("Model saved in path: %s" % save_path)
 
 
-# Run function
+# Run the model in the game environment
 def run():
 	# Testing
 	print("Running the Deep Q-Learning Model")
@@ -290,15 +311,17 @@ def run():
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = False, grid_size = 10, rate = 100, max_time = 20, tail = False)
+	env = Environment(wrap = False, grid_size = GRID_SIZE, rate = 100, max_time = 20, tail = False)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
 
-	epsilon = 0.01  # Probability to choose random action instead of best action
+	epsilon = 0.005  # Probability to choose random action instead of best action
 
 	# Create NN model
 	Q_values = createModel(x)
+
+	action_t = tf.argmax(y, axis=1)
 
 	avg_time = 0
 	avg_score = 0
@@ -313,8 +336,7 @@ def run():
 	# Session can start running
 	with tf.Session() as sess:
 
-		saver.restore(sess, modelpath_load)
-
+		saver.restore(sess, MODEL_PATH_LOAD)
 		print("Model restored.")
 
 		# sess.run(tf.global_variables_initializer())
@@ -359,15 +381,32 @@ def run():
 					avg_score += info["score"]
 
 
-			if episode % print_episode == 0:
+			if episode % print_episode == 0 and episode != 0:
 				# print("Episode:", episode, "   Score:", info["score"])
 				print("Episode:", episode, "   time:", avg_time/print_episode, "   score:", avg_score/print_episode, "    Got food", got_food, "times")
 				avg_time = 0
 				avg_score = 0
 				got_food = 0
 
+# Play the game
+def play():
+	print("Playing the game")
+
+	env = Environment(wrap = True, grid_size = 5, rate = 100, max_time = 20, tail = False)
+
+	# env.play()
+
+	# env.prerender()
+	env.reset()
+
+	print(env.state_vector())
+
+
+
 if __name__ == '__main__':
 	
 	train()
 	
 	# run()
+
+	# play()
