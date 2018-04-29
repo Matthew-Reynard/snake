@@ -21,6 +21,10 @@ Easier to use than on windows
 not linked with one folder
 
 Commands:
+$ pip install virtualenv
+$ mkdir Environment - can be any name you wish
+$ cd Environments/
+$ virtualenv "env" - again, can be any name you wish
 $ source Environments/"env"/bin/activate
 $ which python - useful command
 $ which pip/pip3 - also useful
