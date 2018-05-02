@@ -195,7 +195,7 @@ class Environment:
         done = False
 
         # Initialze to -1 for every time step - to find the fastest route (can be a more negative reward)
-        reward = -10
+        reward = -1
 
         # Update the position of the snake head and tail
         self.snake.update(self.SCALE, action, action_space)
