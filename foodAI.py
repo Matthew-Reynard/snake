@@ -42,20 +42,20 @@ class Food:
             # myCol = random.randint(0, cols-1)
 
             # Making the food only in one position - Test 1
-            myRow = 3
-            myCol = 3
+            # myRow = 3
+            # myCol = 3
 
             # Making the food only in one of three positions - Test 2
-            # r = random.randint(0,2)
-            # if r == 0:
-            #     myRow = 1
-            #     myCol = 9
-            # if r == 1:
-            #     myRow = 8
-            #     myCol = 8
-            # if r == 2:
-            #     myRow = 9
-            #     myCol = 1
+            r = random.randint(0,2)
+            if r == 0:
+                myRow = 1
+                myCol = 8
+            if r == 1:
+                myRow = 8
+                myCol = 8
+            if r == 2:
+                myRow = 8
+                myCol = 1
 
             self.pos = (myCol * scale, myRow * scale) # multiplying by scale
 

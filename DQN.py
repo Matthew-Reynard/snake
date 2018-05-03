@@ -40,16 +40,21 @@ import matplotlib.pyplot as plt # not used yet
 MODEL_PATH_SAVE = "./tmp/model_4.ckpt"
 MODEL_PATH_LOAD = "./tmp/model_4.ckpt"
 
+W1_textfile_path_save = "./Variables/Weights1.txt"
+B1_textfile_path_save = "./Variables/Biases1.txt"
+W2_textfile_path_save = "./Variables/Weights2.txt"
+B2_textfile_path_save = "./Variables/Biases2.txt"
+
 LOGDIR = "./tmp/demo/3"
 
-GRID_SIZE = 5
+GRID_SIZE = 10
 
 
 # Number of nodes at input layer
 n_input_nodes = (GRID_SIZE**2)*3
 
 # Number of hidden layer nodes - 3 Hidden layers => 5 layers in total
-n_nodes_hl1 = 50
+n_nodes_hl1 = 100
 # n_nodes_hl2 = 200
 # n_nodes_hl3 = 200
 
@@ -144,8 +149,37 @@ def createModel(data):
 	# Normalize the output using the L2-Norm method
 	output = tf.nn.l2_normalize(output)
 
-	return output
+	return output, output_layer, hidden_1_layer
 	# return tf.transpose(output)
+
+
+# Recreating the model with txt file initializations
+def recreateModel(data):
+
+	w1 = np.loadtxt(W1_textfile_path_save, dtype='float32', delimiter=" ")
+	b1 = np.loadtxt(B1_textfile_path_save, dtype='float32', delimiter=" ")
+	w2 = np.loadtxt(W2_textfile_path_save, dtype='float32', delimiter=" ")
+	b2 = np.loadtxt(B2_textfile_path_save, dtype='float32', delimiter=" ")
+
+	# Text file initialization
+	hidden_1_layer = {'weights': tf.Variable(w1, name = "Weights1"),
+					  'biases': tf.Variable(b1, name = "Biases1")}
+
+	output_layer = {'weights': tf.Variable(w2, name = "Weights2"),
+					'biases': tf.Variable(b2, name = "Biases2")}
+
+	# The formula of whats happening below:
+	# (input data * weights) + biases
+
+	l1 = tf.add(tf.matmul(data, hidden_1_layer['weights']), hidden_1_layer['biases'])
+	# l1 = tf.nn.relu(l1) # Activation function (ReLU)
+
+	output = tf.add(tf.matmul(l1,output_layer['weights']), output_layer['biases'])
+
+	# Normalize the output using the L2-Norm method
+	output = tf.nn.l2_normalize(output)
+
+	return output
 
 
 # Train function
@@ -162,7 +196,7 @@ def train():
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = False, grid_size = GRID_SIZE, rate = 0, max_time = 15, tail = False)
+	env = Environment(wrap = False, grid_size = GRID_SIZE, rate = 0, max_time = 25, tail = False)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -176,7 +210,7 @@ def train():
 
 	# Create NN model
 	with tf.name_scope('Model'):
-		Q_values = createModel(x)
+		Q_values, output_layer, hidden_1_layer = createModel(x)
 
 	# Error / Loss function 
 	# Not sure why its reduce_mean, it reduces the [1,4] tensor to a scalar of the mean value
@@ -208,8 +242,8 @@ def train():
 	# error plot
 	errors = []
 
-	print_episode = 10000
-	total_episodes = 10000
+	print_episode = 1000
+	total_episodes = 100000
 
 	# Saving model capabilities
 	saver = tf.train.Saver()
@@ -248,9 +282,9 @@ def train():
 
 			# Test for an Epsilon linear function - start at 0.9 random, 
 			# and for 30% of the episodes, decrease down to 0.1 random
-			# epsilon = (-0.9 / (0.4*total_episodes)) * episode + 1
-			# if epsilon < 0.1: 
-			# 	epsilon = 0.1
+			epsilon = (-0.9 / (0.2*total_episodes)) * episode + 1
+			if epsilon < 0.1: 
+				epsilon = 0.1
 
 			while not done:
 				if RENDER_TO_SCREEN:
@@ -317,15 +351,35 @@ def train():
 				avg_time = 0
 				avg_score = 0
 				avg_error = 0
-				save_path = saver.save(sess, MODEL_PATH_SAVE)
+				
+				w1 = np.array(sess.run(hidden_1_layer['weights']))
+				b1 = np.array(sess.run(hidden_1_layer['biases']))
+				w2 = np.array(sess.run(output_layer['weights']))
+				b2 = np.array(sess.run(output_layer['biases']))
+
+				np.savetxt(W1_textfile_path_save, w1.astype(np.float), fmt='%f', delimiter = " ")
+				np.savetxt(B1_textfile_path_save, b1.astype(np.float), fmt='%f', delimiter = " ")
+				np.savetxt(W2_textfile_path_save, w2.astype(np.float), fmt='%f', delimiter = " ")
+				np.savetxt(B2_textfile_path_save, b2.astype(np.float), fmt='%f', delimiter = " ")
 
 		save_path = saver.save(sess, MODEL_PATH_SAVE)
 		print("Model saved in path: %s" % save_path)
 
-	plt.plot([np.mean(errors[i-500:i]) for i in range(len(errors))])
+		# Save the model to a text file
+		w1 = np.array(sess.run(hidden_1_layer['weights']))
+		b1 = np.array(sess.run(hidden_1_layer['biases']))
+		w2 = np.array(sess.run(output_layer['weights']))
+		b2 = np.array(sess.run(output_layer['biases']))
+
+		np.savetxt(W1_textfile_path_save, w1.astype(np.float), fmt='%f', delimiter = " ")
+		np.savetxt(B1_textfile_path_save, b1.astype(np.float), fmt='%f', delimiter = " ")
+		np.savetxt(W2_textfile_path_save, w2.astype(np.float), fmt='%f', delimiter = " ")
+		np.savetxt(B2_textfile_path_save, b2.astype(np.float), fmt='%f', delimiter = " ")
+
+	plt.plot([np.mean(errors[i:i+500]) for i in range(len(errors) - 500)])
 	# plt.plot(range(len(errors)), errors)
 	plt.show()
-	# plt.savefig("errors.png")
+	plt.savefig("./Images/errors.png")
 
 
 # Run the model in the game environment
@@ -338,7 +392,7 @@ def run():
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = False, grid_size = GRID_SIZE, rate = 100, max_time = 20, tail = False)
+	env = Environment(wrap = False, grid_size = GRID_SIZE, rate = 100, max_time = 25, tail = False)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -346,7 +400,7 @@ def run():
 	epsilon = 0.005  # Probability to choose random action instead of best action
 
 	# Create NN model
-	Q_values = createModel(x)
+	Q_values = recreateModel(x)
 
 	action_t = tf.argmax(y, axis=1)
 
@@ -357,16 +411,13 @@ def run():
 	print_episode = 10
 	total_episodes = 100
 
-	# Saving model
-	saver = tf.train.Saver()
+	# Initialising all variables (weights and biases)
+	model = tf.global_variables_initializer()
 
 	# Session can start running
 	with tf.Session() as sess:
 
-		saver.restore(sess, MODEL_PATH_LOAD)
-		print("Model restored.")
-
-		# sess.run(tf.global_variables_initializer())
+		sess.run(model)
 
 		# Testing my DQN model with random values
 		for episode in range(total_episodes):
@@ -765,7 +816,9 @@ def play():
 if __name__ == '__main__':
 	
 	# train()
+
+	run()
 	
-	run2()
+	# run2()
 
 	# play()

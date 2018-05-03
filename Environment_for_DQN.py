@@ -204,16 +204,16 @@ class Environment:
             self.wrap()
         else:
             if self.snake.x > self.DISPLAY_WIDTH - self.SCALE:
-                reward = -100 # very negative reward, to ensure that it never crashes into the side
+                reward = -10 # very negative reward, to ensure that it never crashes into the side
                 done = True 
             if self.snake.x < 0:
-                reward = -100
+                reward = -10
                 done = True
             if self.snake.y > self.DISPLAY_HEIGHT - self.SCALE:
-                reward = -100
+                reward = -10
                 done = True
             if self.snake.y < 0:
-                reward = -100
+                reward = -10
                 done = True
 
         # Update the snakes tail positions (from back to front)
@@ -257,7 +257,7 @@ class Environment:
                 self.snake.box.append((self.snake.x, self.snake.y)) #adds a rectangle variable to snake.box array(list)
 
             # Reward functions
-            reward = 100
+            reward = 50
             # reward = 100 / (np.sqrt((self.snake.x-self.food.x)**2 + (self.snake.y-self.food.y)**2) + 1) # Including the distance between them
             # reward = 1000 * self.score
             # reward = 1000 / self.time # Including the time in the reward function
