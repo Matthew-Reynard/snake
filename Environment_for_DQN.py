@@ -101,8 +101,8 @@ class Environment:
         # self.snake.y = np.random.randint(0,10) * self.SCALE
 
         # Starting at the same spot
-        self.snake.x = 1 * self.SCALE
-        self.snake.y = 1 * self.SCALE
+        self.snake.x = 2 * self.SCALE
+        self.snake.y = 2 * self.SCALE
 
         # Initialise the movement to the right
         self.snake.dx = 1
@@ -195,7 +195,8 @@ class Environment:
         done = False
 
         # Initialze to -1 for every time step - to find the fastest route (can be a more negative reward)
-        reward = -1
+        # reward = -1
+        reward = 0
 
         # Update the position of the snake head and tail
         self.snake.update(self.SCALE, action, action_space)
@@ -204,16 +205,16 @@ class Environment:
             self.wrap()
         else:
             if self.snake.x > self.DISPLAY_WIDTH - self.SCALE:
-                reward = -10 # very negative reward, to ensure that it never crashes into the side
+                reward = -1 # very negative reward, to ensure that it never crashes into the side
                 done = True 
             if self.snake.x < 0:
-                reward = -10
+                reward = -1
                 done = True
             if self.snake.y > self.DISPLAY_HEIGHT - self.SCALE:
-                reward = -10
+                reward = -1
                 done = True
             if self.snake.y < 0:
-                reward = -10
+                reward = -1
                 done = True
 
         # Update the snakes tail positions (from back to front)
@@ -247,9 +248,9 @@ class Environment:
             # CHOOSE 1 OF THE 2 BELOW:
 
             # Create a piece of food that is not within the snake
-            # self.food.make(self.GRID_SIZE, self.SCALE, self.snake)
+            self.food.make(self.GRID_SIZE, self.SCALE, self.snake)
             # Test for one food item at a time
-            done = True 
+            # done = True 
 
             # Can't implement tail with Q learning algorithm
             if self.ENABLE_TAIL:
@@ -257,7 +258,7 @@ class Environment:
                 self.snake.box.append((self.snake.x, self.snake.y)) #adds a rectangle variable to snake.box array(list)
 
             # Reward functions
-            reward = 50
+            reward = 1
             # reward = 100 / (np.sqrt((self.snake.x-self.food.x)**2 + (self.snake.y-self.food.y)**2) + 1) # Including the distance between them
             # reward = 1000 * self.score
             # reward = 1000 / self.time # Including the time in the reward function

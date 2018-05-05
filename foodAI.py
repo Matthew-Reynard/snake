@@ -49,12 +49,12 @@ class Food:
             r = random.randint(0,2)
             if r == 0:
                 myRow = 1
-                myCol = 8
+                myCol = 5
             if r == 1:
-                myRow = 8
-                myCol = 8
+                myRow = 6
+                myCol = 6
             if r == 2:
-                myRow = 8
+                myRow = 5
                 myCol = 1
 
             self.pos = (myCol * scale, myRow * scale) # multiplying by scale
