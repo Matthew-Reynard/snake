@@ -47,7 +47,7 @@ B2_textfile_path_save = "./Variables/Biases2.txt"
 
 LOGDIR = "./tmp/demo/3"
 
-GRID_SIZE = 10
+GRID_SIZE = 6
 
 SEED = 1
 
@@ -200,7 +200,7 @@ def train():
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, max_time = 100, tail = False)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, max_time = 50, tail = False)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -211,6 +211,8 @@ def train():
 	gamma = 0.99  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
 
 	epsilon = 0.1  # Probability to choose random action instead of best action
+	epsilon_start = 0.9
+	epsilon_end = 0.05
 
 	# Create NN model
 	with tf.name_scope('Model'):
@@ -246,10 +248,10 @@ def train():
 	avg_error = 0
 
 	# error plot
-	errors = []
+	# errors = []
 
 	print_episode = 1000
-	total_episodes = 50000
+	total_episodes = 100000
 
 	# Saving model capabilities
 	saver = tf.train.Saver()
@@ -296,9 +298,9 @@ def train():
 
 			# Test for an Epsilon linear function - start at 0.9, 
 			# and for x% of the episodes, decrease down to 0.1 
-			epsilon = (-0.9 / (0.5*total_episodes)) * episode + 1
-			if epsilon < 0.1: 
-				epsilon = 0.1
+			epsilon = (-epsilon_start / (0.5*total_episodes)) * episode + (epsilon_start+epsilon_end)
+			if epsilon < epsilon_end: 
+				epsilon = epsilon_end
 
 			while not done:
 				if RENDER_TO_SCREEN:
@@ -352,7 +354,7 @@ def train():
 				# print("error tensor:", e)
 
 				# add to the error list, to shot the plot at the end of training
-				errors.append(e)
+				# errors.append(e)
 
 				if done:
 					avg_time += info["time"]
@@ -418,9 +420,11 @@ def continue_training():
 		env.prerender()
 
 	# Hyper-parameters
-	alpha = 0.05  # Learning rate, i.e. which fraction of the Q values should be updated
+	alpha = 0.01  # Learning rate, i.e. which fraction of the Q values should be updated
 	gamma = 0.99  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
 	epsilon = 0.1  # Probability to choose random action instead of best action
+	epsilon_start = 0.1
+	epsilon_end = 0.005
 
 	# Create NN model
 	with tf.name_scope('Model'):
@@ -451,10 +455,10 @@ def continue_training():
 	avg_error = 0
 
 	# error plot
-	errors = []
+	# errors = []
 
 	print_episode = 1000
-	total_episodes = 10000
+	total_episodes = 20000
 
 	# Saving model capabilities
 	saver = tf.train.Saver()
@@ -484,6 +488,12 @@ def continue_training():
 		for episode in range(total_episodes):
 			state, info = env.reset()
 			done = False
+
+			# Test for an Epsilon linear function - start at 0.9, 
+			# and for x% of the episodes, decrease down to 0.1 
+			epsilon = (-epsilon_start / (0.8*total_episodes)) * episode + (epsilon_start+epsilon_end)
+			if epsilon < epsilon_end: 
+				epsilon = epsilon_end
 
 			while not done:
 				if RENDER_TO_SCREEN:
@@ -536,7 +546,7 @@ def continue_training():
 				# print("new Q_vector:", Q_vector)
 				# print("error tensor:", e)
 
-				errors.append(e)
+				# errors.append(e)
 
 				if done:
 					avg_time += info["time"]
@@ -544,13 +554,13 @@ def continue_training():
 					avg_error += e
 
 			# Show an error graph on tensorboard
-			if episode % 10 == 0 and episode != 0:
-				s = sess.run(merged_summary, feed_dict={x: state_vector, y: Q_vector})
-				writer.add_summary(s, episode)
+			# if episode % 10 == 0 and episode != 0:
+			# 	s = sess.run(merged_summary, feed_dict={x: state_vector, y: Q_vector})
+			# 	writer.add_summary(s, episode)
 
 			if episode % print_episode == 0 and episode != 0:
 				# print("Episode:", episode, "   Score:", info["score"])
-				print("Episode:", episode, "   time:", avg_time/print_episode, "   score:", avg_score/print_episode, "    Error", avg_error/print_episode)
+				print("Episode:", episode, "   time:", avg_time/print_episode, "   score:", avg_score/print_episode, "    Error", avg_error/print_episode, epsilon)
 				# print("error tensor:", e)
 				avg_time = 0
 				avg_score = 0
@@ -566,8 +576,8 @@ def continue_training():
 				np.savetxt(W2_textfile_path_save, w2.astype(np.float), fmt='%f', delimiter = " ")
 				np.savetxt(B2_textfile_path_save, b2.astype(np.float), fmt='%f', delimiter = " ")
 
-				# s = sess.run(merged_summary, feed_dict={x: state_vector, y: Q_vector})
-				# writer.add_summary(s, episode)
+				s = sess.run(merged_summary, feed_dict={x: state_vector, y: Q_vector})
+				writer.add_summary(s, episode)
 
 		save_path = saver.save(sess, MODEL_PATH_SAVE)
 		print("Model saved in path: %s" % save_path)
@@ -583,10 +593,10 @@ def continue_training():
 		np.savetxt(W2_textfile_path_save, w2.astype(np.float), fmt='%f', delimiter = " ")
 		np.savetxt(B2_textfile_path_save, b2.astype(np.float), fmt='%f', delimiter = " ")
 
-	plt.plot([np.mean(errors[i:i+500]) for i in range(len(errors) - 500)])
+	# plt.plot([np.mean(errors[i:i+500]) for i in range(len(errors) - 500)])
 	# plt.plot(range(len(errors)), errors)
-	plt.savefig("./Images/errors.png")
-	plt.show()
+	# plt.savefig("./Images/errors.png")
+	# plt.show()
 
 
 # Run the model in the game environment
@@ -825,7 +835,7 @@ def run2():
 def play():
 	print("\n ----- Playing the game -----\n")
 
-	env = Environment(wrap = True, grid_size = GRID_SIZE, rate = 100, tail = True)
+	env = Environment(wrap = True, grid_size = GRID_SIZE, rate = 100, tail = False)
 
 	env.play()
 

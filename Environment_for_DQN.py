@@ -226,7 +226,7 @@ class Environment:
         self.snake.box[0] = (self.snake.x, self.snake.y)
 
         # The snake can only start crashing into itself after the tail length it greater than 3
-        if self.snake.tail_length >= 3:
+        if self.snake.tail_length >= 1:
             # print(snake.tail_length) # DEBUGGING
             for i in range(1, self.snake.tail_length + 1):
                 if(self.snake.box[0] == (self.snake.box[i])):
