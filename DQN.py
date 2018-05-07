@@ -36,21 +36,23 @@ import tensorflow as tf
 from Environment_for_DQN import Environment
 import matplotlib.pyplot as plt # not used yet
 
-# Global Variables
-MODEL_PATH_SAVE = "./tmp/model_4.ckpt"
-MODEL_PATH_LOAD = "./tmp/model_4.ckpt"
+# GLOBAL VARIABLES
+# Paths
+MODEL_PATH_SAVE = "./tmp/model/model_1.ckpt"
+MODEL_PATH_LOAD = "./tmp/model/model_1.ckpt"
 
 W1_textfile_path_save = "./Variables/Weights1.txt"
 B1_textfile_path_save = "./Variables/Biases1.txt"
 W2_textfile_path_save = "./Variables/Weights2.txt"
 B2_textfile_path_save = "./Variables/Biases2.txt"
+W3_textfile_path_save = "./Variables/Weights3.txt"
+B3_textfile_path_save = "./Variables/Biases3.txt"
 
-LOGDIR = "./tmp/demo/3"
+LOGDIR = "./tmp/log/1"
 
-GRID_SIZE = 6
-
+# Parameters
+GRID_SIZE = 10
 SEED = 1
-
 WRAP = False
 
 
@@ -58,8 +60,8 @@ WRAP = False
 n_input_nodes = (GRID_SIZE**2)*3
 
 # Number of hidden layer nodes - 3 Hidden layers => 5 layers in total
-n_nodes_hl1 = 100
-# n_nodes_hl2 = 200
+n_nodes_hl1 = 256 # previously 100
+n_nodes_hl2 = 256
 # n_nodes_hl3 = 200
 
 # Number of actions - Up, down, left, right
@@ -186,6 +188,84 @@ def recreateModel(data):
 	return output, output_layer, hidden_1_layer
 
 
+# 2 hidden layers
+def createDeepModel(data):
+
+	# The structure of the model:
+
+	# hidden_1_layer is simply a python dictionary
+	# will create an array (tensor) of your weights - initialized to random values
+
+	# Random uniform initialization
+	hidden_1_layer = {'weights': tf.Variable(tf.random_uniform([n_input_nodes, n_nodes_hl1], minval=-1, maxval=1, seed=SEED), name = "Weights1"),
+					  'biases': tf.Variable(tf.constant(0.1, shape=[n_nodes_hl1]), name = "Biases1")}
+
+	hidden_2_layer = {'weights': tf.Variable(tf.random_uniform([n_nodes_hl1, n_nodes_hl2], minval=-1, maxval=1, seed=SEED+1), name = "Weights2"),
+					  'biases': tf.Variable(tf.constant(0.1, shape=[n_nodes_hl2]), name = "Biases2")}
+
+	output_layer = {'weights': tf.Variable(tf.random_uniform([n_nodes_hl2, n_actions], minval=-1, maxval=1, seed=SEED+2), name = "Weights3"),
+					'biases': tf.Variable(tf.constant(0.1, shape=[n_actions]), name = "Biases3")}
+
+	# The formula of whats happening below:
+	# (input data * weights) + biases
+
+	l1 = tf.add(tf.matmul(data, hidden_1_layer['weights']), hidden_1_layer['biases'])
+	l1 = tf.nn.relu(l1) # Activation function (ReLU)
+
+	l2 = tf.add(tf.matmul(l1, hidden_2_layer['weights']), hidden_2_layer['biases'])
+	l2 = tf.nn.relu(l2)
+
+	# l3 = tf.add(tf.matmul(l2, hidden_3_layer['weights']), hidden_3_layer['biases'])
+	# l3 = tf.nn.relu(l3)
+
+	output = tf.add(tf.matmul(l2, output_layer['weights']), output_layer['biases'])
+
+	# Normalize the output using the L2-Norm method
+	output = tf.nn.l2_normalize(output)
+
+	return output, hidden_1_layer, hidden_2_layer, output_layer
+
+
+# recreate the deep model
+def recreateDeepModel(data):
+
+	w1 = np.loadtxt(W1_textfile_path_save, dtype='float32', delimiter=" ")
+	b1 = np.loadtxt(B1_textfile_path_save, dtype='float32', delimiter=" ")
+	w2 = np.loadtxt(W2_textfile_path_save, dtype='float32', delimiter=" ")
+	b2 = np.loadtxt(B2_textfile_path_save, dtype='float32', delimiter=" ")
+	w3 = np.loadtxt(W3_textfile_path_save, dtype='float32', delimiter=" ")
+	b3 = np.loadtxt(B3_textfile_path_save, dtype='float32', delimiter=" ")
+
+	# Random uniform initialization
+	hidden_1_layer = {'weights': tf.Variable(w1, name = "Weights1"),
+					  'biases': tf.Variable(b1, name = "Biases1")}
+
+	hidden_2_layer = {'weights': tf.Variable(w2, name = "Weights2"),
+					  'biases': tf.Variable(b2, name = "Biases2")}
+
+	output_layer = {'weights': tf.Variable(w3, name = "Weights3"),
+					'biases': tf.Variable(b3, name = "Biases3")}
+
+	# The formula of whats happening below:
+	# (input data * weights) + biases
+
+	l1 = tf.add(tf.matmul(data, hidden_1_layer['weights']), hidden_1_layer['biases'])
+	l1 = tf.nn.relu(l1) # Activation function (ReLU)
+
+	l2 = tf.add(tf.matmul(l1, hidden_2_layer['weights']), hidden_2_layer['biases'])
+	l2 = tf.nn.relu(l2)
+
+	# l3 = tf.add(tf.matmul(l2, hidden_3_layer['weights']), hidden_3_layer['biases'])
+	# l3 = tf.nn.relu(l3)
+
+	output = tf.add(tf.matmul(l2, output_layer['weights']), output_layer['biases'])
+
+	# Normalize the output using the L2-Norm method
+	output = tf.nn.l2_normalize(output)
+
+	return output, hidden_1_layer, hidden_2_layer, output_layer
+
+
 # Train function
 def train():
 
@@ -211,8 +291,9 @@ def train():
 	gamma = 0.99  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
 
 	epsilon = 0.1  # Probability to choose random action instead of best action
-	epsilon_start = 0.9
-	epsilon_end = 0.05
+	epsilon_start = 0.8
+	epsilon_end = 0.1
+	epsilon_percentage = 0.5 # in decimal
 
 	# Create NN model
 	with tf.name_scope('Model'):
@@ -224,9 +305,13 @@ def train():
 		# e1 = tf.subtract(y, Q_values)
 		# e2 = tf.square(e1)
 		# error = tf.reduce_mean(e2, axis=1)
-		error = tf.reduce_max(tf.square(tf.subtract(Q_values, y)), axis=1)
+
+		# test
+		error = tf.losses.mean_squared_error(labels=Q_values, predictions=y)
+
+		# error = tf.reduce_max(tf.sqrt(tf.square(tf.subtract(Q_values, y))), axis=1)
+		# error = tf.reduce_max(tf.square(tf.subtract(Q_values, y)), axis=1)
 		# error = tf.reduce_max(tf.square(Q_values - y), axis=1)
-		# error = tf.square(tf.subtract(y, Q_values))
 	
 	tf.summary.scalar('error', tf.squeeze(error))
 
@@ -298,7 +383,7 @@ def train():
 
 			# Test for an Epsilon linear function - start at 0.9, 
 			# and for x% of the episodes, decrease down to 0.1 
-			epsilon = (-epsilon_start / (0.5*total_episodes)) * episode + (epsilon_start+epsilon_end)
+			epsilon = (-epsilon_start / (epsilon_percentage*total_episodes)) * episode + (epsilon_start+epsilon_end)
 			if epsilon < epsilon_end: 
 				epsilon = epsilon_end
 
@@ -363,7 +448,7 @@ def train():
 
 			if episode % print_episode == 0 and episode != 0:
 				# print("Episode:", episode, "   Score:", info["score"])
-				print("Episode:", episode, "   time:", avg_time/print_episode, "   score:", avg_score/print_episode, "    Error", avg_error/print_episode)
+				print("Ep:", episode, "   avg t:", avg_time/print_episode, "   avg score:", avg_score/print_episode, "    Err", avg_error/print_episode, "    epsilon", epsilon)
 				# print("error tensor:", e)
 				avg_time = 0
 				avg_score = 0
@@ -400,6 +485,7 @@ def train():
 	# plt.savefig("./Images/errors.png")
 	# plt.show()
 
+
 # Continue training the same model
 def continue_training():
 
@@ -414,7 +500,7 @@ def continue_training():
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, max_time = 100, tail = False)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, max_time = 30, tail = False)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -423,8 +509,12 @@ def continue_training():
 	alpha = 0.01  # Learning rate, i.e. which fraction of the Q values should be updated
 	gamma = 0.99  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
 	epsilon = 0.1  # Probability to choose random action instead of best action
-	epsilon_start = 0.1
-	epsilon_end = 0.005
+	
+	# Epsilon as a linear function
+	epsilon_function = True
+	epsilon_start = 0.9
+	epsilon_end = 0.1
+	epsilon_percentage = 0.6 # 90%
 
 	# Create NN model
 	with tf.name_scope('Model'):
@@ -433,7 +523,11 @@ def continue_training():
 	# Error / Loss function 
 	# Not sure why its reduce_mean, it reduces the [1,4] tensor to a scalar of the mean value
 	with tf.name_scope('Error'):
-		error = tf.reduce_max(tf.square(tf.subtract(Q_values, y)), axis=1)
+		# error = tf.reduce_max(tf.square(tf.subtract(Q_values, y)), axis=1)
+		# error = tf.reduce_max(tf.sqrt(tf.square(tf.subtract(Q_values, y))), axis=1)
+
+		# test
+		error = tf.losses.mean_squared_error(labels=Q_values, predictions=y)
 	
 	tf.summary.scalar('error', tf.squeeze(error))
 
@@ -491,9 +585,10 @@ def continue_training():
 
 			# Test for an Epsilon linear function - start at 0.9, 
 			# and for x% of the episodes, decrease down to 0.1 
-			epsilon = (-epsilon_start / (0.8*total_episodes)) * episode + (epsilon_start+epsilon_end)
-			if epsilon < epsilon_end: 
-				epsilon = epsilon_end
+			if epsilon_function:
+				epsilon = (-epsilon_start / (epsilon_percentage*total_episodes)) * episode + (epsilon_start+epsilon_end)
+				if epsilon < epsilon_end: 
+					epsilon = epsilon_end
 
 			while not done:
 				if RENDER_TO_SCREEN:
@@ -560,7 +655,7 @@ def continue_training():
 
 			if episode % print_episode == 0 and episode != 0:
 				# print("Episode:", episode, "   Score:", info["score"])
-				print("Episode:", episode, "   time:", avg_time/print_episode, "   score:", avg_score/print_episode, "    Error", avg_error/print_episode, epsilon)
+				print("Ep:", episode, "   avg t:", avg_time/print_episode, "   avg score:", avg_score/print_episode, "    Err", avg_error/print_episode, "    epsilon", epsilon)
 				# print("error tensor:", e)
 				avg_time = 0
 				avg_score = 0
@@ -595,6 +690,237 @@ def continue_training():
 
 	# plt.plot([np.mean(errors[i:i+500]) for i in range(len(errors) - 500)])
 	# plt.plot(range(len(errors)), errors)
+	# plt.savefig("./Images/errors.png")
+	# plt.show()
+
+
+# Train Deep Model function
+def trainDeepModel():
+
+	# Testing
+	print("\n ---- Training the Deep Q Network ----- \n")
+
+	# Decide whether or not to render to the screen or not
+	RENDER_TO_SCREEN = False
+
+	# True - Load model from modelpath_load; False - Initialise random weights
+	USE_SAVED_MODEL_FILE = False 
+
+	# First we need our environment form Environment_for_DQN.py
+	# has to have a grid_size of 10 for this current NN
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, max_time = 100, tail = False)
+	
+	if RENDER_TO_SCREEN:
+		env.prerender()
+
+	# Hyper-parameters
+	alpha = 0.01  # Learning rate, i.e. which fraction of the Q values should be updated
+	
+	gamma = 0.99  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
+
+	epsilon = 0.1  # Probability to choose random action instead of best action
+
+	epsilon_function = True
+	epsilon_start = 0.3
+	epsilon_end = 0.1
+	epsilon_percentage = 0.3 # in decimal
+
+	# Create NN model
+	with tf.name_scope('Model'):
+		Q_values, hidden_1_layer, hidden_2_layer, output_layer  = recreateDeepModel(x)
+
+	# Error / Loss function 
+	# Not sure why its reduce_mean, it reduces the [1,4] tensor to a scalar of the mean value
+	with tf.name_scope('Error'):
+		# e1 = tf.subtract(y, Q_values)
+		# e2 = tf.square(e1)
+		# error = tf.reduce_mean(e2, axis=1)
+
+		# test
+		error = tf.losses.mean_squared_error(labels=Q_values, predictions=y)
+
+		# error = tf.reduce_max(tf.sqrt(tf.square(tf.subtract(Q_values, y))), axis=1)
+		# error = tf.reduce_max(tf.square(tf.subtract(Q_values, y)), axis=1)
+		# error = tf.reduce_max(tf.square(Q_values - y), axis=1)
+	
+	tf.summary.scalar('error', tf.squeeze(error))
+
+	# Gradient descent optimizer - minimizes error/loss function
+	with tf.name_scope('Optimizer'):
+		optimizer = tf.train.GradientDescentOptimizer(alpha).minimize(error)
+		# optimizer = tf.train.AdamOptimizer(alpha).minimize(error)
+
+	# The next states action-value [1,4] tensor, reduced to a scalar of the max value
+	with tf.name_scope('Max_y_prime'):
+		y_prime_max = tf.reduce_max(y, axis=1)
+
+	# Action at time t, the index of the max value in the action-value tensor (Made a global variable)
+	with tf.name_scope('Max_action'):
+		action_t = tf.argmax(y, axis=1)
+
+	avg_time = 0
+	avg_score = 0
+	avg_error = 0
+
+	# error plot
+	# errors = []
+
+	print_episode = 1000
+	total_episodes = 100000
+
+	# Saving model capabilities
+	saver = tf.train.Saver()
+
+	# Initialising all variables (weights and biases)
+	model = tf.global_variables_initializer()
+
+	# Adds a summary graph of the error over time
+	merged_summary = tf.summary.merge_all()
+
+	# Tensorboard capabilties
+	writer = tf.summary.FileWriter(LOGDIR)
+
+	# Session can start running
+	with tf.Session() as sess:
+
+		# Restore the model, to keep training
+		if USE_SAVED_MODEL_FILE:
+			saver.restore(sess, MODEL_PATH_LOAD)
+			print("Model restored.")
+
+		sess.run(model)
+
+		# print(sess.run(output_layer['biases']))
+
+		writer.add_graph(sess.graph)
+
+		# variables_names = [v.name for v in tf.trainable_variables()]
+		# values = sess.run(variables_names)
+		# for k, v in zip(variables_names, values):
+		#     print("Variable: ", k)
+		#     print("Shape: ", v.shape)
+		#     print(v)
+
+		# Testing my DQN model with random values
+		for episode in range(total_episodes):
+			state, info = env.reset()
+			done = False
+
+			# linear function for alpha
+			# alpha = (-0.3 / (0.5*total_episodes)) * episode + 1
+			# if alpha < 0.1: 
+			# 	alpha = 0.1
+
+			# Test for an Epsilon linear function - start at 0.9, 
+			# and for x% of the episodes, decrease down to 0.1 
+			if epsilon_function:
+				epsilon = (-epsilon_start / (epsilon_percentage*total_episodes)) * episode + (epsilon_start+epsilon_end)
+				if epsilon < epsilon_end: 
+					epsilon = epsilon_end
+
+			while not done:
+				if RENDER_TO_SCREEN:
+					env.render()
+
+				# One Hot representation of the current state
+				state_vector = env.state_vector()
+
+				# Retrieve the Q values from the NN in vector form
+				Q_vector = sess.run(Q_values, feed_dict={x: state_vector})
+				# print("Qvector",Q_vector) # DEBUGGING
+
+				# Deciding one which action to take
+				if np.random.rand() <= epsilon:
+					action = env.sample()
+				else:
+					# "action" is the max value of the Q values (output vector of NN)
+					action = sess.run(action_t, feed_dict={y: Q_vector})
+
+				# Update environment with by performing action
+				new_state, reward, done, info = env.step(action)
+
+				state = new_state
+
+				# if final state of the episode
+				if done:
+					Q_vector[:,action] = reward
+					# print("Reward:", reward)
+				else:
+					# Gathering our now current states action-value vector
+					new_state_vector = env.state_vector()
+					y_prime = sess.run(Q_values, feed_dict={x: new_state_vector})
+
+					# Equation for training
+					maxq = sess.run(y_prime_max, feed_dict={y: y_prime})
+
+					Q_vector[:,action] = reward + (gamma * maxq)
+
+					# print("Q_max:", Q_vector[:,action])
+
+				_, e = sess.run([optimizer, error], feed_dict={x: state_vector, y: Q_vector})
+				# _ = sess.run(optimizer, feed_dict={x: state_vector, y: Q_vector})
+				# e = sess.run(error,feed_dict={x:state_vector, y:Q_vector})
+				# sess.run(optimizer)
+				
+				# DEBUGGING
+				# print("action:",action)
+				# print("y_prime:", y_prime)
+				# print("max q value:", maxq)
+				# print("new Q_vector:", Q_vector)
+				# print("error tensor:", e)
+
+				# add to the error list, to shot the plot at the end of training
+				# errors.append(e)
+
+				if done:
+					avg_time += info["time"]
+					avg_score += info["score"]
+					avg_error += e
+
+			if episode % print_episode == 0 and episode != 0:
+				# print("Episode:", episode, "   Score:", info["score"])
+				print("Ep:", episode, "   avg t:", avg_time/print_episode, "   avg score:", avg_score/print_episode, "    Err", avg_error/print_episode, "    epsilon", epsilon)
+				# print("error tensor:", e)
+				avg_time = 0
+				avg_score = 0
+				avg_error = 0
+				
+				w1 = np.array(sess.run(hidden_1_layer['weights']))
+				b1 = np.array(sess.run(hidden_1_layer['biases']))
+				w2 = np.array(sess.run(hidden_2_layer['weights']))
+				b2 = np.array(sess.run(hidden_2_layer['biases']))
+				w3 = np.array(sess.run(output_layer['weights']))
+				b3 = np.array(sess.run(output_layer['biases']))
+
+				np.savetxt(W1_textfile_path_save, w1.astype(np.float), fmt='%f', delimiter = " ")
+				np.savetxt(B1_textfile_path_save, b1.astype(np.float), fmt='%f', delimiter = " ")
+				np.savetxt(W2_textfile_path_save, w2.astype(np.float), fmt='%f', delimiter = " ")
+				np.savetxt(B2_textfile_path_save, b2.astype(np.float), fmt='%f', delimiter = " ")
+				np.savetxt(W3_textfile_path_save, w3.astype(np.float), fmt='%f', delimiter = " ")
+				np.savetxt(B3_textfile_path_save, b3.astype(np.float), fmt='%f', delimiter = " ")
+
+				s = sess.run(merged_summary, feed_dict={x: state_vector, y: Q_vector})
+				writer.add_summary(s, episode)
+
+		save_path = saver.save(sess, MODEL_PATH_SAVE)
+		print("Model saved in path: %s" % save_path)
+
+		# Save the models weights and biases to a text file
+		w1 = np.array(sess.run(hidden_1_layer['weights']))
+		b1 = np.array(sess.run(hidden_1_layer['biases']))
+		w2 = np.array(sess.run(hidden_2_layer['weights']))
+		b2 = np.array(sess.run(hidden_2_layer['biases']))
+		w3 = np.array(sess.run(output_layer['weights']))
+		b3 = np.array(sess.run(output_layer['biases']))
+
+		np.savetxt(W1_textfile_path_save, w1.astype(np.float), fmt='%f', delimiter = " ")
+		np.savetxt(B1_textfile_path_save, b1.astype(np.float), fmt='%f', delimiter = " ")
+		np.savetxt(W2_textfile_path_save, w2.astype(np.float), fmt='%f', delimiter = " ")
+		np.savetxt(B2_textfile_path_save, b2.astype(np.float), fmt='%f', delimiter = " ")
+		np.savetxt(W3_textfile_path_save, w3.astype(np.float), fmt='%f', delimiter = " ")
+		np.savetxt(B3_textfile_path_save, b3.astype(np.float), fmt='%f', delimiter = " ")
+
+	# plt.plot([np.mean(errors[i:i+500]) for i in range(len(errors) - 500)])
 	# plt.savefig("./Images/errors.png")
 	# plt.show()
 
@@ -831,6 +1157,121 @@ def run2():
 				avg_error = 0
 
 
+def runDeepModel():
+
+	# Testing
+	print("\n ---- Running the Deep Q Network ----- \n")
+
+	# Decide whether or not to render to the screen or not
+	RENDER_TO_SCREEN = True
+
+	# True - Load model from modelpath_load; False - Initialise random weights
+	USE_SAVED_MODEL_FILE = False 
+
+	# First we need our environment form Environment_for_DQN.py
+	# has to have a grid_size of 10 for this current NN
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 50, max_time = 50, tail = False)
+	
+	if RENDER_TO_SCREEN:
+		env.prerender()
+
+	# Hyper-parameters
+	alpha = 0.01  # Learning rate, i.e. which fraction of the Q values should be updated
+	gamma = 0.99  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
+	
+	epsilon = 0.01  # Probability to choose random action instead of best action
+
+	# Create NN model
+	with tf.name_scope('Model'):
+		Q_values, hidden_1_layer, hidden_2_layer, output_layer  = recreateDeepModel(x)
+
+	# Error / Loss function 
+	# Not sure why its reduce_mean, it reduces the [1,4] tensor to a scalar of the mean value
+	with tf.name_scope('Error'):
+		# e1 = tf.subtract(y, Q_values)
+		# e2 = tf.square(e1)
+		# error = tf.reduce_mean(e2, axis=1)
+
+		# test
+		error = tf.losses.mean_squared_error(labels=Q_values, predictions=y)
+
+		# error = tf.reduce_max(tf.sqrt(tf.square(tf.subtract(Q_values, y))), axis=1)
+		# error = tf.reduce_max(tf.square(tf.subtract(Q_values, y)), axis=1)
+		# error = tf.reduce_max(tf.square(Q_values - y), axis=1)
+
+	# Gradient descent optimizer - minimizes error/loss function
+	with tf.name_scope('Optimizer'):
+		optimizer = tf.train.GradientDescentOptimizer(alpha).minimize(error)
+		# optimizer = tf.train.AdamOptimizer(alpha).minimize(error)
+
+	# The next states action-value [1,4] tensor, reduced to a scalar of the max value
+	with tf.name_scope('Max_y_prime'):
+		y_prime_max = tf.reduce_max(y, axis=1)
+
+	# Action at time t, the index of the max value in the action-value tensor (Made a global variable)
+	with tf.name_scope('Max_action'):
+		action_t = tf.argmax(y, axis=1)
+
+	avg_time = 0
+	avg_score = 0
+	avg_error = 0
+
+	print_episode = 10
+	total_episodes = 100
+
+	# Saving model capabilities
+	saver = tf.train.Saver()
+
+	# Initialising all variables (weights and biases)
+	model = tf.global_variables_initializer()
+
+	# Session can start running
+	with tf.Session() as sess:
+
+		# Restore the model, to keep training
+		if USE_SAVED_MODEL_FILE:
+			saver.restore(sess, MODEL_PATH_LOAD)
+			print("Model restored.")
+
+		sess.run(model)
+
+		# Testing my DQN model with random values
+		for episode in range(total_episodes):
+			state, info = env.reset()
+			done = False
+
+			while not done:
+				if RENDER_TO_SCREEN:
+					env.render()
+
+				# One Hot representation of the current state
+				state_vector = env.state_vector()
+
+				# Retrieve the Q values from the NN in vector form
+				Q_vector = sess.run(Q_values, feed_dict={x: state_vector})
+				# print("Qvector",Q_vector) # DEBUGGING
+
+				# Deciding one which action to take
+				if np.random.rand() <= epsilon:
+					action = env.sample()
+				else:
+					# "action" is the max value of the Q values (output vector of NN)
+					action = sess.run(action_t, feed_dict={y: Q_vector})
+
+				# Update environment with by performing action
+				new_state, reward, done, info = env.step(action)
+
+				state = new_state
+
+				if done:
+					avg_time += info["time"]
+					avg_score += info["score"]
+
+			if episode % print_episode == 0 and episode != 0:
+				print("Ep:", episode, "   avg t:", avg_time/print_episode, "   avg score:", avg_score/print_episode)
+				avg_time = 0
+				avg_score = 0
+
 # Play the game
 def play():
 	print("\n ----- Playing the game -----\n")
@@ -852,8 +1293,12 @@ if __name__ == '__main__':
 
 	# continue_training()
 
-	run()
+	# run()
 	
 	# run2()
 
 	# play()
+
+	trainDeepModel()
+
+	# runDeepModel()
