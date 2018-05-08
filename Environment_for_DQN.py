@@ -97,12 +97,12 @@ class Environment:
         self.score = 0
 
         # Starting at random positions
-        # self.snake.x = np.random.randint(0,10) * self.SCALE
-        # self.snake.y = np.random.randint(0,10) * self.SCALE
+        self.snake.x = np.random.randint(0,self.GRID_SIZE) * self.SCALE
+        self.snake.y = np.random.randint(0,self.GRID_SIZE) * self.SCALE
 
         # Starting at the same spot
-        self.snake.x = 2 * self.SCALE
-        self.snake.y = 2 * self.SCALE
+        # self.snake.x = 2 * self.SCALE
+        # self.snake.y = 2 * self.SCALE
 
         # Initialise the movement to the right
         self.snake.dx = 1
@@ -239,7 +239,9 @@ class Environment:
         reached_food = ((self.snake.x, self.snake.y) == (self.food.x, self.food.y)) 
 
         # Reward: Including the distance between them
-        # reward = 100 / (np.sqrt((self.snake.x-self.food.x)**2 + (self.snake.y-self.food.y)**2) + 1)**2 
+        # if reward == 0:
+        #     reward = ((self.GRID_SIZE**2) / np.sqrt(((self.snake.x/self.SCALE-self.food.x/self.SCALE)**2 + (self.snake.y/self.SCALE-self.food.y/self.SCALE)**2) + 1)**2)/(self.GRID_SIZE**2)
+            # print(reward) 
         
         # If the snake reaches the food, increment score (and increase snake tail length)
         if reached_food:
@@ -313,28 +315,59 @@ class Environment:
         # up, down, left, right
         return 4
 
-    # The state represented at a onehot 1D vector
+    # The state represented as a onehot 1D vector
     def state_vector(self):
-        # (rows, columns)
-        state = np.zeros(((self.GRID_SIZE**2),3))
-        
-        # Probabily very inefficient - TODO, find a better implementation
-        # This is for the HEAD and the FOOD and EMPTY, need to add a column for a TAIL later [H, T, F, E]
-        for i in range(self.GRID_SIZE): # rows
-            for j in range(self.GRID_SIZE): # columns
-                if ((self.snake.x/self.SCALE) == j and (self.snake.y/self.SCALE) == i):
-                    state[i*self.GRID_SIZE+j] = [1,0,0]
-                    # print("Snake:", i*self.GRID_SIZE+j)
-                elif ((self.food.x/self.SCALE) == j and (self.food.y/self.SCALE) == i):
-                    state[i*self.GRID_SIZE+j] = [0,1,0]
-                    # print("Food:", i*self.GRID_SIZE+j)
-                else:
-                    state[i*self.GRID_SIZE+j] = [0,0,1]
 
-        # Flatten the vector to a 1 dimensional vector for the input layer to the NN
-        state = state.flatten()
+        if self.ENABLE_TAIL:
+           # (rows, columns)
+            state = np.zeros(((self.GRID_SIZE**2), 4))
+            
+            # Probabily very inefficient - TODO, find a better implementation
+            # This is for the HEAD, TAIL, FOOD and EMPTY - [H, T, F, E]
+            for i in range(self.GRID_SIZE): # rows
+                for j in range(self.GRID_SIZE): # columns
+                    if ((self.snake.x/self.SCALE) == j and (self.snake.y/self.SCALE) == i):
+                        state[i*self.GRID_SIZE + j] = [1,0,0,0]
+                        # print("Snake:", i*self.GRID_SIZE+j)
+                    elif ((self.food.x/self.SCALE) == j and (self.food.y/self.SCALE) == i):
+                        state[i*self.GRID_SIZE + j] = [0,0,1,0]
+                        # print("Food:", i*self.GRID_SIZE+j)
+                    # elif ((self.food.x/self.SCALE) == j and (self.food.y/self.SCALE) == i):
+                    #     state[i*self.GRID_SIZE+j] = [0,0,1,0]
+                        # print("Food:", i*self.GRID_SIZE+j)
+                    else:
+                        state[i*self.GRID_SIZE + j] = [0,0,0,1]
 
-        state = state.reshape(1,(self.GRID_SIZE**2)*3)
+            # Adding the snakes tail to the state vector
+            for i in range(1, self.snake.tail_length + 1):
+                state[int((self.snake.box[i][1]/self.SCALE)*self.GRID_SIZE + (self.snake.box[i][0]/self.SCALE))] = [0,1,0,0]
+
+            # Flatten the vector to a 1 dimensional vector for the input layer to the NN
+            state = state.flatten()
+
+            state = state.reshape(1,(self.GRID_SIZE**2)*4)
+
+        else:
+            # (rows, columns)
+            state = np.zeros(((self.GRID_SIZE**2), 3))
+            
+            # Probabily very inefficient - TODO, find a better implementation
+            # This is for the HEAD and the FOOD and EMPTY, need to add a column for a TAIL later [H, T, F, E]
+            for i in range(self.GRID_SIZE): # rows
+                for j in range(self.GRID_SIZE): # columns
+                    if ((self.snake.x/self.SCALE) == j and (self.snake.y/self.SCALE) == i):
+                        state[i*self.GRID_SIZE+j] = [1,0,0]
+                        # print("Snake:", i*self.GRID_SIZE+j)
+                    elif ((self.food.x/self.SCALE) == j and (self.food.y/self.SCALE) == i):
+                        state[i*self.GRID_SIZE+j] = [0,1,0]
+                        # print("Food:", i*self.GRID_SIZE+j)
+                    else:
+                        state[i*self.GRID_SIZE+j] = [0,0,1]
+
+            # Flatten the vector to a 1 dimensional vector for the input layer to the NN
+            state = state.flatten()
+
+            state = state.reshape(1,(self.GRID_SIZE**2)*3)
 
         # state = np.transpose(state)
 
@@ -448,6 +481,8 @@ class Environment:
         self.reset()
 
         while not GAME_OVER:
+
+            # print(self.state_vector()) # DEBUGGING
 
             action = self.render()
 

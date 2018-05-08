@@ -214,10 +214,12 @@ def createDeepModel(data):
 	# (input data * weights) + biases
 
 	l1 = tf.add(tf.matmul(data, hidden_1_layer['weights']), hidden_1_layer['biases'])
-	l1 = tf.nn.relu(l1) # Activation function (ReLU)
+	# l1 = tf.nn.relu(l1) # Activation function
+	l1 = tf.sigmoid(l1) # Activation function
 
 	l2 = tf.add(tf.matmul(l1, hidden_2_layer['weights']), hidden_2_layer['biases'])
 	# l2 = tf.nn.relu(l2)
+	l2 = tf.sigmoid(l2)
 
 	# l3 = tf.add(tf.matmul(l2, hidden_3_layer['weights']), hidden_3_layer['biases'])
 	# l3 = tf.nn.relu(l3)
@@ -226,6 +228,7 @@ def createDeepModel(data):
 
 	# Normalize the output using the L2-Norm method
 	output = tf.nn.l2_normalize(output)
+	# output =  tf.clip_by_value(output, 1e-10, 1e+10)
 
 	return output, hidden_1_layer, hidden_2_layer, output_layer
 
@@ -254,10 +257,12 @@ def recreateDeepModel(data):
 	# (input data * weights) + biases
 
 	l1 = tf.add(tf.matmul(data, hidden_1_layer['weights']), hidden_1_layer['biases'])
-	l1 = tf.nn.relu(l1) # Activation function (ReLU)
+	# l1 = tf.nn.relu(l1) # Activation function
+	l1 = tf.sigmoid(l1) # Activation function
 
 	l2 = tf.add(tf.matmul(l1, hidden_2_layer['weights']), hidden_2_layer['biases'])
 	# l2 = tf.nn.relu(l2)
+	l2 = tf.sigmoid(l2)
 
 	# l3 = tf.add(tf.matmul(l2, hidden_3_layer['weights']), hidden_3_layer['biases'])
 	# l3 = tf.nn.relu(l3)
@@ -265,7 +270,7 @@ def recreateDeepModel(data):
 	output = tf.add(tf.matmul(l2, output_layer['weights']), output_layer['biases'])
 
 	# Normalize the output using the L2-Norm method
-	output = tf.nn.l2_normalize(output)
+	# output = tf.nn.l2_normalize(output)
 
 	return output, hidden_1_layer, hidden_2_layer, output_layer
 
@@ -284,7 +289,7 @@ def train():
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, max_time = 50, tail = False)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, max_time = 50, tail = TAIL)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -504,7 +509,7 @@ def continue_training():
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, max_time = 30, tail = False)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, max_time = 30, tail = TAIL)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -711,7 +716,7 @@ def trainDeepModel():
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, max_time = 100, tail = TAIL)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, max_time = 50, tail = TAIL)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -724,7 +729,7 @@ def trainDeepModel():
 	epsilon_function = True
 	epsilon_start = 0.2
 	epsilon_end = 0.1
-	epsilon_percentage = 0.5 # in decimal
+	epsilon_percentage = 0.1 # in decimal
 
 	alpha_function = False
 	alpha_start = 0.01
@@ -874,7 +879,7 @@ def trainDeepModel():
 
 			if episode % print_episode == 0 and episode != 0:
 				
-				print("Ep:", episode, "   avg t:", avg_time/print_episode, "   avg score:", avg_score/print_episode, "    Err", avg_error/print_episode, "    epsilon", epsilon)
+				print("Ep:", episode, "   avg t:", avg_time/print_episode, "   avg score:", avg_score/print_episode, "    Err", round(avg_error/print_episode,3), "    epsilon", round(epsilon,2))
 				avg_time = 0
 				avg_score = 0
 				avg_error = 0
@@ -932,7 +937,7 @@ def continueTrainingDeepModel():
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, max_time = 100, tail = TAIL)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, max_time = 60, tail = TAIL)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -943,9 +948,9 @@ def continueTrainingDeepModel():
 	epsilon = 0.1  # Probability to choose random action instead of best action
 
 	epsilon_function = True
-	epsilon_start = 0.2
+	epsilon_start = 0.3
 	epsilon_end = 0.1
-	epsilon_percentage = 0.5 # in decimal
+	epsilon_percentage = 0.4 # in decimal
 
 	alpha_function = False
 	alpha_start = 0.01
@@ -990,7 +995,7 @@ def continueTrainingDeepModel():
 	# errors = []
 
 	print_episode = 1000
-	total_episodes = 100000
+	total_episodes = 50000
 
 	# Saving model capabilities
 	saver = tf.train.Saver()
@@ -1095,7 +1100,7 @@ def continueTrainingDeepModel():
 
 			if episode % print_episode == 0 and episode != 0:
 				
-				print("Ep:", episode, "   avg t:", avg_time/print_episode, "   avg score:", avg_score/print_episode, "    Err", avg_error/print_episode, "    epsilon", epsilon)
+				print("Ep:", episode, "   avg t:", avg_time/print_episode, "   avg score:", avg_score/print_episode, "    Err", round(avg_error/print_episode,3), "    epsilon", round(epsilon,2))
 				avg_time = 0
 				avg_score = 0
 				avg_error = 0
@@ -1150,7 +1155,7 @@ def run():
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 100, max_time = 100, tail = False)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 100, max_time = 100, tail = TAIL)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -1239,7 +1244,7 @@ def run2():
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 100, max_time = 20, tail = False)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 100, max_time = 20, tail = TAIL)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -1386,7 +1391,7 @@ def runDeepModel():
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 50, max_time = 50, tail = False)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 50, max_time = 100, tail = TAIL)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -1493,14 +1498,18 @@ def runDeepModel():
 def play():
 	print("\n ----- Playing the game -----\n")
 
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 100, tail = TAIL)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 1000, tail = TAIL)
 
 	env.play()
 
 	# env.prerender()
+	
 	# env.reset()
 
 	# print(env.state_vector())
+	
+	# env.render()
+
 
 
 # Choose the appropriate function to run - Need to find a better more user friendly way to implement this
