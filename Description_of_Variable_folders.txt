@@ -1,0 +1,4 @@
+Variables_deep_6x6:
+ReLU activation function
+2 layers (128 each)
+h1 has an activation function
