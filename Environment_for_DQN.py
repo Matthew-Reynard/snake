@@ -230,10 +230,9 @@ class Environment:
             # print(snake.tail_length) # DEBUGGING
             for i in range(1, self.snake.tail_length + 1):
                 if(self.snake.box[0] == (self.snake.box[i])):
-                    # done = True
-                    #DEBUGGING
-                    print("Crashed")
-                    #print("Try again?")
+                    # print("Crashed") # DEBUGGING
+                    reward = -1
+                    done = True
 
         # Checking if the snake has reached the food
         reached_food = ((self.snake.x, self.snake.y) == (self.food.x, self.food.y)) 
@@ -283,13 +282,13 @@ class Environment:
         return new_state, reward, done, info
 
     # Given the state array, return the index of that state as an integer
+    # Used for the Qlearning lookup table
     def state_index(self, state_array):
         return int((self.GRID_SIZE**3)*state_array[0]+(self.GRID_SIZE**2)*state_array[1]+(self.GRID_SIZE**1)*state_array[2]+(self.GRID_SIZE**0)*state_array[3])
 
 
     # Random action generator
     def sample(self):
-
         # Can't use this with a tail, else it will have a double chance of doing nothing
         action = np.random.randint(0,4) 
         # action = np.random.randint(0,3)
@@ -309,7 +308,7 @@ class Environment:
     # Number of actions that can be taken
     def number_of_actions(self):
 
-        # forward, left, right
+        # 'forward', left, right
         # return 3
 
         # up, down, left, right
@@ -370,6 +369,27 @@ class Environment:
             state = state.reshape(1,(self.GRID_SIZE**2)*3)
 
         # state = np.transpose(state)
+
+        return state
+
+    def state_vector_3D(self):
+
+        if self.ENABLE_TAIL:
+            state = np.zeros((3, self.GRID_SIZE, self.GRID_SIZE))
+
+            state[0, int(self.snake.y/self.SCALE), int(self.snake.x/self.SCALE)] = 1
+
+            state[1, int(self.food.y/self.SCALE), int(self.food.x/self.SCALE)] = 1
+
+            for i in range(1, self.snake.tail_length + 1):
+                state[2, int(self.snake.box[i][1]/self.SCALE), int(self.snake.box[i][0]/self.SCALE)] = 1
+
+        else:
+            state = np.zeros((2, self.GRID_SIZE, self.GRID_SIZE))
+
+            state[0, int(self.snake.y/self.SCALE), int(self.snake.x/self.SCALE)] = 1
+
+            state[1, int(self.food.y/self.SCALE), int(self.food.x/self.SCALE)] = 1
 
         return state
 
@@ -482,7 +502,7 @@ class Environment:
 
         while not GAME_OVER:
 
-            # print(self.state_vector()) # DEBUGGING
+            # print(self.state_vector_3D()) # DEBUGGING
 
             action = self.render()
 

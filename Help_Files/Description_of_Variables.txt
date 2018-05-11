@@ -1,0 +1,24 @@
+Variables_deep_6x6:
+	ReLU activation function
+	2 layers (128 each)
+	h1 has an activation function
+
+Variables_deep_6x6_new:
+	works best
+	DQN model
+	No tricks
+	2 hidden layers 128 (each)
+	h1 has a ReLU activation function
+	h1 has NO activation function
+	300 input nodes
+	4 output nodes
+	random food
+	random snake
+
+Variables_5x5
+	linear model
+	h1 no activation (100 nodes)
+	fixed snake (1,1)
+	fixed food (4,4)
+	
+

@@ -62,8 +62,8 @@ class Food:
             for i in range(0, snake.tail_length + 1):
                 # print("making food")
                 # Need to change this to the whole body of the snake
-                # if self.pos == snake.box[i]:
-                if self.pos == (snake.x, snake.y):
+                if self.pos == snake.box[i]:
+                # if self.pos == (snake.x, snake.y):
                     made = False # the food IS within the snakes body
                     break
                 else:

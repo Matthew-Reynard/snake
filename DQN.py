@@ -51,7 +51,7 @@ B3_textfile_path_save = "./Variables/Biases3.txt"
 LOGDIR = "./tmp/log/1"
 
 # Parameters
-GRID_SIZE = 6
+GRID_SIZE = 8
 SEED = 1
 WRAP = False
 TAIL = False
@@ -663,7 +663,7 @@ def continue_training():
 
 
 # Train Deep Model function
-def trainDeepModel():
+def trainDeepModel(load = False):
 
 	print("\n ---- Training the Deep Neural Network ----- \n")
 
@@ -675,7 +675,7 @@ def trainDeepModel():
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, max_time = 200, tail = TAIL)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, max_time = 100, tail = TAIL)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -686,9 +686,9 @@ def trainDeepModel():
 	epsilon = 0.1  # Probability to choose random action instead of best action
 
 	epsilon_function = True
-	epsilon_start = 0.05
-	epsilon_end = 0.05
-	epsilon_percentage = 0.8 # in decimal
+	epsilon_start = 0.9
+	epsilon_end = 0.1
+	epsilon_percentage = 0.3 # in decimal
 
 	alpha_function = False
 	alpha_start = 0.01
@@ -697,7 +697,7 @@ def trainDeepModel():
 
 	# Create NN model
 	with tf.name_scope('Model'):
-		Q_values, hidden_1_layer, hidden_2_layer, output_layer  = createDeepModel(x, load_variables = True)
+		Q_values, hidden_1_layer, hidden_2_layer, output_layer  = createDeepModel(x, load_variables = load)
 
 	# Error / Loss function 
 	# reduce_max -> it reduces the [1,4] tensor to a scalar of the max value
@@ -739,7 +739,7 @@ def trainDeepModel():
 	saver = tf.train.Saver()
 
 	# Initialising all variables (weights and biases)
-	model = tf.global_variables_initializer()
+	init = tf.global_variables_initializer()
 
 	# Adds a summary graph of the error over time
 	merged_summary = tf.summary.merge_all()
@@ -756,7 +756,7 @@ def trainDeepModel():
 			print("Model restored.")
 
 		# Initialize global variables
-		sess.run(model)
+		sess.run(init)
 
 		# Tensorboard graph
 		writer.add_graph(sess.graph)
@@ -1251,9 +1251,9 @@ if __name__ == '__main__':
 
 	# --- Deep Neural Network --- #
 
-	# trainDeepModel()
+	trainDeepModel(load = False)
 
-	runDeepModel()
+	# runDeepModel()
 	
 
 	# --- Just for fun --- #

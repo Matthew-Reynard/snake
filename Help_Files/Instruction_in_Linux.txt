@@ -1,25 +1,40 @@
-to create a new virtualenv in Environments
-cd ~/Environments
-virtualenv NEWNAME
+To create a new virtualenv in Environments
+$ cd ~/Environments
+$ virtualenv NEWNAME
 
 Go to that virtualenv
-source NEWNAME/bin/activate
+$ source NEWNAME/bin/activate
 
 double check the version of python youre using
-python -V
-pip -V
+$ python -V / python --version
+$ pip -V / pip --version
 
-is you want to create a virtualenv with a specific python
-virtualenv -p PATH_TO_PYTHON NEWNAME
+If you want to create a virtualenv with a specific python
+$ virtualenv -p PATH_TO_PYTHON NEWNAME
 
-check which python youre using
-which python
-which pip
+check which python you're using
+$ which python
+$ which pip
 
-pip install ANYTHING_YOU_NEED
-(dont use sudo apt -- I think)
+$ pip install ANYTHING_YOU_NEED
+(don't use sudo apt if you dont need to)
 
-to get out of youre virtualenv
-deactivate
+To see what libraries are installed in a specific virtualenv
+$ pip list
+
+to get out of your virtualenv
+$ deactivate
+
+Pro tip
+use 
+$ sudo apt install ...
+instead of 
+$ sudo apt-get install ...
+
+This command will take you to the home folder
+$ cd ~
+
+Show you whats in the folder
+$ ls
 
 

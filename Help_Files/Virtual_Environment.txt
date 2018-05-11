@@ -11,7 +11,7 @@ Commands: (Once you've installed python and pip successfully)
 (go to your development/project folder)
 > setprojectdir .
 > deactivate (parenthesis will disappear)
-> workon "env"
+> workon "env" (very useful)
 
 Linux:
 
