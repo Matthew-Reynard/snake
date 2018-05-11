@@ -29,6 +29,7 @@ import numpy as np
 import tensorflow as tf
 from Environment_for_DQN import Environment
 import matplotlib.pyplot as plt # not used yet
+import time # Used to measure how long training takes
 
 # GLOBAL VARIABLES
 # Paths
@@ -57,24 +58,27 @@ SEED = 1
 WRAP = False
 TAIL = True
 
+# Number of hidden layers, nodes, channels, etc. 
+if TAIL:
+	n_input_channels = 3
+else:
+	n_input_channels = 2
 
-# Number of nodes at input layer
-# if TAIL:
-# 	n_input_nodes = (GRID_SIZE**2)*4
-# else:
-# 	n_input_nodes = (GRID_SIZE**2)*3
+# these still need to be added to the code
+n_out_channels_conv1 = 16
+n_out_channels_conv2 = 32
+n_out_fc = 256
 
-# Number of hidden layer nodes 
+size_filter1 = 3
+size_filter2 = 3
+
 
 
 # Number of actions - Up, down, left, right
 n_actions = 4
 
 # input - shape is included to minimise unseen errors
-if TAIL:
-	x = tf.placeholder(tf.float32, [3, GRID_SIZE, GRID_SIZE], name="Input")
-else:
-	x = tf.placeholder(tf.float32, [2, GRID_SIZE, GRID_SIZE], name="Input")
+x = tf.placeholder(tf.float32, [n_input_channels, GRID_SIZE, GRID_SIZE], name="Input")
 
 # output
 y = tf.placeholder(tf.float32, [1, n_actions], name="Output")
@@ -84,16 +88,16 @@ y = tf.placeholder(tf.float32, [1, n_actions], name="Output")
 def conv2d(x, W, name = None):
 	return tf.nn.conv2d(x, W, strides=[1,1,1,1], padding ="SAME", name = name)
 
+
 # Max pooling
 def maxpool2d(x, name = None):
 	return tf.nn.max_pool(x, ksize=[1,2,2,1], strides=[1,2,2,1], padding='SAME', name = name)
 
 
-# 2 hidden layers
+# Input -> Conv layer & max pooling -> Conv layer & max pooling -> Fully connected -> Output (Action-value)
 def createDeepModel(data, load_variables = False):
 
-	# The structure of the model:
-
+	# Model structure
 	if load_variables:
 		W_conv1 = np.load(W_conv1_textfile_path_save).astype('float32')
 		W_conv2 = np.load(W_conv2_textfile_path_save).astype('float32')
@@ -117,38 +121,31 @@ def createDeepModel(data, load_variables = False):
 	
 	else:
 
-		# Create an array (tensor) of your weights - initialized to random values
-		# hidden_1_layer = {'weights': tf.Variable(tf.random_uniform([n_input_nodes, n_nodes_hl1], minval=-1, maxval=1, seed=SEED), name = "Weights1"),
-		# 				  'biases': tf.Variable(tf.constant(0.1, shape=[n_nodes_hl1]), name = "Biases1")}
-
-		# hidden_2_layer = {'weights': tf.Variable(tf.random_uniform([n_nodes_hl1, n_nodes_hl2], minval=-1, maxval=1, seed=SEED+1), name = "Weights2"),
-		# 				  'biases': tf.Variable(tf.constant(0.1, shape=[n_nodes_hl2]), name = "Biases2")}
-
-		# output_layer = {'weights': tf.Variable(tf.random_uniform([n_nodes_hl2, n_actions], minval=-1, maxval=1, seed=SEED+2), name = "Weights3"),
-		# 				'biases': tf.Variable(tf.constant(0.1, shape=[n_actions]), name = "Biases3")}
 		
-		# Difference between TAIL and no tail is the dimensions of input vector
-		if TAIL:#                                                    |
-			    #                                                    v
-			weights = {'W_conv1':tf.Variable(tf.random_normal([3, 3, 3, 16]), name = 'W_conv1'),
-				   	   'W_conv2':tf.Variable(tf.random_normal([3, 3, 16, 32]), name = 'W_conv2'),
-				   	   'W_fc':tf.Variable(tf.random_normal([2*2*32, 256]), name = 'W_fc'),
-				   	   'W_out':tf.Variable(tf.random_normal([256, n_actions]), name = 'W_out')}
-		else:
-			weights = {'W_conv1':tf.Variable(tf.random_normal([3, 3, 2, 16]), name = 'W_conv1'),
-				   	   'W_conv2':tf.Variable(tf.random_normal([3, 3, 16, 32]), name = 'W_conv2'),
-				   	   'W_fc':tf.Variable(tf.random_normal([2*2*32, 256]), name = 'W_fc'),
-				   	   'W_out':tf.Variable(tf.random_normal([256, n_actions]), name = 'W_out')}
+		'''
+		Different Initialisations for the weights (the biases can be initialised a constant)
 
-		biases = {'b_conv1':tf.Variable(tf.random_normal([16]), name = 'b_conv1'),
-			   	  'b_conv2':tf.Variable(tf.random_normal([32]), name = 'b_conv2'),
-			   	  'b_fc':tf.Variable(tf.random_normal([256]), name = 'b_fc'),
-			   	  'b_out':tf.Variable(tf.random_normal([n_actions]), name = 'b_out')}
+		tf.random_normal([3, 3, n_input_channels, 16], mean=0.0, stddev=1.0, seed=SEED)
+		tf.random_uniform([3, 3, n_input_channels, 16], minval=-1, maxval=1, seed=SEED)
+		tf.truncated_normal([3, 3, n_input_channels, 16], mean=0, stddev=1.0, seed=SEED)
 
-	if TAIL:
-		x = tf.reshape(data, shape=[-1, GRID_SIZE, GRID_SIZE, 3])
-	else:
-		x = tf.reshape(data, shape=[-1, GRID_SIZE, GRID_SIZE, 2])
+		use xavier initialiser
+		use tf.get_variable()
+
+		'''
+		
+		weights = {'W_conv1':tf.Variable(tf.random_normal([3, 3, n_input_channels, 16]), name = 'W_conv1'),
+			   	   'W_conv2':tf.Variable(tf.random_normal([3, 3, 16, 32]), name = 'W_conv2'),
+			   	   'W_fc':tf.Variable(tf.random_normal([2*2*32, 256]), name = 'W_fc'),
+			   	   'W_out':tf.Variable(tf.random_normal([256, n_actions]), name = 'W_out')}
+
+		biases = {'b_conv1':tf.Variable(tf.constant(0.1, shape=[16]), name = 'b_conv1'),
+			   	  'b_conv2':tf.Variable(tf.constant(0.1, shape=[32]), name = 'b_conv2'),
+			   	  'b_fc':tf.Variable(tf.constant(0.1, shape=[256]), name = 'b_fc'),
+			   	  'b_out':tf.Variable(tf.constant(0.1, shape=[n_actions]), name = 'b_out')}
+
+	# Model operations
+	x = tf.reshape(data, shape=[-1, GRID_SIZE, GRID_SIZE, n_input_channels])
 
 	conv1 = conv2d(x, weights['W_conv1'], name = 'conv1')
 	conv1 = maxpool2d(conv1, name = 'max_pool1')
@@ -167,6 +164,9 @@ def createDeepModel(data, load_variables = False):
 
 # Train Deep Model function
 def trainDeepModel(load = False):
+
+	# Used to see how long model takes to train - model needs to be optimized!
+	start_time = time.time()
 
 	print("\n ---- Training the Deep Neural Network ----- \n")
 
@@ -189,9 +189,9 @@ def trainDeepModel(load = False):
 	epsilon = 0.1  # Probability to choose random action instead of best action
 
 	epsilon_function = True
-	epsilon_start = 0.9
-	epsilon_end = 0.1
-	epsilon_percentage = 0.3 # in decimal
+	epsilon_start = 0.1
+	epsilon_end = 0.05
+	epsilon_percentage = 0.9 # in decimal
 
 	alpha_function = False
 	alpha_start = 0.01
@@ -236,7 +236,7 @@ def trainDeepModel(load = False):
 	# errors = []
 
 	print_episode = 1000
-	total_episodes = 100000
+	total_episodes = 200000
 
 	# Saving model capabilities
 	saver = tf.train.Saver()
@@ -264,6 +264,9 @@ def trainDeepModel(load = False):
 		# Tensorboard graph
 		writer.add_graph(sess.graph)
 
+		print("\nProgram took {0:.4f} seconds to initialise\n".format(time.time()-start_time))
+		start_time = time.time()
+
 		# Testing my DQN model with random values
 		for episode in range(total_episodes):
 			state, info = env.reset()
@@ -277,7 +280,7 @@ def trainDeepModel(load = False):
 
 			# Linear function for epsilon
 			if epsilon_function:
-				epsilon = (-epsilon_start / (epsilon_percentage*total_episodes)) * episode + (epsilon_start+epsilon_end)
+				epsilon = (-(epsilon_start-epsilon_end)/ (epsilon_percentage*total_episodes)) * episode + (epsilon_start)
 				if epsilon < epsilon_end: 
 					epsilon = epsilon_end
 
@@ -340,13 +343,18 @@ def trainDeepModel(load = False):
 					avg_error += e
 
 			if (episode % print_episode == 0 and episode != 0) or (episode == total_episodes-1):
-				
-				print("Ep:", episode, "   avg t:", avg_time/print_episode, "   avg score:", avg_score/print_episode, "    Err", round(avg_error/print_episode,3), "    epsilon", round(epsilon,2))
+				current_time = time.time()-start_time
+				print("Ep:", episode, 
+					"\tavg t:", avg_time/print_episode, 
+					"\tavg score:", avg_score/print_episode, 
+					"\tErr {0:.3f}".format(avg_error/print_episode), 
+					"\tepsilon {0:.2f}".format(epsilon), 
+					"\ttime {0:.0f}m {1:.2f}s".format(current_time/60, current_time%60))
 				avg_time = 0
 				avg_score = 0
 				avg_error = 0
 
-				# Save the model's weights and biases to text files
+				# Save the model's weights and biases to .npy files (can't save 4D array to text file)
 				W_conv1 = np.array(sess.run(weights['W_conv1']))
 				W_conv2 = np.array(sess.run(weights['W_conv2']))
 				W_fc = np.array(sess.run(weights['W_fc']))
@@ -366,17 +374,6 @@ def trainDeepModel(load = False):
 				np.save(b_conv2_textfile_path_save, b_conv2.astype(np.float32))
 				np.save(b_fc_textfile_path_save, b_fc.astype(np.float32))
 				np.save(b_out_textfile_path_save, b_out.astype(np.float32))
-
-				# np.savetxt(W_conv1_textfile_path_save, W_conv1.astype(np.float), fmt='%f', delimiter = " ")
-				# np.savetxt(W_conv2_textfile_path_save, W_conv2.astype(np.float), fmt='%f', delimiter = " ")
-				# np.savetxt(W_fc_textfile_path_save, W_fc.astype(np.float), fmt='%f', delimiter = " ")
-				# np.savetxt(W_out_textfile_path_save, W_out.astype(np.float), fmt='%f', delimiter = " ")
-
-				# np.savetxt(b_conv1_textfile_path_save, b_conv1.astype(np.float), fmt='%f', delimiter = " ")
-				# np.savetxt(b_conv2_textfile_path_save, b_conv2.astype(np.float), fmt='%f', delimiter = " ")
-				# np.savetxt(b_fc_textfile_path_save, b_fc.astype(np.float), fmt='%f', delimiter = " ")
-				# np.savetxt(b_out_textfile_path_save, b_out.astype(np.float), fmt='%f', delimiter = " ")
-			
 
 				s = sess.run(merged_summary, feed_dict={x: state_vector, y: Q_vector})
 				writer.add_summary(s, episode)
@@ -510,7 +507,7 @@ def runDeepModel():
 def play():
 	print("\n ----- Playing the game -----\n")
 
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 1000, tail = TAIL)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 100, tail = TAIL)
 
 	env.play()
 
@@ -526,10 +523,9 @@ def play():
 # Choose the appropriate function to run - Need to find a better more user friendly way to implement this
 if __name__ == '__main__':
 	
-
 	# --- Deep Neural Network with CNN --- #
 
-	trainDeepModel(load = False)
+	trainDeepModel(load = True)
 
 	# runDeepModel()
 	

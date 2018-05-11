@@ -124,8 +124,21 @@
 # 	w_value = session.run(w)
 # 	print("Predicted model: {a:.3f}x + {b:.3f}".format(a=w_value[0], b=w_value[1]))
 
-box = ((1,1),(2,2),(3,4),(9,5),(2,7),(4,0))
+import time
 
-# print([x[1] for x in box][2])
+start = time.time()
 
-print(box[4][1])
+for i in range(1000000):
+
+	t = 5000
+
+	a = 0.23
+	b = 1+2453
+	afd = 1+2453
+	agf = 1+245
+	grea = 1+25
+	argg= 1+246
+	arge = 1+263
+
+	if i % 100000 == 0:
+		print("Time taken: {0:.0f}m {1:.2f}s".format(((t)/60), (t%60)))
