@@ -69,10 +69,8 @@ n_out_channels_conv1 = 16
 n_out_channels_conv2 = 32
 n_out_fc = 256
 
-size_filter1 = 3
-size_filter2 = 3
-
-
+filter1_size = 3
+filter2_size = 3
 
 # Number of actions - Up, down, left, right
 n_actions = 4
@@ -120,8 +118,6 @@ def createDeepModel(data, load_variables = False):
 			   	  'b_out':tf.Variable(b_out, name = 'b_out')}
 	
 	else:
-
-		
 		'''
 		Different Initialisations for the weights (the biases can be initialised a constant)
 
@@ -134,10 +130,10 @@ def createDeepModel(data, load_variables = False):
 
 		'''
 		
-		weights = {'W_conv1':tf.Variable(tf.random_normal([3, 3, n_input_channels, 16]), name = 'W_conv1'),
-			   	   'W_conv2':tf.Variable(tf.random_normal([3, 3, 16, 32]), name = 'W_conv2'),
-			   	   'W_fc':tf.Variable(tf.random_normal([2*2*32, 256]), name = 'W_fc'),
-			   	   'W_out':tf.Variable(tf.random_normal([256, n_actions]), name = 'W_out')}
+		weights = {'W_conv1':tf.Variable(tf.truncated_normal([3, 3, n_input_channels, 16], mean=0, stddev=1.0, seed=0), name = 'W_conv1'),
+			   	   'W_conv2':tf.Variable(tf.truncated_normal([3, 3, 16, 32], mean=0, stddev=1.0, seed=1), name = 'W_conv2'),
+			   	   'W_fc':tf.Variable(tf.truncated_normal([2*2*32, 256], mean=0, stddev=1.0, seed=2), name = 'W_fc'),
+			   	   'W_out':tf.Variable(tf.truncated_normal([256, n_actions], mean=0, stddev=1.0, seed=3), name = 'W_out')}
 
 		biases = {'b_conv1':tf.Variable(tf.constant(0.1, shape=[16]), name = 'b_conv1'),
 			   	  'b_conv2':tf.Variable(tf.constant(0.1, shape=[32]), name = 'b_conv2'),
@@ -178,7 +174,7 @@ def trainDeepModel(load = False):
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, max_time = 120, tail = TAIL)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, max_time = 200, tail = TAIL)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -189,9 +185,9 @@ def trainDeepModel(load = False):
 	epsilon = 0.1  # Probability to choose random action instead of best action
 
 	epsilon_function = True
-	epsilon_start = 0.1
-	epsilon_end = 0.05
-	epsilon_percentage = 0.9 # in decimal
+	epsilon_start = 0.05
+	epsilon_end = 0.005
+	epsilon_percentage = 0.2 # in decimal
 
 	alpha_function = False
 	alpha_start = 0.01
@@ -209,7 +205,6 @@ def trainDeepModel(load = False):
 		# test
 		error = tf.losses.mean_squared_error(labels=Q_values, predictions=y)
 
-		# error = tf.reduce_max(tf.sqrt(tf.square(tf.subtract(Q_values, y))), axis=1) # Doesn't work!
 		# error = tf.reduce_max(tf.square(tf.subtract(Q_values, y)), axis=1)
 		# error = tf.reduce_max(tf.square(Q_values - y), axis=1)
 	
@@ -236,7 +231,7 @@ def trainDeepModel(load = False):
 	# errors = []
 
 	print_episode = 1000
-	total_episodes = 200000
+	total_episodes = 1000000
 
 	# Saving model capabilities
 	saver = tf.train.Saver()
@@ -345,11 +340,11 @@ def trainDeepModel(load = False):
 			if (episode % print_episode == 0 and episode != 0) or (episode == total_episodes-1):
 				current_time = time.time()-start_time
 				print("Ep:", episode, 
-					"\tavg t:", avg_time/print_episode, 
-					"\tavg score:", avg_score/print_episode, 
+					"\tavg t: {0:.3f}".format(avg_time/print_episode), 
+					"\tavg score: {0:.3f}".format(avg_score/print_episode), 
 					"\tErr {0:.3f}".format(avg_error/print_episode), 
-					"\tepsilon {0:.2f}".format(epsilon), 
-					"\ttime {0:.0f}m {1:.2f}s".format(current_time/60, current_time%60))
+					"\tepsilon {0:.3f}".format(epsilon), 
+					"\ttime {0:.0f}:{1:.0f}".format(current_time/60, current_time%60))
 				avg_time = 0
 				avg_score = 0
 				avg_error = 0
@@ -409,7 +404,7 @@ def runDeepModel():
 	alpha = 0.01  # Learning rate, i.e. which fraction of the Q values should be updated
 	gamma = 0.99  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
 	
-	epsilon = 0.01  # Probability to choose random action instead of best action
+	epsilon = 0.005  # Probability to choose random action instead of best action
 
 	# Create NN model
 	with tf.name_scope('Model'):
@@ -524,12 +519,8 @@ def play():
 if __name__ == '__main__':
 	
 	# --- Deep Neural Network with CNN --- #
-
 	trainDeepModel(load = True)
-
 	# runDeepModel()
-	
 
 	# --- Just for fun --- #
-
 	# play()
