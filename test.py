@@ -124,21 +124,25 @@
 # 	w_value = session.run(w)
 # 	print("Predicted model: {a:.3f}x + {b:.3f}".format(a=w_value[0], b=w_value[1]))
 
-import time
+# import time
 
-start = time.time()
+# start = time.time()
 
-for i in range(1000000):
+# for i in range(1000000):
 
-	t = 5000
+# 	t = 5000
 
-	a = 0.23
-	b = 1+2453
-	afd = 1+2453
-	agf = 1+245
-	grea = 1+25
-	argg= 1+246
-	arge = 1+263
+# 	a = 0.23
+# 	b = 1+2453
+# 	afd = 1+2453
+# 	agf = 1+245
+# 	grea = 1+25
+# 	argg= 1+246
+# 	arge = 1+263
 
-	if i % 100000 == 0:
-		print("Time taken: {0:.0f}m {1:.2f}s".format(((t)/60), (t%60)))
+# 	if i % 100000 == 0:
+# 		print("Time taken: {0:.0f}m {1:.2f}s".format(((t)/60), (t%60)))
+
+x = "\x00\t1203.6526"
+
+print(x[2:-2])

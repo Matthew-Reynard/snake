@@ -1,7 +1,10 @@
 import socket
 import sys
+import numpy as np
 # from _thread import *
 
+# AF_INET => IPv4 address, SOCK_STREAM => TCP
+# SOCK_DGRAM => UDP (User Datagram Protocol)
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # TCP connection
 
 print(s)
@@ -26,10 +29,27 @@ while True:
 			# while True:
 			r = s.recv(1024)
 
-			state = "Server message: "+ r.decode("utf-8")
+			state = "Server message: " + r.decode("utf-8")
 				# if not r:
 				# 	break
-			print(state)	
+			print(state)
+
+			x = r.decode("utf-8")
+
+			x_cleaned = x[3:-1]
+			a = x_cleaned.split(", ")
+			new_state = np.zeros(3)
+
+			for i in range(3):
+				new_state[i] = float(a[i])
+
+			# new_state[0] = float(x[2:])
+
+			# for i in range(len(x)):
+			# 	print(i, x[i])
+
+			np.savetxt("./tmp/State.txt", new_state.astype(np.float), fmt='%f', delimiter = " ")
+			# np.savetxt("./tmp/State.txt", state)	
 		else:
 			s.send(str.encode(data + "\n"))
 	else:
