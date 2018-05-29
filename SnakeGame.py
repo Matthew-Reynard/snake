@@ -247,9 +247,9 @@ class Environment:
             # CHOOSE 1 OF THE 2 BELOW:
 
             # Create a piece of food that is not within the snake
-            # self.food.make(self.GRID_SIZE, self.SCALE, self.snake)
+            self.food.make(self.GRID_SIZE, self.SCALE, self.snake)
             # Test for one food item at a time
-            done = True 
+            # done = True 
 
             # Can't implement tail with Q learning algorithm
             if self.ENABLE_TAIL:

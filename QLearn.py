@@ -22,7 +22,7 @@ TO DO LIST:
 import numpy as np 
 from SnakeGame import Environment
 
-Q_textfile_path_load = "./Data/Q_test.txt"
+Q_textfile_path_load = "./Data/Q_10x10_no_wrap.txt"
 Q_textfile_path_save = "./Data/Q_test.txt"
 
 # dimensions: (states, actions)
@@ -116,7 +116,7 @@ def run():
 
 	RENDER_TO_SCREEN = True
 
-	env = Environment(wrap = False, grid_size = 10, rate = 50, max_time = 50, tail = False)
+	env = Environment(wrap = False, grid_size = 10, rate = 50, max_time = 150, tail = False)
 
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -171,7 +171,7 @@ if __name__ == '__main__':
 
 	# train() 
 
-	# run()
+	run()
 
-	play()
+	# play()
 
