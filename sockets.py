@@ -30,7 +30,11 @@ port = 5555
 
 s.connect((server, port))
 
+iteration = 0
+
 while True:
+
+	iteration=iteration+1
 
 	try:
 		s.send(str.encode("p\n"))
@@ -38,13 +42,13 @@ while True:
 		if r != None:
 			x = r.decode("utf-8")
 			# print(x)
-			x_cleaned = x[3:-1]
+			x_cleaned = x[3:-1] #Need to find a better implementation
 			a = x_cleaned.split(", ")
 			state = np.zeros(4)
 			for i in range(4):
 				state[i] = float(a[i])
 
-			print(state)
+			print(state, iteration)
 
 			action = np.argmax(Q[state_index(state)])
 
@@ -54,6 +58,7 @@ while True:
 
 	except KeyboardInterrupt as e:
 		s.close()
+		print("Socket has been closed")
 		raise e
 
 	# data = input("Send (q to Quit): ")
