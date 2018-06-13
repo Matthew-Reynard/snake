@@ -1,6 +1,6 @@
 '''
 
-Simple Snake Game
+Simple Snake Game. FIRST ATTEMPT!
 
 @author: Matthew Reynard
 @year: 2018

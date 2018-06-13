@@ -22,7 +22,7 @@ TO DO LIST:
 import numpy as np 
 from SnakeGame import Environment
 
-Q_textfile_path_load = "./Data/Q_10x10_no_wrap.txt"
+Q_textfile_path_load = "./Data/Q_test.txt"
 Q_textfile_path_save = "./Data/Q_test.txt"
 
 # dimensions: (states, actions)
@@ -30,10 +30,12 @@ def Qmatrix(x, env):
 	if x == 0:
 		Q = np.zeros((env.number_of_states(), env.number_of_actions()))
 	elif x == 1:
+		np.random.seed(0) # To ensure the results can be recreated
 		Q = np.random.rand(env.number_of_states(), env.number_of_actions()) 
 	elif x == 2:
 		Q = np.loadtxt(Q_textfile_path_load, dtype='float', delimiter=" ")
 	return Q
+
 
 # Training function
 def train():
@@ -41,16 +43,21 @@ def train():
 	RENDER_TO_SCREEN = False
 
 	# rate should be 0 when not rendering, else it will lengthen training time unnecessarily
-	env = Environment(wrap = False, grid_size = 10, rate = 0, max_time = 20)
+	env = Environment(wrap = False, grid_size = 10, rate = 0, max_time = 500)
 
 	if RENDER_TO_SCREEN:
 		env.prerender()
 
-	Q = Qmatrix(0, env) # 0 - zeros, 1 - random, 2 - textfile
+	Q = Qmatrix(2, env) # 0 - zeros, 1 - random, 2 - textfile
 
 	alpha = 0.15  # Learning rate, i.e. which fraction of the Q values should be updated
 	gamma = 0.99  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
 	epsilon = 0.1  # Probability to choose random action instead of best action
+
+	epsilon_function = True
+	epsilon_start = 0.05
+	epsilon_end = 0.005
+	epsilon_percentage = 0.9 # in decimal
 
 	# Test for an Epsilon linear function
 	# y = mx + c
@@ -60,19 +67,20 @@ def train():
 	avg_time = 0
 	avg_score = 0
 
-	total_episodes = 10000
+	total_episodes = 1000000
 
-	print_episode = 1000
+	print_episode = 10000
 
 	for episode in range(total_episodes):
 		# Reset the environment
 		state, info = env.reset()
 		done = False
 
-		# Test for an Epsilon linear function
-		# epsilon = (-0.9 / (0.2*total_episodes)) * episode + 1
-		# if epsilon < 0.1: 
-		# 	epsilon = 0.1
+		# Epsilon linear function
+		if epsilon_function:
+			epsilon = (-(epsilon_start-epsilon_end)/ (epsilon_percentage*total_episodes)) * episode + (epsilon_start)
+			if epsilon < epsilon_end: 
+				epsilon = epsilon_end	
 
 		while not done:
 
@@ -98,25 +106,29 @@ def train():
 					avg_score += info["score"]
 
 			except KeyboardInterrupt as e:
-				# Test to see if I can write teh Q file during runtime
+				# Test to see if I can write the Q file during runtime
 				np.savetxt(Q_textfile_path_save, Q.astype(np.float), fmt='%f', delimiter = " ")
 				print("Saved Q matrix to text file")
 				raise e
 
 
-		if episode % print_episode == 0:
+		if (episode % print_episode == 0 and episode != 0) or (episode == total_episodes-1):
 			print("Episode:", episode, "   time:", avg_time/print_episode, "   score:", avg_score/print_episode)
+			np.savetxt(Q_textfile_path_save, Q.astype(np.float), fmt='%f', delimiter = " ")
 			avg_time = 0
 			avg_score = 0
 
-	np.savetxt(Q_textfile_path_save, Q.astype(np.float), fmt='%f', delimiter = " ")
+	# This doesn't need to be here
+	# np.savetxt(Q_textfile_path_save, Q.astype(np.float), fmt='%f', delimiter = " ")
+	print("Simulation finished. \nSaved Q matrix to text file at:", Q_textfile_path_save)
+
 
 # Testing function
 def run():
 
 	RENDER_TO_SCREEN = True
 
-	env = Environment(wrap = False, grid_size = 10, rate = 50, max_time = 150, tail = False)
+	env = Environment(wrap = False, grid_size = 10, rate = 50, max_time = 200, tail = False)
 
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -169,9 +181,9 @@ if __name__ == '__main__':
 
 	# CHOOSE 1 OF THE 3
 
-	# train() 
+	train() 
 
-	run()
+	# run()
 
 	# play()
 

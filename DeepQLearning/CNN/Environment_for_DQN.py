@@ -89,7 +89,7 @@ class Environment:
         self.food.create(pygame)
 
         # Creates the grid background
-        self.bg = pygame.image.load("./Images/Grid20.png").convert()
+        self.bg = pygame.image.load("../../Images/Grid20.png").convert()
 
     def reset(self):
 
@@ -97,12 +97,12 @@ class Environment:
         self.score = 0
 
         # Starting at random positions
-        # self.snake.x = np.random.randint(0,10) * self.SCALE
-        # self.snake.y = np.random.randint(0,10) * self.SCALE
+        self.snake.x = np.random.randint(0,self.GRID_SIZE) * self.SCALE
+        self.snake.y = np.random.randint(0,self.GRID_SIZE) * self.SCALE
 
         # Starting at the same spot
-        self.snake.x = 3 * self.SCALE
-        self.snake.y = 3 * self.SCALE
+        # self.snake.x = 2 * self.SCALE
+        # self.snake.y = 2 * self.SCALE
 
         # Initialise the movement to the right
         self.snake.dx = 1
@@ -195,7 +195,8 @@ class Environment:
         done = False
 
         # Initialze to -1 for every time step - to find the fastest route (can be a more negative reward)
-        reward = -1
+        # reward = -1
+        reward = 0
 
         # Update the position of the snake head and tail
         self.snake.update(self.SCALE, action, action_space)
@@ -204,16 +205,16 @@ class Environment:
             self.wrap()
         else:
             if self.snake.x > self.DISPLAY_WIDTH - self.SCALE:
-                reward = -100 # very negative reward, to ensure that it never crashes into the side
+                reward = -1 # very negative reward, to ensure that it never crashes into the side
                 done = True 
             if self.snake.x < 0:
-                reward = -100
+                reward = -1
                 done = True
             if self.snake.y > self.DISPLAY_HEIGHT - self.SCALE:
-                reward = -100
+                reward = -1
                 done = True
             if self.snake.y < 0:
-                reward = -100
+                reward = -1
                 done = True
 
         # Update the snakes tail positions (from back to front)
@@ -225,20 +226,21 @@ class Environment:
         self.snake.box[0] = (self.snake.x, self.snake.y)
 
         # The snake can only start crashing into itself after the tail length it greater than 3
-        if self.snake.tail_length >= 3:
+        if self.snake.tail_length >= 1:
             # print(snake.tail_length) # DEBUGGING
             for i in range(1, self.snake.tail_length + 1):
                 if(self.snake.box[0] == (self.snake.box[i])):
-                    # done = True
-                    #DEBUGGING
-                    print("Crashed")
-                    #print("Try again?")
+                    # print("Crashed") # DEBUGGING
+                    reward = -1
+                    done = True
 
         # Checking if the snake has reached the food
         reached_food = ((self.snake.x, self.snake.y) == (self.food.x, self.food.y)) 
 
         # Reward: Including the distance between them
-        # reward = 100 / (np.sqrt((self.snake.x-self.food.x)**2 + (self.snake.y-self.food.y)**2) + 1)**2 
+        # if reward == 0:
+        #     reward = ((self.GRID_SIZE**2) / np.sqrt(((self.snake.x/self.SCALE-self.food.x/self.SCALE)**2 + (self.snake.y/self.SCALE-self.food.y/self.SCALE)**2) + 1)**2)/(self.GRID_SIZE**2)
+            # print(reward) 
         
         # If the snake reaches the food, increment score (and increase snake tail length)
         if reached_food:
@@ -257,7 +259,7 @@ class Environment:
                 self.snake.box.append((self.snake.x, self.snake.y)) #adds a rectangle variable to snake.box array(list)
 
             # Reward functions
-            reward = 100
+            reward = 1
             # reward = 100 / (np.sqrt((self.snake.x-self.food.x)**2 + (self.snake.y-self.food.y)**2) + 1) # Including the distance between them
             # reward = 1000 * self.score
             # reward = 1000 / self.time # Including the time in the reward function
@@ -280,13 +282,13 @@ class Environment:
         return new_state, reward, done, info
 
     # Given the state array, return the index of that state as an integer
+    # Used for the Qlearning lookup table
     def state_index(self, state_array):
         return int((self.GRID_SIZE**3)*state_array[0]+(self.GRID_SIZE**2)*state_array[1]+(self.GRID_SIZE**1)*state_array[2]+(self.GRID_SIZE**0)*state_array[3])
 
 
     # Random action generator
     def sample(self):
-
         # Can't use this with a tail, else it will have a double chance of doing nothing
         action = np.random.randint(0,4) 
         # action = np.random.randint(0,3)
@@ -306,35 +308,88 @@ class Environment:
     # Number of actions that can be taken
     def number_of_actions(self):
 
-        # forward, left, right
+        # 'forward', left, right
         # return 3
 
         # up, down, left, right
         return 4
 
-    # The state represented at a onehot 1D vector
+    # The state represented as a onehot 1D vector
     def state_vector(self):
-        # (rows, columns)
-        state = np.zeros(((self.GRID_SIZE**2),3))
-        
-        # Probabily very inefficient - TODO, find a better implementation
-        # This is for the HEAD and the FOOD and EMPTY, need to add a column for a TAIL later [H, T, F, E]
-        for i in range(self.GRID_SIZE): # rows
-            for j in range(self.GRID_SIZE): # columns
-                if ((self.snake.x/self.SCALE) == j and (self.snake.y/self.SCALE) == i):
-                    state[i*self.GRID_SIZE+j] = [1,0,0]
-                    # print(i*self.GRID_SIZE+j)
-                elif ((self.food.x/self.SCALE) == j and (self.food.y/self.SCALE) == i):
-                    state[i*self.GRID_SIZE+j] = [0,1,0]
-                    # print(i*self.GRID_SIZE+j)
-                else:
-                    state[i*self.GRID_SIZE+j] = [0,0,1]
 
-        # Flatten the vector to a 1 dimensional vector for the input layer to the NN
-        state = state.flatten()
+        if self.ENABLE_TAIL:
+           # (rows, columns)
+            state = np.zeros(((self.GRID_SIZE**2), 4))
+            
+            # Probabily very inefficient - TODO, find a better implementation
+            # This is for the HEAD, TAIL, FOOD and EMPTY - [H, T, F, E]
+            for i in range(self.GRID_SIZE): # rows
+                for j in range(self.GRID_SIZE): # columns
+                    if ((self.snake.x/self.SCALE) == j and (self.snake.y/self.SCALE) == i):
+                        state[i*self.GRID_SIZE + j] = [1,0,0,0]
+                        # print("Snake:", i*self.GRID_SIZE+j)
+                    elif ((self.food.x/self.SCALE) == j and (self.food.y/self.SCALE) == i):
+                        state[i*self.GRID_SIZE + j] = [0,0,1,0]
+                        # print("Food:", i*self.GRID_SIZE+j)
+                    # elif ((self.food.x/self.SCALE) == j and (self.food.y/self.SCALE) == i):
+                    #     state[i*self.GRID_SIZE+j] = [0,0,1,0]
+                        # print("Food:", i*self.GRID_SIZE+j)
+                    else:
+                        state[i*self.GRID_SIZE + j] = [0,0,0,1]
 
-        # Reshape into a column vector instead of a row vector - NOT SURE HOW
-        # state = state.reshape(-1,1)
+            # Adding the snakes tail to the state vector
+            for i in range(1, self.snake.tail_length + 1):
+                state[int((self.snake.box[i][1]/self.SCALE)*self.GRID_SIZE + (self.snake.box[i][0]/self.SCALE))] = [0,1,0,0]
+
+            # Flatten the vector to a 1 dimensional vector for the input layer to the NN
+            state = state.flatten()
+
+            state = state.reshape(1,(self.GRID_SIZE**2)*4)
+
+        else:
+            # (rows, columns)
+            state = np.zeros(((self.GRID_SIZE**2), 3))
+            
+            # Probabily very inefficient - TODO, find a better implementation
+            # This is for the HEAD and the FOOD and EMPTY, need to add a column for a TAIL later [H, T, F, E]
+            for i in range(self.GRID_SIZE): # rows
+                for j in range(self.GRID_SIZE): # columns
+                    if ((self.snake.x/self.SCALE) == j and (self.snake.y/self.SCALE) == i):
+                        state[i*self.GRID_SIZE+j] = [1,0,0]
+                        # print("Snake:", i*self.GRID_SIZE+j)
+                    elif ((self.food.x/self.SCALE) == j and (self.food.y/self.SCALE) == i):
+                        state[i*self.GRID_SIZE+j] = [0,1,0]
+                        # print("Food:", i*self.GRID_SIZE+j)
+                    else:
+                        state[i*self.GRID_SIZE+j] = [0,0,1]
+
+            # Flatten the vector to a 1 dimensional vector for the input layer to the NN
+            state = state.flatten()
+
+            state = state.reshape(1,(self.GRID_SIZE**2)*3)
+
+        # state = np.transpose(state)
+
+        return state
+
+    def state_vector_3D(self):
+
+        if self.ENABLE_TAIL:
+            state = np.zeros((3, self.GRID_SIZE, self.GRID_SIZE))
+
+            state[0, int(self.snake.y/self.SCALE), int(self.snake.x/self.SCALE)] = 1
+
+            state[1, int(self.food.y/self.SCALE), int(self.food.x/self.SCALE)] = 1
+
+            for i in range(1, self.snake.tail_length + 1):
+                state[2, int(self.snake.box[i][1]/self.SCALE), int(self.snake.box[i][0]/self.SCALE)] = 1
+
+        else:
+            state = np.zeros((2, self.GRID_SIZE, self.GRID_SIZE))
+
+            state[0, int(self.snake.y/self.SCALE), int(self.snake.x/self.SCALE)] = 1
+
+            state[1, int(self.food.y/self.SCALE), int(self.food.x/self.SCALE)] = 1
 
         return state
 
@@ -446,6 +501,8 @@ class Environment:
         self.reset()
 
         while not GAME_OVER:
+
+            # print(self.state_vector_3D()) # DEBUGGING
 
             action = self.render()
 
