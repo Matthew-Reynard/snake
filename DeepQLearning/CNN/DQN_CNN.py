@@ -27,7 +27,7 @@ BUGS - or just things that I can't get working:
 
 import numpy as np
 import tensorflow as tf
-from Environment_for_DQN import Environment
+from Environment_for_DQN_CNN import Environment
 import matplotlib.pyplot as plt # not used yet
 import time # Used to measure how long training takes
 
@@ -167,14 +167,14 @@ def trainDeepModel(load = False):
 	print("\n ---- Training the Deep Neural Network ----- \n")
 
 	# Decide whether or not to render to the screen or not
-	RENDER_TO_SCREEN = True
+	RENDER_TO_SCREEN = False
 
 	# True - Load model from modelpath_load; False - Initialise random weights
 	USE_SAVED_MODEL_FILE = False 
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 50, max_time = 2000, tail = TAIL)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, max_time = 2000, tail = TAIL)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -186,8 +186,8 @@ def trainDeepModel(load = False):
 
 	epsilon_function = True
 	epsilon_start = 0.05
-	epsilon_end = 0.01
-	epsilon_percentage = 0.1 # in decimal
+	epsilon_end = 0.001
+	epsilon_percentage = 0.5 # in decimal
 
 	alpha_function = False
 	alpha_start = 0.01
@@ -230,8 +230,8 @@ def trainDeepModel(load = False):
 	# error plot
 	# errors = []
 
-	print_episode = 100
-	total_episodes = 100000
+	print_episode = 10000
+	total_episodes = 1000000
 
 	# Saving model capabilities
 	saver = tf.train.Saver()
@@ -395,7 +395,7 @@ def runDeepModel():
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 90, max_time = 1200, tail = TAIL)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 80, max_time = 1200, tail = TAIL)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -519,8 +519,8 @@ def play():
 if __name__ == '__main__':
 	
 	# --- Deep Neural Network with CNN --- #
-	# trainDeepModel(load = True)
+	trainDeepModel(load = True)
 	# runDeepModel()
 
 	# --- Just for fun --- #
-	play()
+	# play()

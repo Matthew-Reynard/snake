@@ -1,6 +1,8 @@
 # snake
 Snake game using Reinforcement Learning (RL) and TensorFlow
 
+*Note: still under construction*
+
 ---
 
 ### LIBRARIES USED:

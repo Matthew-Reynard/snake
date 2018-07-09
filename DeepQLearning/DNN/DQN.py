@@ -1239,23 +1239,14 @@ def play():
 if __name__ == '__main__':
 	
 	# --- Linear function Neural Network --- #
-
 	# train()
-
 	# continue_training()
-
 	# run()
-	
 	# run2()
 
-
 	# --- Deep Neural Network --- #
-
-	trainDeepModel(load = False)
-
+	# trainDeepModel(load = False)
 	# runDeepModel()
-	
 
 	# --- Just for fun --- #
-
-	# play()
+	play()

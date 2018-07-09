@@ -15,7 +15,7 @@ def state_index(state_array):
 # SOCK_DGRAM => UDP (User Datagram Protocol)
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # TCP connection
 
-Q_textfile_path_load = "./Data/Q_10x10_no_wrap.txt"
+Q_textfile_path_load = "./QLearning/Data/Q_10x10_no_wrap.txt"
 
 print(s)
 
