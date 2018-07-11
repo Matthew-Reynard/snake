@@ -38,7 +38,7 @@ iteration = 0
 
 while connected:
 
-	time.sleep(5)
+	# time.sleep(5)
 
 	iteration=iteration+1
 
@@ -48,7 +48,7 @@ while connected:
 		r = s.recv(1024)
 		if r != None:
 			x = r.decode("utf-8")
-			print(x)
+			print(x) #to skip line
 			x_cleaned = x[3:-1] #Need to find a better implementation
 			a = x_cleaned.split(", ")
 

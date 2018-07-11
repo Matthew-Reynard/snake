@@ -56,7 +56,7 @@ LOGDIR = "./Logs/log1"
 GRID_SIZE = 8
 SEED = 1
 WRAP = False
-TAIL = True
+TAIL = False
 
 # Number of hidden layers, nodes, channels, etc. 
 if TAIL:
@@ -174,7 +174,7 @@ def trainDeepModel(load = False):
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, max_time = 2000, tail = TAIL)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, max_time = 1000, tail = TAIL)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -185,8 +185,8 @@ def trainDeepModel(load = False):
 	epsilon = 0.1  # Probability to choose random action instead of best action
 
 	epsilon_function = True
-	epsilon_start = 0.05
-	epsilon_end = 0.001
+	epsilon_start = 0.2
+	epsilon_end = 0.005
 	epsilon_percentage = 0.5 # in decimal
 
 	alpha_function = False
@@ -404,7 +404,7 @@ def runDeepModel():
 	alpha = 0.01  # Learning rate, i.e. which fraction of the Q values should be updated
 	gamma = 0.99  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
 	
-	epsilon = 0.005  # Probability to choose random action instead of best action
+	epsilon = 0.0001  # Probability to choose random action instead of best action
 
 	# Create NN model
 	with tf.name_scope('Model'):
@@ -519,8 +519,8 @@ def play():
 if __name__ == '__main__':
 	
 	# --- Deep Neural Network with CNN --- #
-	trainDeepModel(load = True)
-	# runDeepModel()
+	# trainDeepModel(load = True)
+	runDeepModel()
 
 	# --- Just for fun --- #
 	# play()
