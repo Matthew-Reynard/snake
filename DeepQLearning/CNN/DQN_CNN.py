@@ -186,7 +186,7 @@ def trainDeepModel(load = False):
 
 	epsilon_function = True
 	epsilon_start = 0.2
-	epsilon_end = 0.005
+	epsilon_end = 0.02
 	epsilon_percentage = 0.5 # in decimal
 
 	alpha_function = False
@@ -231,7 +231,7 @@ def trainDeepModel(load = False):
 	# errors = []
 
 	print_episode = 10000
-	total_episodes = 1000000
+	total_episodes = 2000000
 
 	# Saving model capabilities
 	saver = tf.train.Saver()
@@ -519,8 +519,8 @@ def play():
 if __name__ == '__main__':
 	
 	# --- Deep Neural Network with CNN --- #
-	# trainDeepModel(load = True)
-	runDeepModel()
+	trainDeepModel(load = True)
+	# runDeepModel()
 
 	# --- Just for fun --- #
 	# play()
