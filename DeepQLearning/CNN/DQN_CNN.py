@@ -519,8 +519,8 @@ def play():
 if __name__ == '__main__':
 	
 	# --- Deep Neural Network with CNN --- #
-	trainDeepModel(load = True)
-	# runDeepModel()
+	# trainDeepModel(load = True)
+	runDeepModel()
 
 	# --- Just for fun --- #
 	# play()

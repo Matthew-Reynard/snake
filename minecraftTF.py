@@ -10,6 +10,8 @@ GRID_SIZE = 10
 def state_index(state_array):
     return int((GRID_SIZE**3)*state_array[0]+(GRID_SIZE**2)*state_array[1]+(GRID_SIZE**1)*state_array[2]+(GRID_SIZE**0)*state_array[3])
 
+time.sleep(10)
+
 
 # AF_INET => IPv4 address, SOCK_STREAM => TCP
 # SOCK_DGRAM => UDP (User Datagram Protocol)
@@ -38,7 +40,7 @@ iteration = 0
 
 while connected:
 
-	# time.sleep(5)
+	time.sleep(5)
 
 	iteration=iteration+1
 
