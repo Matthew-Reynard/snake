@@ -10,7 +10,8 @@ GRID_SIZE = 10
 def state_index(state_array):
     return int((GRID_SIZE**3)*state_array[0]+(GRID_SIZE**2)*state_array[1]+(GRID_SIZE**1)*state_array[2]+(GRID_SIZE**0)*state_array[3])
 
-time.sleep(10)
+# Once connection is established, wait 10 seconds
+time.sleep(3)
 
 
 # AF_INET => IPv4 address, SOCK_STREAM => TCP
@@ -40,13 +41,14 @@ iteration = 0
 
 while connected:
 
-	time.sleep(5)
+	# time.sleep(2)
 
 	iteration=iteration+1
 
 	try:
+		print("waiting for recv...")
 		# data = input("Send (q to Quit): ")
-		s.send(str.encode("p\n"))
+		# s.send(str.encode("p\n"))
 		r = s.recv(1024)
 		if r != None:
 			x = r.decode("utf-8")
