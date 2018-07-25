@@ -41,7 +41,7 @@ iteration = 0
 
 while connected:
 
-	# time.sleep(2)
+	time.sleep(1)
 
 	iteration=iteration+1
 
