@@ -55,9 +55,9 @@ def train():
 	epsilon = 0.1  # Probability to choose random action instead of best action
 
 	epsilon_function = True
-	epsilon_start = 0.001
+	epsilon_start = 0.1
 	epsilon_end = 0.001
-	epsilon_percentage = 0.9 # in decimal
+	epsilon_percentage = 0.5 # in decimal
 
 	# Test for an Epsilon linear function
 	# y = mx + c
