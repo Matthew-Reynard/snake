@@ -64,7 +64,8 @@ while connected:
 				for i in range(4):
 					state[i] = float(a[i])
 
-				print(state, iteration)
+				if(iteration%10 == 0):
+					print(state, iteration)
 
 				action = np.argmax(Q[state_index(state)])
 
