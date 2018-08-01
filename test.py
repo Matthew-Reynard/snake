@@ -1,6 +1,6 @@
 # Python
 # import tensorflow as tf
-# import numpy as np
+import numpy as np
 # from SnakeGame import Environment
 
 
@@ -147,4 +147,20 @@
 
 # print(x[2:-2])
 
-print(2.345 % 1)
+# print(2.345 % 1)
+
+# action = np.random.randint(0,4)
+
+# # action[0]
+
+# print(action)
+
+# folder = "CNN_VARIABLES"
+
+# path = "CNN/" + folder + "/Data1"
+
+# print(path)
+a = 1
+a = a + 1
+
+print(a)

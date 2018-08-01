@@ -12,18 +12,20 @@ from Environment_for_DQN_CNN import Environment
 MODEL_PATH_SAVE = "./Models/model_1.ckpt"
 MODEL_PATH_LOAD = "./Models/model_1.ckpt"
 
+folder = "CNN_variables"
+
 # Not text files. Some of these arrays are 4D which can't be neatly written to a text file.
-W_conv1_textfile_path_save = "./Data/CNN_variables/W_conv1.npy"
-b_conv1_textfile_path_save = "./Data/CNN_variables/b_conv1.npy"
+W_conv1_textfile_path_save = "./Data/"+folder+"/W_conv1.npy"
+b_conv1_textfile_path_save = "./Data/"+folder+"/b_conv1.npy"
 
-W_conv2_textfile_path_save = "./Data/CNN_variables/W_conv2.npy"
-b_conv2_textfile_path_save = "./Data/CNN_variables/b_conv2.npy"
+W_conv2_textfile_path_save = "./Data/"+folder+"/W_conv2.npy"
+b_conv2_textfile_path_save = "./Data/"+folder+"/b_conv2.npy"
 
-W_fc_textfile_path_save = "./Data/CNN_variables/W_fc.npy"
-b_fc_textfile_path_save = "./Data/CNN_variables/b_fc.npy"
+W_fc_textfile_path_save = "./Data/"+folder+"/W_fc.npy"
+b_fc_textfile_path_save = "./Data/"+folder+"/b_fc.npy"
 
-W_out_textfile_path_save = "./Data/CNN_variables/W_out.npy"
-b_out_textfile_path_save = "./Data/CNN_variables/b_out.npy"
+W_out_textfile_path_save = "./Data/"+folder+"/W_out.npy"
+b_out_textfile_path_save = "./Data/"+folder+"/b_out.npy"
 
 # This is for viewing the model and summaries in Tensorboard
 LOGDIR = "./Logs/log1"
@@ -66,6 +68,7 @@ def conv2d(x, W, name = None):
 # Max pooling
 def maxpool2d(x, name = None):
 	return tf.nn.max_pool(x, ksize=[1,2,2,1], strides=[1,2,2,1], padding='SAME', name = name)
+
 
 # Input -> Conv layer & max pooling -> Conv layer & max pooling -> Fully connected -> Output (Action-value)
 def createDeepModel(data, load_variables = False):
@@ -132,8 +135,9 @@ def createDeepModel(data, load_variables = False):
 
 	return output, weights, biases
 
+
 # Train Deep Model function
-def trainDeepModel(load = False):
+def trainDeepModel(s, load = False):
 
 	# Used to see how long model takes to train - model needs to be optimized!
 	start_time = time.time()
@@ -148,10 +152,8 @@ def trainDeepModel(load = False):
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, max_time = 1000, tail = TAIL)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, tail = TAIL)
 	
-	if RENDER_TO_SCREEN:
-		env.prerender()
 
 	# Hyper-parameters
 	alpha = 0.01  # Learning rate, i.e. which fraction of the Q values should be updated
@@ -201,11 +203,8 @@ def trainDeepModel(load = False):
 	avg_score = 0
 	avg_error = 0
 
-	# error plot
-	# errors = []
-
-	print_episode = 10000
-	total_episodes = 2000000
+	print_episode = 10
+	total_episodes = 100
 
 	# Saving model capabilities
 	saver = tf.train.Saver()
@@ -238,8 +237,10 @@ def trainDeepModel(load = False):
 
 		# Testing my DQN model with random values
 		for episode in range(total_episodes):
-			state, info = env.reset()
+			# state, info = env.reset()
 			done = False
+			first_action = True
+			action_count = 0
 
 			# Linear function for alpha
 			if alpha_function:
@@ -254,62 +255,111 @@ def trainDeepModel(load = False):
 					epsilon = epsilon_end
 
 			while not done:
-				if RENDER_TO_SCREEN:
-					env.render()
 
-				# One Hot representation of the current state
-				state_vector = env.state_vector_3D()
+				try:
+					print("waiting for recv...")
+					# data = input("Send (q to Quit): ")
+					# s.send(str.encode("p\n"))
+					r = s.recv(1024)
+					print("recv something")
+					if r != None:
+						msg = r.decode("utf-8")
+						print("Raw msg: ", msg) #raw bytes received
+						msg_cleaned = msg[3:-1] #Need to find a better implementation
+						a = msg_cleaned.split(", ")
 
-				# Retrieve the Q values from the NN in vector form
-				Q_vector = sess.run(Q_values, feed_dict={x: state_vector})
-				# print("Qvector", Q_vector) # DEBUGGING
+						if a[0] != "close":
 
-				# Deciding one which action to take
-				if np.random.rand() <= epsilon:
-					action = env.sample()
-				else:
-					# "action" is the max value of the Q values (output vector of NN)
-					action = sess.run(action_t, feed_dict={y: Q_vector})
+							if a[0] == "done":
+								done = True
+								print("\nEpisode done,   #", episode, "\n")
 
-				# Update environment with by performing action
-				new_state, reward, done, info = env.step(action)
+							else:
+								state = np.zeros(4)
 
-				state = new_state
+								try:
+									for i in range(4):
+										state[i] = float(a[i])
+								except ValueError as e:
+									raise e
+									print("\nYou probably closed Minecraft without closing the socket server... NOOB!\n")
+									quit(0)
 
-				# if final state of the episode
-				if done:
-					Q_vector[:,action] = reward
-					# print("Reward:", reward)
-				else:
-					# Gathering the now current state's action-value vector
-					new_state_vector = env.state_vector_3D()
-					y_prime = sess.run(Q_values, feed_dict={x: new_state_vector})
+								print(state)
 
-					# Equation for training
-					maxq = sess.run(y_prime_max, feed_dict={y: y_prime})
+								# Need to get reward here...
+								reward = 0
 
-					# RL Equation
-					Q_vector[:,action] = reward + (gamma * maxq)
+								# One Hot representation of the current state
+								state_vector = state_vector_3D(state)
 
-				_, e = sess.run([optimizer, error], feed_dict={x: state_vector, y: Q_vector})
-				# _ = sess.run(optimizer, feed_dict={x: state_vector, y: Q_vector})
-				# e = sess.run(error,feed_dict={x:state_vector, y:Q_vector})
-				# sess.run(optimizer)
-				
-				# DEBUGGING
-				# print("action:", action)
-				# print("y_prime:", y_prime)
-				# print("max q value:", maxq)
-				# print("new Q_vector:", Q_vector)
-				# print("error tensor:", e)
+								# Retrieve the Q values from the NN in vector form
+								Q_vector = sess.run(Q_values, feed_dict={x: state_vector})
+								# print("Qvector",Q_vector) # DEBUGGING
 
-				# add to the error list, to show the plot at the end of training - RAM OVERLOAD!!!
-				# errors.append(e)
+								# Deciding one which action to take
+								if np.random.rand() <= epsilon:
+									action = np.random.randint(0,4)
+								else:
+									# "action" is the max value of the Q values (output vector of NN)
+									action_tensor = sess.run(action_t, feed_dict={y: Q_vector})
+									action = action_tensor[0]
 
-				if done:
-					avg_time += info["time"]
-					avg_score += info["score"]
-					avg_error += e
+								# Update environment with by performing action
+								# new_state, reward, done, info = env.step(action)
+
+								print("Action = ", action)
+							
+								s.send(str.encode(str(action) + "\n")) # equivalent to env.step()
+
+								if first_action:
+									action_count = action_count + 1
+
+									if action >= 2:
+										first_action = False
+
+
+							# TRAINING PART
+
+							if not first_action:
+
+								# if final state of the episode
+								if done:
+									Q_vector[:,action] = reward
+									# print("Reward:", reward)
+								else:
+									# Gathering the now current state's action-value vector
+									# new_state_vector = state_vector_3D(state)
+									y_prime = sess.run(Q_values, feed_dict={x: state_vector})
+
+									# Equation for training
+									maxq = sess.run(y_prime_max, feed_dict={y: y_prime})
+
+									# RL Equation
+									Q_vector[:,action] = reward + (gamma * maxq)
+
+								_, e = sess.run([optimizer, error], feed_dict={x: prev_state_vector, y: Q_vector})
+
+
+							# save the previous state
+							prev_state_vector = state_vector
+
+						else:
+							s.close()
+							print("Socket has been closed")
+							quit(0)
+
+				# To force close the connection
+				except (KeyboardInterrupt, OSError) as e:
+					s.close()
+					print("Socket has been closed")
+					raise e
+					quit(0)
+
+				# if done:
+				# 	avg_time += info["time"]
+				# 	avg_score += info["score"]
+				# 	avg_error += e
 
 			if (episode % print_episode == 0 and episode != 0) or (episode == total_episodes-1):
 				current_time = time.time()-start_time
@@ -344,8 +394,8 @@ def trainDeepModel(load = False):
 				np.save(b_fc_textfile_path_save, b_fc.astype(np.float32))
 				np.save(b_out_textfile_path_save, b_out.astype(np.float32))
 
-				s = sess.run(merged_summary, feed_dict={x: state_vector, y: Q_vector})
-				writer.add_summary(s, episode)
+				my_summary = sess.run(merged_summary, feed_dict={x: state_vector, y: Q_vector})
+				writer.add_summary(my_summary, episode)
 
 		save_path = saver.save(sess, MODEL_PATH_SAVE)
 		print("Model saved in path: %s" % save_path)
@@ -354,30 +404,28 @@ def trainDeepModel(load = False):
 	# plt.savefig("./Images/errors.png")
 	# plt.show()
 
+
 # Running the deep model
-def runDeepModel():
+def runDeepModel(s):
 
 	# Testing
 	print("\n ---- Running the Deep Neural Network ----- \n")
 
 	# Decide whether or not to render to the screen or not
-	RENDER_TO_SCREEN = True
+	RENDER_TO_SCREEN = False
 
 	# True - Load model from modelpath_load; False - Initialise random weights
 	USE_SAVED_MODEL_FILE = False 
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 80, max_time = 1200, tail = TAIL)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, tail = TAIL)
 	
-	if RENDER_TO_SCREEN:
-		env.prerender()
 
 	# Hyper-parameters
 	alpha = 0.01  # Learning rate, i.e. which fraction of the Q values should be updated
 	gamma = 0.99  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
-	
-	epsilon = 0.0001  # Probability to choose random action instead of best action
+	epsilon = 0.005  # Probability to choose random action instead of best action
 
 	# Create NN model
 	with tf.name_scope('Model'):
@@ -386,21 +434,11 @@ def runDeepModel():
 	# Error / Loss function 
 	# Not sure why its reduce_mean, it reduces the [1,4] tensor to a scalar of the mean value
 	with tf.name_scope('Error'):
-		# e1 = tf.subtract(y, Q_values)
-		# e2 = tf.square(e1)
-		# error = tf.reduce_mean(e2, axis=1)
-
-		# test
 		error = tf.losses.mean_squared_error(labels=Q_values, predictions=y)
-
-		# error = tf.reduce_max(tf.sqrt(tf.square(tf.subtract(Q_values, y))), axis=1)
-		# error = tf.reduce_max(tf.square(tf.subtract(Q_values, y)), axis=1)
-		# error = tf.reduce_max(tf.square(Q_values - y), axis=1)
 
 	# Gradient descent optimizer - minimizes error/loss function
 	with tf.name_scope('Optimizer'):
 		optimizer = tf.train.GradientDescentOptimizer(alpha).minimize(error)
-		# optimizer = tf.train.AdamOptimizer(alpha).minimize(error)
 
 	# The next states action-value [1,4] tensor, reduced to a scalar of the max value
 	with tf.name_scope('Max_y_prime'):
@@ -414,7 +452,6 @@ def runDeepModel():
 	avg_score = 0
 	avg_error = 0
 
-	print_episode = 1
 	total_episodes = 10
 
 	# Saving model capabilities
@@ -435,40 +472,79 @@ def runDeepModel():
 
 		# Testing my DQN model with random values
 		for episode in range(total_episodes):
-			state, info = env.reset()
+			# state, info = env.reset()
 			done = False
 
 			while not done:
-				if RENDER_TO_SCREEN:
-					env.render()
 
-				# One Hot representation of the current state
-				state_vector = env.state_vector_3D()
+				try:
+					print("waiting for recv...")
+					# data = input("Send (q to Quit): ")
+					# s.send(str.encode("p\n"))
+					r = s.recv(1024)
+					print("recv something")
+					if r != None:
+						msg = r.decode("utf-8")
+						print("Raw msg: ", msg) #raw bytes received
+						msg_cleaned = msg[3:-1] #Need to find a better implementation
+						a = msg_cleaned.split(", ")
 
-				# Retrieve the Q values from the NN in vector form
-				Q_vector = sess.run(Q_values, feed_dict={x: state_vector})
-				# print("Qvector",Q_vector) # DEBUGGING
+						if a[0] != "close":
 
-				# Deciding one which action to take
-				if np.random.rand() <= epsilon:
-					action = env.sample()
-				else:
-					# "action" is the max value of the Q values (output vector of NN)
-					action = sess.run(action_t, feed_dict={y: Q_vector})
+							if a[0] == "done":
+								done = True
+								print("Episode done")
 
-				# Update environment with by performing action
-				new_state, reward, done, info = env.step(action)
+							else:
+								state = np.zeros(4)
 
-				state = new_state
+								try:
+									for i in range(4):
+										state[i] = float(a[i])
+								except ValueError as e:
+									raise e
+									print("\nYou probably closed Minecraft without closing the socket server... NOOB!\n")
+									quit(0)
 
-				if done:
-					avg_time += info["time"]
-					avg_score += info["score"]
+								print(state)
 
-			if episode % print_episode == 0 and episode != 0:
-				print("Ep:", episode, "   avg t:", avg_time/print_episode, "   avg score:", avg_score/print_episode)
-				avg_time = 0
-				avg_score = 0
+								# One Hot representation of the current state
+								state_vector = state_vector_3D(state)
+
+								# Retrieve the Q values from the NN in vector form
+								Q_vector = sess.run(Q_values, feed_dict={x: state_vector})
+								# print("Qvector",Q_vector) # DEBUGGING
+
+								# Deciding one which action to take
+								if np.random.rand() <= epsilon:
+									action = np.random.randint(0,4)
+								else:
+									# "action" is the max value of the Q values (output vector of NN)
+									action_tensor = sess.run(action_t, feed_dict={y: Q_vector})
+									action = action_tensor[0]
+
+								# Update environment with by performing action
+								# new_state, reward, done, info = env.step(action)
+
+								print("Action = ", action)
+							
+								s.send(str.encode(str(action) + "\n")) # equivalent to env.step()
+
+						else:
+							s.close()
+							print("Socket has been closed")
+							quit(0)
+
+				# To force close the connection
+				except (KeyboardInterrupt, OSError) as e:
+					s.close()
+					print("Socket has been closed")
+					raise e
+					quit(0)
+
+		s.close()
+		print("Socket has been closed")
+
 
 # Play the game
 def play():
@@ -479,6 +555,12 @@ def play():
 	env.play()
 
 
+"""
+Converts the state of Minecraft to the state that is readable by the CNN
+
+@Returns: a 3D array of the current state
+@parameters: state
+"""
 def state_vector_3D(state):
 	cnn_state = np.zeros((2, GRID_SIZE, GRID_SIZE))
 	cnn_state[0, int(state[1]), int(state[0])] = 1
@@ -489,16 +571,8 @@ def state_vector_3D(state):
 # Choose the appropriate function to run - Need to find a better more user friendly way to implement this
 if __name__ == '__main__':
 	
-	# --- Deep Neural Network with CNN --- #
-	# trainDeepModel(load = True)
-	# runDeepModel()
-
-	# --- Just for fun --- #
-	# play()
-
 	# Once connection is established, wait 10 seconds
 	time.sleep(3)
-
 
 	# AF_INET => IPv4 address, SOCK_STREAM => TCP
 	# SOCK_DGRAM => UDP (User Datagram Protocol)
@@ -508,157 +582,19 @@ if __name__ == '__main__':
 
 	print(s)
 
-	# Q learning in Minecraft
-	# Q = np.loadtxt(Q_textfile_path_load, dtype='float', delimiter=" ")
-
 	# server = "127.0.0.1"
 	server = "localhost"
 	host = ""
-	# server = "www.matthewreynard.com"
 	port = 5555
-
-	# CLIENT
-
-	connected = True
 
 	s.connect((server, port))
 
-	iteration = 0
+	# iteration = 0
+	# iteration=iteration+1
+
+	trainDeepModel(s, load = False)
+
+	# runDeepModel(s)
 
 
-
-
-	# Decide whether or not to render to the screen or not
-	RENDER_TO_SCREEN = False
-
-	# True - Load model from modelpath_load; False - Initialise random weights
-	USE_SAVED_MODEL_FILE = False 
-
-	# First we need our environment form Environment_for_DQN.py
-	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, tail = TAIL)
 	
-
-	# Hyper-parameters
-	alpha = 0.01  # Learning rate, i.e. which fraction of the Q values should be updated
-	gamma = 0.99  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
-	epsilon = 0.0001  # Probability to choose random action instead of best action
-
-	# Create NN model
-	with tf.name_scope('Model'):
-		Q_values, weights, biases  = createDeepModel(x, load_variables = True)
-
-	# Error / Loss function 
-	# Not sure why its reduce_mean, it reduces the [1,4] tensor to a scalar of the mean value
-	with tf.name_scope('Error'):
-		# e1 = tf.subtract(y, Q_values)
-		# e2 = tf.square(e1)
-		# error = tf.reduce_mean(e2, axis=1)
-
-		# test
-		error = tf.losses.mean_squared_error(labels=Q_values, predictions=y)
-
-		# error = tf.reduce_max(tf.sqrt(tf.square(tf.subtract(Q_values, y))), axis=1)
-		# error = tf.reduce_max(tf.square(tf.subtract(Q_values, y)), axis=1)
-		# error = tf.reduce_max(tf.square(Q_values - y), axis=1)
-
-	# Gradient descent optimizer - minimizes error/loss function
-	with tf.name_scope('Optimizer'):
-		optimizer = tf.train.GradientDescentOptimizer(alpha).minimize(error)
-		# optimizer = tf.train.AdamOptimizer(alpha).minimize(error)
-
-	# The next states action-value [1,4] tensor, reduced to a scalar of the max value
-	with tf.name_scope('Max_y_prime'):
-		y_prime_max = tf.reduce_max(y, axis=1)
-
-	# Action at time t, the index of the max value in the action-value tensor (Made a global variable)
-	with tf.name_scope('Max_action'):
-		action_t = tf.argmax(y, axis=1)
-
-	avg_time = 0
-	avg_score = 0
-	avg_error = 0
-
-	print_episode = 1
-	total_episodes = 10
-
-	# Saving model capabilities
-	saver = tf.train.Saver()
-
-	# Initialising all variables (weights and biases)
-	init = tf.global_variables_initializer()
-
-	# Session can start running
-	with tf.Session() as sess:
-
-		# Restore the model, to keep training
-		if USE_SAVED_MODEL_FILE:
-			saver.restore(sess, MODEL_PATH_LOAD)
-			print("Model restored.")
-
-		sess.run(init)
-
-		while connected:
-
-			# time.sleep(1)
-
-			iteration=iteration+1
-
-			try:
-				print("waiting for recv...")
-				# data = input("Send (q to Quit): ")
-				# s.send(str.encode("p\n"))
-				r = s.recv(1024)
-				if r != None:
-					msg = r.decode("utf-8")
-					print(msg) #to skip line
-					msg_cleaned = msg[3:-1] #Need to find a better implementation
-					a = msg_cleaned.split(", ")
-
-					if a[0] != "close":
-
-						state = np.zeros(4)
-						for i in range(4):
-							state[i] = float(a[i])
-
-						print(state, iteration)
-
-
-						# One Hot representation of the current state
-						state_vector = state_vector_3D(state)
-
-						# Retrieve the Q values from the NN in vector form
-						Q_vector = sess.run(Q_values, feed_dict={x: state_vector})
-						# print("Qvector",Q_vector) # DEBUGGING
-
-						# # Deciding one which action to take
-						# if np.random.rand() <= epsilon:
-						# 	action = env.sample()
-						# else:
-						# 	# "action" is the max value of the Q values (output vector of NN)
-						action = sess.run(action_t, feed_dict={y: Q_vector})
-
-						# Update environment with by performing action
-						# new_state, reward, done, info = env.step(action)
-
-						# state = new_state
-
-
-						# action = np.argmax(Q[state_index(state)])
-
-						print("Action = ", action[0])
-					
-						s.send(str.encode(str(action[0]) + "\n"))
-
-					else:
-						s.close()
-						print("Socket has been closed")
-						connected = False
-
-			# To force close the connection
-			except KeyboardInterrupt as e:
-				s.close()
-				print("Socket has been closed")
-				raise e
-				connected = False
-
