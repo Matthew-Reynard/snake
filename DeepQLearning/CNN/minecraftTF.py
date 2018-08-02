@@ -161,9 +161,9 @@ def trainDeepModel(s, load = False):
 	epsilon = 0.1  # Probability to choose random action instead of best action
 
 	epsilon_function = True
-	epsilon_start = 0.2
-	epsilon_end = 0.02
-	epsilon_percentage = 0.5 # in decimal
+	epsilon_start = 0.5
+	epsilon_end = 0.01
+	epsilon_percentage = 0.8 # in decimal
 
 	alpha_function = False
 	alpha_start = 0.01
@@ -204,7 +204,7 @@ def trainDeepModel(s, load = False):
 	avg_error = 0
 
 	print_episode = 10
-	total_episodes = 100
+	total_episodes = 1000
 
 	# Saving model capabilities
 	saver = tf.train.Saver()
@@ -257,22 +257,25 @@ def trainDeepModel(s, load = False):
 			while not done:
 
 				try:
-					print("waiting for recv...")
+					# print("waiting to receive...")
 					# data = input("Send (q to Quit): ")
 					# s.send(str.encode("p\n"))
 					r = s.recv(1024)
-					print("recv something")
+					# print("recv something")
 					if r != None:
 						msg = r.decode("utf-8")
-						print("Raw msg: ", msg) #raw bytes received
+						# print("Raw msg: ", msg) #raw bytes received
 						msg_cleaned = msg[3:-1] #Need to find a better implementation
 						a = msg_cleaned.split(", ")
+						# print("Cleaned msg: ", a) #raw bytes received
 
 						if a[0] != "close":
 
 							if a[0] == "done":
 								done = True
-								print("\nEpisode done,   #", episode, "\n")
+								reward = int(a[1])
+								print("\nEpisode done,   #", episode)
+								print("reward = ", reward, "\n")
 
 							else:
 								state = np.zeros(4)
@@ -285,10 +288,13 @@ def trainDeepModel(s, load = False):
 									print("\nYou probably closed Minecraft without closing the socket server... NOOB!\n")
 									quit(0)
 
-								print(state)
+								reward = int(a[4])
+								# print("reward = ", reward)
+
+								# print(state)
 
 								# Need to get reward here...
-								reward = 0
+								# reward = 0
 
 								# One Hot representation of the current state
 								state_vector = state_vector_3D(state)
@@ -308,7 +314,7 @@ def trainDeepModel(s, load = False):
 								# Update environment with by performing action
 								# new_state, reward, done, info = env.step(action)
 
-								print("Action = ", action)
+								# print("Action = ", action)
 							
 								s.send(str.encode(str(action) + "\n")) # equivalent to env.step()
 
@@ -322,6 +328,9 @@ def trainDeepModel(s, load = False):
 							# TRAINING PART
 
 							if not first_action:
+
+								if reward == 1:
+									avg_score = avg_score+1
 
 								# if final state of the episode
 								if done:
@@ -396,6 +405,8 @@ def trainDeepModel(s, load = False):
 
 				my_summary = sess.run(merged_summary, feed_dict={x: state_vector, y: Q_vector})
 				writer.add_summary(my_summary, episode)
+
+			# print("") # skip line
 
 		save_path = saver.save(sess, MODEL_PATH_SAVE)
 		print("Model saved in path: %s" % save_path)
@@ -592,7 +603,7 @@ if __name__ == '__main__':
 	# iteration = 0
 	# iteration=iteration+1
 
-	trainDeepModel(s, load = False)
+	trainDeepModel(s, load = True)
 
 	# runDeepModel(s)
 
