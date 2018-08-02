@@ -315,7 +315,7 @@ def trainDeepModel(s, load = False):
 								if first_action:
 									action_count = action_count + 1
 
-									if action >= 2:
+									if action_count >= 2:
 										first_action = False
 
 
@@ -572,7 +572,7 @@ def state_vector_3D(state):
 if __name__ == '__main__':
 	
 	# Once connection is established, wait 10 seconds
-	time.sleep(3)
+	# time.sleep(3)
 
 	# AF_INET => IPv4 address, SOCK_STREAM => TCP
 	# SOCK_DGRAM => UDP (User Datagram Protocol)
