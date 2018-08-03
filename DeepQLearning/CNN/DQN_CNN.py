@@ -174,7 +174,7 @@ def trainDeepModel(load = False):
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, max_time = 1000, tail = TAIL)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 0, max_time = 50, tail = TAIL)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -185,8 +185,8 @@ def trainDeepModel(load = False):
 	epsilon = 0.1  # Probability to choose random action instead of best action
 
 	epsilon_function = True
-	epsilon_start = 0.2
-	epsilon_end = 0.02
+	epsilon_start = 0.9
+	epsilon_end = 0.01
 	epsilon_percentage = 0.5 # in decimal
 
 	alpha_function = False
@@ -230,8 +230,8 @@ def trainDeepModel(load = False):
 	# error plot
 	# errors = []
 
-	print_episode = 10000
-	total_episodes = 2000000
+	print_episode = 100
+	total_episodes = 10000
 
 	# Saving model capabilities
 	saver = tf.train.Saver()
@@ -395,7 +395,7 @@ def runDeepModel():
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 80, max_time = 1200, tail = TAIL)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 80, max_time = 100, tail = TAIL)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -519,8 +519,8 @@ def play():
 if __name__ == '__main__':
 	
 	# --- Deep Neural Network with CNN --- #
-	# trainDeepModel(load = True)
-	runDeepModel()
+	trainDeepModel(load = False)
+	# runDeepModel()
 
 	# --- Just for fun --- #
 	# play()

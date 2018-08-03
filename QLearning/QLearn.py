@@ -43,20 +43,20 @@ def train():
 	RENDER_TO_SCREEN = False
 
 	# rate should be 0 when not rendering, else it will lengthen training time unnecessarily
-	env = Environment(wrap = False, grid_size = 10, rate = 0, max_time = 500)
+	env = Environment(wrap = False, grid_size = 8, rate = 0, max_time = 50)
 
 	if RENDER_TO_SCREEN:
 		env.prerender()
 
-	Q = Qmatrix(2, env) # 0 - zeros, 1 - random, 2 - textfile
+	Q = Qmatrix(0, env) # 0 - zeros, 1 - random, 2 - textfile
 
 	alpha = 0.15  # Learning rate, i.e. which fraction of the Q values should be updated
 	gamma = 0.99  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
 	epsilon = 0.1  # Probability to choose random action instead of best action
 
 	epsilon_function = True
-	epsilon_start = 0.1
-	epsilon_end = 0.001
+	epsilon_start = 0.5
+	epsilon_end = 0.01
 	epsilon_percentage = 0.5 # in decimal
 
 	# Test for an Epsilon linear function
@@ -67,9 +67,8 @@ def train():
 	avg_time = 0
 	avg_score = 0
 
-	total_episodes = 1000000
-
-	print_episode = 10000
+	print_episode = 100
+	total_episodes = 1000
 
 	for episode in range(total_episodes):
 		# Reset the environment
@@ -128,7 +127,7 @@ def run():
 
 	RENDER_TO_SCREEN = True
 
-	env = Environment(wrap = False, grid_size = 10, rate = 50, max_time = 200, tail = False)
+	env = Environment(wrap = False, grid_size = 8, rate = 80, max_time = 100, tail = False)
 
 	if RENDER_TO_SCREEN:
 		env.prerender()

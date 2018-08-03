@@ -97,12 +97,12 @@ class Environment:
         self.score = 0
 
         # Starting at random positions
-        self.snake.x = np.random.randint(0,self.GRID_SIZE) * self.SCALE
-        self.snake.y = np.random.randint(0,self.GRID_SIZE) * self.SCALE
+        # self.snake.x = np.random.randint(0,self.GRID_SIZE) * self.SCALE
+        # self.snake.y = np.random.randint(0,self.GRID_SIZE) * self.SCALE
 
         # Starting at the same spot
-        # self.snake.x = 2 * self.SCALE
-        # self.snake.y = 2 * self.SCALE
+        self.snake.x = 2 * self.SCALE
+        self.snake.y = 2 * self.SCALE
 
         # Initialise the movement to the right
         self.snake.dx = 1
