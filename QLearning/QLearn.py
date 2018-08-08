@@ -48,7 +48,7 @@ def train():
 	if RENDER_TO_SCREEN:
 		env.prerender()
 
-	Q = Qmatrix(0, env) # 0 - zeros, 1 - random, 2 - textfile
+	Q = Qmatrix(1, env) # 0 - zeros, 1 - random, 2 - textfile
 
 	alpha = 0.15  # Learning rate, i.e. which fraction of the Q values should be updated
 	gamma = 0.99  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
@@ -151,6 +151,8 @@ def run():
 			else:
 				action = np.argmax(Q[env.state_index(state)])
 
+			print(state)
+
 			new_state, reward, done, info = env.step(action)
 
 			# Q[env.state_index(state), action] += alpha * (reward + gamma * np.max(Q[env.state_index(new_state)]) - Q[env.state_index(state), action])
@@ -180,8 +182,8 @@ if __name__ == '__main__':
 
 	# CHOOSE 1 OF THE 3
 
-	# train() 
+	train() 
 
-	run()
+	# run()
 
 	# play()

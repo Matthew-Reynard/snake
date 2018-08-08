@@ -31,16 +31,16 @@ def train(s):
 	# rate should be 0 when not rendering, else it will lengthen training time unnecessarily
 	env = Environment(wrap = False, grid_size = 8, rate = 0, max_time = 50)
 
-	Q = Qmatrix(0, env) # 0 - zeros, 1 - random, 2 - textfile
+	Q = Qmatrix(1, env) # 0 - zeros, 1 - random, 2 - textfile
 
 	alpha = 0.15  # Learning rate, i.e. which fraction of the Q values should be updated
 	gamma = 0.99  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
 	epsilon = 0.1  # Probability to choose random action instead of best action
 
 	epsilon_function = True
-	epsilon_start = 0.9
+	epsilon_start = 0.5
 	epsilon_end = 0.01
-	epsilon_percentage = 0.8 # in decimal
+	epsilon_percentage = 0.5 # in decimal
 
 	# Test for an Epsilon linear function
 	# y = mx + c
@@ -71,7 +71,6 @@ def train(s):
 			# Testing with try except in loop
 			# Might not be the best implementation of training and ensuring saving Q to a .txt file
 			try:
-
 				# print("waiting for recv...")
 				# data = input("Send (q to Quit): ")
 				# s.send(str.encode("p\n"))
@@ -87,8 +86,9 @@ def train(s):
 
 						if a[0] == "done":
 							done = True
-							print("\nEpisode done,   #", episode)
+							print("\nEpisode done, #", episode)
 							
+							state = np.zeros(4) # Needs to change to incorporate dead states
 							reward = int(a[1])
 							# print("reward = ", reward, "\n")
 
@@ -124,14 +124,15 @@ def train(s):
 						# TRAINING PART
 						if not first_action:
 
-							if reward == 1:
+							if reward == 10:
 								avg_score = avg_score+1
 
-							Q[state_index(prev_state), action] += alpha * (reward + gamma * np.max(Q[state_index(state)]) - Q[state_index(prev_state), action])
+							Q[state_index(prev_state), prev_action] += alpha * (reward + gamma * np.max(Q[state_index(state)]) - Q[state_index(prev_state), prev_action])
 
 
 						# save the previous state
 						prev_state = state
+						prev_action = action
 
 					else:
 						s.close()
@@ -150,7 +151,7 @@ def train(s):
 
 
 		if (episode % print_episode == 0 and episode != 0) or (episode == total_episodes-1):
-			print("Episode:", episode, "   time:", avg_time/print_episode, "   score:", avg_score/print_episode)
+			print("Episode:", episode, "   time:", avg_time/print_episode, "   score:", avg_score/print_episode, "   epsilon:", epsilon)
 			np.savetxt(Q_textfile_path_save, Q.astype(np.float), fmt='%f', delimiter = " ")
 			avg_time = 0
 			avg_score = 0
@@ -200,8 +201,9 @@ def run(s):
 							state = np.zeros(4)
 							for i in range(4):
 								state[i] = float(a[i])
+								state[i] = int(state[i])
 
-							print(state)
+							# print(state)
 
 							if np.random.rand() <= epsilon:
 								action = np.random.randint(0,4)
@@ -243,33 +245,17 @@ def state_index(state_array):
 
 if __name__ == '__main__':
 
-	# CHOOSE 1 OF THE 3
-
-	# train() 
-
-	# run()
-
-
-	# Once connection is established, wait 10 seconds
-	# time.sleep(3)
-
-
 	# AF_INET => IPv4 address, SOCK_STREAM => TCP
 	# SOCK_DGRAM => UDP (User Datagram Protocol)
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # TCP connection
 
 	print(s)
 
-	# Q learning in Minecraft
-	# Q = np.loadtxt(Q_textfile_path_load, dtype='float', delimiter=" ")
-
 	# server = "127.0.0.1"
 	server = "localhost"
 	host = ""
 	# server = "www.matthewreynard.com"
 	port = 5555
-
-	# CLIENT
 
 	# connected = True
 
@@ -279,10 +265,13 @@ if __name__ == '__main__':
 
 	print("Connected...")
 
-
 	# train(s) 
 
 	run(s)
+
+
+
+
 
 	# while connected:
 
