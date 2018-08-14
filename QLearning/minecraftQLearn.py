@@ -31,7 +31,7 @@ def train(s):
 	# rate should be 0 when not rendering, else it will lengthen training time unnecessarily
 	env = Environment(wrap = False, grid_size = 8, rate = 0, max_time = 50)
 
-	Q = Qmatrix(1, env) # 0 - zeros, 1 - random, 2 - textfile
+	Q = Qmatrix(2, env) # 0 - zeros, 1 - random, 2 - textfile
 
 	alpha = 0.15  # Learning rate, i.e. which fraction of the Q values should be updated
 	gamma = 0.99  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
@@ -39,8 +39,8 @@ def train(s):
 
 	epsilon_function = True
 	epsilon_start = 0.5
-	epsilon_end = 0.01
-	epsilon_percentage = 0.5 # in decimal
+	epsilon_end = 0.05
+	epsilon_percentage = 0.4 # in decimal
 
 	# Test for an Epsilon linear function
 	# y = mx + c
@@ -265,9 +265,9 @@ if __name__ == '__main__':
 
 	print("Connected...")
 
-	# train(s) 
+	train(s) 
 
-	run(s)
+	# run(s)
 
 
 

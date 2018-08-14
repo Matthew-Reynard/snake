@@ -48,59 +48,59 @@ class Snake:
         # ACTION SPACE OF 4 - Up, Down, Left, Right
         # This is for when just using the head and food
 
-        if action_space == 4:
-            # Up
-            if action == 0:
-                if self.dy == 1:
-                    pass
-                else:
-                    self.dy = -1 # move up
-                    self.dx = 0
-
-            # Down
-            elif action == 1:
-                if self.dy == -1:
-                    pass
-                else:
-                    self.dy = 1 # move down
-                    self.dx = 0
-
-            # Left
-            elif action == 2:
-                if self.dx == 1:
-                    pass
-                else:
-                    self.dx = -1 # move left
-                    self.dy = 0
-
-            # Right
-            elif action == 3:
-                if self.dx == -1:
-                    pass
-                else:
-                    self.dx = 1 # move right
-                    self.dy = 0
-
         # if action_space == 4:
         #     # Up
         #     if action == 0:
-        #         self.dy = -1 # move up
-        #         self.dx = 0
+        #         if self.dy == 1:
+        #             pass
+        #         else:
+        #             self.dy = -1 # move up
+        #             self.dx = 0
 
         #     # Down
         #     elif action == 1:
-        #         self.dy = 1 # move down
-        #         self.dx = 0
+        #         if self.dy == -1:
+        #             pass
+        #         else:
+        #             self.dy = 1 # move down
+        #             self.dx = 0
 
         #     # Left
         #     elif action == 2:
-        #         self.dx = -1 # move left
-        #         self.dy = 0
+        #         if self.dx == 1:
+        #             pass
+        #         else:
+        #             self.dx = -1 # move left
+        #             self.dy = 0
 
         #     # Right
         #     elif action == 3:
-        #         self.dx = 1 # move right
-        #         self.dy = 0
+        #         if self.dx == -1:
+        #             pass
+        #         else:
+        #             self.dx = 1 # move right
+        #             self.dy = 0
+
+        if action_space == 4:
+            # Up
+            if action == 0:
+                self.dy = -1 # move up
+                self.dx = 0
+
+            # Down
+            elif action == 1:
+                self.dy = 1 # move down
+                self.dx = 0
+
+            # Left
+            elif action == 2:
+                self.dx = -1 # move left
+                self.dy = 0
+
+            # Right
+            elif action == 3:
+                self.dx = 1 # move right
+                self.dy = 0
 
 
         # ACTION SPACE OF 3 - Forward, Left, Right
