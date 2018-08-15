@@ -182,12 +182,12 @@ def trainDeepModel(load = False):
 	# Hyper-parameters
 	alpha = 0.01  # Learning rate, i.e. which fraction of the Q values should be updated
 	gamma = 0.99  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
-	epsilon = 0.1  # Probability to choose random action instead of best action
+	epsilon = 0.05  # Probability to choose random action instead of best action
 
-	epsilon_function = True
-	epsilon_start = 0.5
-	epsilon_end = 0.05
-	epsilon_percentage = 0.3 # in decimal
+	epsilon_function = False
+	epsilon_start = 0.3
+	epsilon_end = 0.01
+	epsilon_percentage = 0.5 # in decimal
 
 	alpha_function = False
 	alpha_start = 0.01
@@ -230,8 +230,8 @@ def trainDeepModel(load = False):
 	# error plot
 	# errors = []
 
-	print_episode = 100
-	total_episodes = 100000
+	print_episode = 1000
+	total_episodes = 1000000
 
 	# Saving model capabilities
 	saver = tf.train.Saver()

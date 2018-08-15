@@ -40,7 +40,7 @@ def train(s):
 	epsilon_function = True
 	epsilon_start = 0.5
 	epsilon_end = 0.05
-	epsilon_percentage = 0.4 # in decimal
+	epsilon_percentage = 0.5 # in decimal
 
 	# Test for an Epsilon linear function
 	# y = mx + c
@@ -51,7 +51,9 @@ def train(s):
 	avg_score = 0
 
 	print_episode = 100
-	total_episodes = 1000
+	total_episodes = 2000
+
+	start_time = time.time()
 
 	for episode in range(total_episodes):
 		# Reset the environment
@@ -86,7 +88,7 @@ def train(s):
 
 						if a[0] == "done":
 							done = True
-							print("\nEpisode done, #", episode)
+							# print("\nEpisode done, #", episode)
 							
 							state = np.zeros(4) # Needs to change to incorporate dead states
 							reward = int(a[1])
@@ -151,7 +153,12 @@ def train(s):
 
 
 		if (episode % print_episode == 0 and episode != 0) or (episode == total_episodes-1):
-			print("Episode:", episode, "   time:", avg_time/print_episode, "   score:", avg_score/print_episode, "   epsilon:", epsilon)
+			current_time = time.time()-start_time
+			print("Episode:", episode, 
+				"\ttime:", avg_time/print_episode, 
+				"\tscore:", avg_score/print_episode, 
+				"\tepsilon:", epsilon, 
+				"\ttime {0:.0f}:{1:.0f}".format(current_time/60, current_time%60))
 			np.savetxt(Q_textfile_path_save, Q.astype(np.float), fmt='%f', delimiter = " ")
 			avg_time = 0
 			avg_score = 0
@@ -174,14 +181,19 @@ def run(s):
 	epsilon = 0.005
 
 	# Testing for a certain amount of episodes
-	for episode in range(10):
+	for episode in range(1000):
 		# state, info = env.reset()
 		done = False
+
+		score = 0
+
+		prev_state = np.zeros(4)
+		prev_state[2] = -1
 
 		while not done:
 
 			try:
-				print("waiting for recv...")
+				# print("waiting for recv...")
 				# data = input("Send (q to Quit): ")
 				# s.send(str.encode("p\n"))
 				r = s.recv(1024)
@@ -214,6 +226,10 @@ def run(s):
 						
 							s.send(str.encode(str(action) + "\n"))
 
+							score = brute_force_scoring(state, prev_state, score)
+
+							prev_state = state
+
 					else:
 						s.close()
 						print("Socket has been closed")
@@ -228,7 +244,7 @@ def run(s):
 		
 
 		if episode % 1 == 0:
-			print("Episode:", episode, "   Score:")
+			print("Episode:", episode, "   Score:", score)
 
 
 # Play the game yourself :)
@@ -242,6 +258,11 @@ def play():
 def state_index(state_array):
     return int((GRID_SIZE**3)*state_array[0]+(GRID_SIZE**2)*state_array[1]+(GRID_SIZE**1)*state_array[2]+(GRID_SIZE**0)*state_array[3])
 
+def brute_force_scoring(state, prev_state, score):
+	if prev_state[2] == state[0] and prev_state[3] == state[1]:
+		score = score + 1
+
+	return score
 
 if __name__ == '__main__':
 
@@ -265,9 +286,9 @@ if __name__ == '__main__':
 
 	print("Connected...")
 
-	train(s) 
+	# train(s) 
 
-	# run(s)
+	run(s)
 
 
 

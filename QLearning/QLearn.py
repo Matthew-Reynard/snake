@@ -182,8 +182,8 @@ if __name__ == '__main__':
 
 	# CHOOSE 1 OF THE 3
 
-	train() 
+	# train() 
 
-	# run()
+	run()
 
 	# play()

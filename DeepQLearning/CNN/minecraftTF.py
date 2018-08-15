@@ -334,7 +334,7 @@ def trainDeepModel(s, load = False):
 
 								# if final state of the episode
 								if done:
-									Q_vector[:,action] = reward
+									Q_vector[:,prev_action] = reward
 									# print("Reward:", reward)
 								else:
 									# Gathering the now current state's action-value vector
@@ -345,13 +345,14 @@ def trainDeepModel(s, load = False):
 									maxq = sess.run(y_prime_max, feed_dict={y: y_prime})
 
 									# RL Equation
-									Q_vector[:,action] = reward + (gamma * maxq)
+									Q_vector[:,prev_action] = reward + (gamma * maxq)
 
 								_, e = sess.run([optimizer, error], feed_dict={x: prev_state_vector, y: Q_vector})
 
 
-							# save the previous state
+							# save the previous state and action
 							prev_state_vector = state_vector
+							prev_action = action
 
 						else:
 							s.close()
