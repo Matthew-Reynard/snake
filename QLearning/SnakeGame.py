@@ -31,8 +31,10 @@ import numpy as np
 import pygame
 from snakeAI import Snake
 from foodAI import Food
+from obstacleAI import Obstacle
 import sys
 import math # Only used for infinity game time
+import time
 
 # import csv
 # import pandas as pd
@@ -44,7 +46,7 @@ import math # Only used for infinity game time
 class Environment:
 
     # Initialise the Game Environment with default values
-    def __init__(self, wrap = False, grid_size = 10, rate = 100, max_time = math.inf, tail = False):
+    def __init__(self, wrap = False, grid_size = 10, rate = 100, max_time = math.inf, tail = False, obstacles = True):
 
         # self.FPS = 120 # NOT USED YET
         self.UPDATE_RATE = rate
@@ -52,6 +54,7 @@ class Environment:
         self.GRID_SIZE = grid_size
         self.ENABLE_WRAP = wrap
         self.ENABLE_TAIL = tail
+        self.ENABLE_OBSTACLES = obstacles
         
         self.DISPLAY_WIDTH = self.GRID_SIZE * self.SCALE
         self.DISPLAY_HEIGHT = self.GRID_SIZE * self.SCALE
@@ -65,11 +68,16 @@ class Environment:
         # Create Food 
         self.food = Food()
 
+        # Create Obstacles
+        self.no_of_obstacles = 5
+        self.obstacle = [Obstacle() for i in range(self.no_of_obstacles)]
+
         self.score = 0
         self.time = 0
         self.state = np.zeros(4)
 
         self.display = None
+        self.font = None
         self.bg = None
         self.clock = None
 
@@ -82,11 +90,18 @@ class Environment:
         pygame.display.set_caption('SnakeAI')
         self.clock = pygame.time.Clock()
 
+        pygame.font.init()
+        self.font = pygame.font.SysFont('Comic Sans MS', 30)
+
         # Creates a visual Snake 
         self.snake.create(pygame)
 
         # Creates visual Food 
         self.food.create(pygame)
+
+        # Creates visual Obstacles 
+        for i in range(self.no_of_obstacles):
+            self.obstacle[i].create(pygame)
 
         # Creates the grid background
         self.bg = pygame.image.load("../Images/Grid20.png").convert()
@@ -110,6 +125,10 @@ class Environment:
 
         # Update the head position of the snake
         self.snake.box[0] = (self.snake.x, self.snake.y)
+
+        # Create a piece of food that is not within the snake
+        for i in range(self.no_of_obstacles):
+            self.obstacle[i].make(self.GRID_SIZE, self.SCALE, self.snake)
 
         # Create a piece of food that is not within the snake
         self.food.make(self.GRID_SIZE, self.SCALE, self.snake)
@@ -146,6 +165,8 @@ class Environment:
         # Draw the background, the snake and the food
         self.display.blit(self.bg, (0, 0))
         self.food.draw(self.display)
+        for i in range(self.no_of_obstacles):
+            self.obstacle[i].draw(self.display)
         self.snake.draw(self.display)
 
         # Update the pygame display
@@ -191,6 +212,8 @@ class Environment:
         # If the snake has reached the food
         reached_food = False
 
+        hit_obstacle = False
+
         # If the episode is finished - after a certain amount of timesteps or it crashed
         done = False
 
@@ -215,6 +238,14 @@ class Environment:
             if self.snake.y < 0:
                 reward = -10
                 done = True
+
+        if self.ENABLE_OBSTACLES:
+            for i in range(self.no_of_obstacles):
+                hit_obstacle = ((self.snake.x, self.snake.y) == (self.obstacle[i].x, self.obstacle[i].y))
+
+                if hit_obstacle:
+                    # print("dead")
+                    done = True
 
         # Update the snakes tail positions (from back to front)
         if self.snake.tail_length > 0:
@@ -440,25 +471,57 @@ class Environment:
     def play(self):
 
         GAME_OVER = False
+        GAME_ON = True
+
+        wait = True
+        t = 3
 
         self.prerender()
 
-        self.reset()
+        while GAME_ON:
 
-        while not GAME_OVER:
+            self.reset()
 
-            action = self.render()
+            while not GAME_OVER:
 
-            # When the snake touches the food, game ends
-            # action_space has to be 3 for the players controls, 
-            # because they know that the snake can't go backwards
-            s, r, GAME_OVER, i = self.step(action, action_space = 3)
+                action = self.render()
 
-            # For the snake to look like it ate the food, render needs to be last
-            # Next piece of code if very BAD programming
-            if GAME_OVER:
-                print("Game Over")
-                # self.render()
+                if wait:
+                    text = self.font.render(str(t), True, (255, 255, 255))
+                    self.display.blit(text,(0,0))
+                    pygame.display.update()
+                    time.sleep(0.5)
+                    t =  t - 1
+                    if t == 0:
+                        t = 3
+                        wait = False
+                else:
+                    # When the snake touches the food, game ends
+                    # action_space has to be 3 for the players controls, 
+                    # because they know that the snake can't go backwards
+                    s, r, GAME_OVER, i = self.step(action, action_space = 3)
+
+                # For the snake to look like it ate the food, render needs to be last
+                # Next piece of code if very BAD programming
+                if GAME_OVER:
+                    print("Game Over")
+                    # self.render()
+
+            while GAME_OVER:
+                for event in pygame.event.get():
+                    # print(event) # DEBUGGING
+
+                    if event.type == pygame.QUIT:
+                        self.end()
+
+                    if event.type == pygame.KEYDOWN:
+                        # In order to stop training and still save the Q txt file
+                        if (event.key == pygame.K_q):
+                            self.end()
+
+                        if (event.key == pygame.K_SPACE):
+                            GAME_OVER = False;
+                            wait = True
 
         self.end()
 

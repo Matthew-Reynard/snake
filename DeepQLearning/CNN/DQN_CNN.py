@@ -55,7 +55,7 @@ LOGDIR = "./Logs/log1"
 # Parameters
 GRID_SIZE = 8
 SEED = 1
-WRAP = False
+WRAP = True
 TAIL = False
 
 # Number of hidden layers, nodes, channels, etc. 
@@ -182,7 +182,7 @@ def trainDeepModel(load = False):
 	# Hyper-parameters
 	alpha = 0.01  # Learning rate, i.e. which fraction of the Q values should be updated
 	gamma = 0.99  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
-	epsilon = 0.05  # Probability to choose random action instead of best action
+	epsilon = 0.1  # Probability to choose random action instead of best action
 
 	epsilon_function = False
 	epsilon_start = 0.3

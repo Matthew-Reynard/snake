@@ -166,7 +166,7 @@ def run():
 # Play the game yourself :)
 def play():
 
-	env = Environment(wrap = True, grid_size = 10, rate = 100, tail = False)
+	env = Environment(wrap = True, grid_size = 10, rate = 100, tail = True)
 
 	env.play()
 
@@ -184,6 +184,6 @@ if __name__ == '__main__':
 
 	# train() 
 
-	run()
+	# run()
 
-	# play()
+	play()
