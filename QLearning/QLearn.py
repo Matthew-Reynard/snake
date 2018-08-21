@@ -43,7 +43,7 @@ def train():
 	RENDER_TO_SCREEN = False
 
 	# rate should be 0 when not rendering, else it will lengthen training time unnecessarily
-	env = Environment(wrap = False, grid_size = 8, rate = 0, max_time = 50)
+	env = Environment(wrap = False, grid_size = 10, rate = 0, max_time = 50, obstacles = True)
 
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -68,7 +68,7 @@ def train():
 	avg_score = 0
 
 	print_episode = 100
-	total_episodes = 1000
+	total_episodes = 10000
 
 	for episode in range(total_episodes):
 		# Reset the environment
@@ -127,7 +127,7 @@ def run():
 
 	RENDER_TO_SCREEN = True
 
-	env = Environment(wrap = False, grid_size = 8, rate = 80, max_time = 100, tail = False)
+	env = Environment(wrap = False, grid_size = 10, rate = 80, max_time = 100, tail = False, obstacles = True)
 
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -151,7 +151,7 @@ def run():
 			else:
 				action = np.argmax(Q[env.state_index(state)])
 
-			print(state)
+			# print(state)
 
 			new_state, reward, done, info = env.step(action)
 
@@ -166,7 +166,7 @@ def run():
 # Play the game yourself :)
 def play():
 
-	env = Environment(wrap = True, grid_size = 10, rate = 100, tail = True)
+	env = Environment(wrap = False, grid_size = 10, rate = 100, tail = True, obstacles = True)
 
 	env.play()
 
@@ -184,6 +184,6 @@ if __name__ == '__main__':
 
 	# train() 
 
-	# run()
+	run()
 
-	play()
+	# play()

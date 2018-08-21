@@ -1,5 +1,6 @@
 # Maybe can use numpy.random instead of this
 import random
+import time
 
 class Food:
 
@@ -32,14 +33,16 @@ class Food:
         # self.rect = self.food_img.get_rect()
 
     #Load a food item into the screen at a random location
-    def make(self, grid_size, scale, snake):
+    def make(self, grid_size, scale, snake, enable_obstacles, obstacles):
         made = False
         rows = grid_size
         cols = grid_size
 
+        random.seed(time.time())
+
         while not made:
-            myRow = random.randint(0, rows-1)
-            myCol = random.randint(0, cols-1)
+            myRow = random.randint(1, rows-2)
+            myCol = random.randint(1, cols-2)
 
             # Making the food only in one position - Test 1
             # myRow = 3
@@ -70,6 +73,16 @@ class Food:
                     self.x = myCol * scale
                     self.y = myRow * scale
                     made = True # the food IS NOT within the snakes body
+
+            if enable_obstacles:
+                for i in range(obstacles.array_length):
+                    if self.pos == obstacles.array[i]:
+                        made = False
+                        break
+                    else:
+                        self.x = myCol * scale
+                        self.y = myRow * scale
+                        made = True # the food IS NOT within the snakes body
 
     #Draw the food
     def draw(self, display):

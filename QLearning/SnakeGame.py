@@ -69,8 +69,14 @@ class Environment:
         self.food = Food()
 
         # Create Obstacles
-        self.no_of_obstacles = 5
-        self.obstacle = [Obstacle() for i in range(self.no_of_obstacles)]
+        # self.no_of_obstacles = 5
+        # self.obstacle = [Obstacle() for i in range(self.no_of_obstacles)]
+
+        if self.ENABLE_OBSTACLES:
+            self.obstacle = Obstacle(20)
+            self.obstacle.make(self.GRID_SIZE, self.SCALE)
+        else:
+            self.obstacle = None
 
         self.score = 0
         self.time = 0
@@ -99,21 +105,46 @@ class Environment:
         # Creates visual Food 
         self.food.create(pygame)
 
-        # Creates visual Obstacles 
-        for i in range(self.no_of_obstacles):
-            self.obstacle[i].create(pygame)
+        # Creates visual Obstacles
+        # if self.ENABLE_OBSTACLES:
+        #     for i in range(self.no_of_obstacles):
+        #         self.obstacle[i].create(pygame)
+
+        if self.ENABLE_OBSTACLES:
+            self.obstacle.create(pygame)
+
+        # if self.ENABLE_OBSTACLES:
+        #     self.obstacle.make(self.GRID_SIZE, self.SCALE)
 
         # Creates the grid background
-        self.bg = pygame.image.load("../Images/Grid20.png").convert()
+        self.bg = pygame.image.load("../Images/Grid8_with_bounds.png").convert()
 
     def reset(self):
 
         # Reset the score to 0
         self.score = 0
 
+        # if self.ENABLE_OBSTACLES:
+        #     self.obstacle.make(self.GRID_SIZE, self.SCALE)
+
         # Starting at random positions
-        self.snake.x = np.random.randint(0,self.GRID_SIZE) * self.SCALE
-        self.snake.y = np.random.randint(0,self.GRID_SIZE) * self.SCALE
+        # self.snake.x = np.random.randint(0,self.GRID_SIZE) * self.SCALE
+        # self.snake.y = np.random.randint(0,self.GRID_SIZE) * self.SCALE
+        if self.ENABLE_OBSTACLES:
+            made = False
+            while not made:
+                self.snake.x = np.random.randint(1,self.GRID_SIZE-1) * self.SCALE
+                self.snake.y = np.random.randint(1,self.GRID_SIZE-1) * self.SCALE
+
+                if self.ENABLE_OBSTACLES:
+                    for i in range(0, self.obstacle.array_length):
+                        if (self.snake.x, self.snake.y) == (self.obstacle.array[i][0], self.obstacle.array[i][1]):
+                            made = False
+                        else:
+                            made = True
+        else:
+            self.snake.x = np.random.randint(1,self.GRID_SIZE-1) * self.SCALE
+            self.snake.y = np.random.randint(1,self.GRID_SIZE-1) * self.SCALE
 
         # Starting at the same spot
         # self.snake.x = 2 * self.SCALE
@@ -127,11 +158,12 @@ class Environment:
         self.snake.box[0] = (self.snake.x, self.snake.y)
 
         # Create a piece of food that is not within the snake
-        for i in range(self.no_of_obstacles):
-            self.obstacle[i].make(self.GRID_SIZE, self.SCALE, self.snake)
+        # if self.ENABLE_OBSTACLES:
+        #     for i in range(self.no_of_obstacles):
+        #         self.obstacle[i].make(self.GRID_SIZE, self.SCALE, self.snake)
 
         # Create a piece of food that is not within the snake
-        self.food.make(self.GRID_SIZE, self.SCALE, self.snake)
+        self.food.make(self.GRID_SIZE, self.SCALE, self.snake, self.ENABLE_OBSTACLES, self.obstacle)
 
         # Reset snakes tail
         self.snake.tail_length = 0
@@ -165,8 +197,12 @@ class Environment:
         # Draw the background, the snake and the food
         self.display.blit(self.bg, (0, 0))
         self.food.draw(self.display)
-        for i in range(self.no_of_obstacles):
-            self.obstacle[i].draw(self.display)
+
+        if self.ENABLE_OBSTACLES:
+            # for i in range(self.no_of_obstacles):
+            #     self.obstacle[i].draw(self.display)
+            self.obstacle.draw(self.display)
+
         self.snake.draw(self.display)
 
         # Update the pygame display
@@ -226,26 +262,27 @@ class Environment:
         if self.ENABLE_WRAP:
             self.wrap()
         else:
-            if self.snake.x > self.DISPLAY_WIDTH - self.SCALE:
+            if self.snake.x > self.DISPLAY_WIDTH - (self.SCALE*2):
                 reward = -10 # very negative reward, to ensure that it never crashes into the side
                 done = True 
-            if self.snake.x < 0:
+            if self.snake.x < (self.SCALE*1):
                 reward = -10
                 done = True
-            if self.snake.y > self.DISPLAY_HEIGHT - self.SCALE:
+            if self.snake.y > self.DISPLAY_HEIGHT - (self.SCALE*2):
                 reward = -10
                 done = True
-            if self.snake.y < 0:
+            if self.snake.y < (self.SCALE*1):
                 reward = -10
                 done = True
 
         if self.ENABLE_OBSTACLES:
-            for i in range(self.no_of_obstacles):
-                hit_obstacle = ((self.snake.x, self.snake.y) == (self.obstacle[i].x, self.obstacle[i].y))
+            for i in range(self.obstacle.array_length):
+                hit_obstacle = ((self.snake.x, self.snake.y) == (self.obstacle.array[i][0], self.obstacle.array[i][1]))
 
                 if hit_obstacle:
                     # print("dead")
                     done = True
+                    reward = -10
 
         # Update the snakes tail positions (from back to front)
         if self.snake.tail_length > 0:
@@ -278,7 +315,7 @@ class Environment:
             # CHOOSE 1 OF THE 2 BELOW:
 
             # Create a piece of food that is not within the snake
-            self.food.make(self.GRID_SIZE, self.SCALE, self.snake)
+            self.food.make(self.GRID_SIZE, self.SCALE, self.snake, self.ENABLE_OBSTACLES, self.obstacle)
             # Test for one food item at a time
             # done = True 
 

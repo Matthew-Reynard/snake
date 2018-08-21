@@ -2,6 +2,7 @@
 # import tensorflow as tf
 import numpy as np
 # from SnakeGame import Environment
+import random
 
 
 # #Creates tf constants. Not a normal Python variable
@@ -160,7 +161,14 @@ import numpy as np
 # path = "CNN/" + folder + "/Data1"
 
 # print(path)
-a = 1
-a = a + 1
+# a = 1
+# a = a + 1
 
-print(a)
+# print(a)
+
+Q = np.zeros((500000, 5))
+
+np.savetxt("./tmp/irl.txt", Q.astype(np.float), fmt='%.2f', delimiter = " ")
+
+
+# Q = np.loadtxt(Q_textfile_path_load, dtype='float', delimiter=" ")
