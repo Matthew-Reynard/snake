@@ -192,7 +192,7 @@ def irl_train():
 
 	csv_file_path = "./Data/log_file.csv"
 
-	RENDER_TO_SCREEN = True
+	RENDER_TO_SCREEN = False
 
 	# rate should be 0 when not rendering, else it will lengthen training time unnecessarily
 	env = Environment(wrap = False, grid_size = 10, rate = 80, tail = True, obstacles = False)
@@ -202,7 +202,7 @@ def irl_train():
 
 	Q = Qmatrix(0, env) # 0 - zeros, 1 - random, 2 - textfile
 
-	alpha = 0.5  # Learning rate, i.e. which fraction of the Q values should be updated
+	alpha = 0.15  # Learning rate, i.e. which fraction of the Q values should be updated
 	gamma = 0.99  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
 	epsilon = 0.0  # Probability to choose random action instead of best action
 
@@ -255,7 +255,7 @@ def irl_train():
 		state, info = env.irl_reset(snake_Xs[my_index], snake_Ys[my_index], food_Xs[my_index], food_Ys[my_index])
 		last_action = 3
 
-		print(state)
+		# print(state)
 
 		my_index = my_index + 1 #BUG: TODO: FIX MY_INDEX
 
@@ -274,12 +274,24 @@ def irl_train():
 
 				# print(self.time)
 				if my_index < len(my_actions):
-					print(time_stamps[my_index])
+
+					# Ensuring that it takes the last action pressed during that "tick"
+					last_action_pressed = False
+					i = 1
+					while not last_action_pressed:
+						if my_index + i < len(my_actions) and time_stamps[my_index] == time_stamps[my_index + i]:
+							my_index = my_index + 1
+							i = i + 1
+						else:
+							last_action_pressed = True
+
+					# print(time_stamps[my_index])
 					if env.time == time_stamps[my_index]:
 						action = my_actions[my_index]
 						last_action = action
-						my_index = my_index + 1
-						print("action",action)
+						if action != -1:
+							my_index = my_index + 1
+						# print("action",action)
 
 				if env.countdown:
 					text = env.font.render(str(t), True, (255, 255, 255))
@@ -309,7 +321,7 @@ def irl_train():
 					# print("Game Over")
 					avg_time += info["time"]
 					avg_score += info["score"]
-					my_index = my_index + 2
+					my_index = my_index + 1
 		            # self.render()
 
 			except KeyboardInterrupt as e:
