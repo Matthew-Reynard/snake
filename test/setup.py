@@ -1,4 +1,4 @@
-from setuptools import setuptools
+from setuptools import setup
 
 setup(
 	name="test",
@@ -8,8 +8,16 @@ setup(
 	author_email="matthewreynard24@gmail.com",
 	url="matthewreynard.com",
 	# packages=["snake"],
-	py_modules=["test"],
+	py_modules=[
+	"snakeAI",
+	"foodAI",
+	"obstacleAI",
+	"SnakeGame",
+	"QLearn"
+	],
 	install_requires=[
 	"numpy",
+	"pygame",
+	"pandas"
 	]
 )

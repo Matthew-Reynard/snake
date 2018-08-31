@@ -2,7 +2,7 @@
 # import tensorflow as tf
 import numpy as np
 # from SnakeGame import Environment
-import random
+# import random
 
 
 # #Creates tf constants. Not a normal Python variable
@@ -168,7 +168,7 @@ import random
 
 Q = np.zeros((500000, 5))
 
-np.savetxt("./tmp/irl.txt", Q.astype(np.float), fmt='%.2f', delimiter = " ")
+np.savetxt("./mytest.txt", Q.astype(np.float), fmt='%.2f', delimiter = " ")
 
 
 # Q = np.loadtxt(Q_textfile_path_load, dtype='float', delimiter=" ")
