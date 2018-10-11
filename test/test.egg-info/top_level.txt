@@ -1,5 +1,0 @@
-QLearn
-SnakeGame
-foodAI
-obstacleAI
-snakeAI

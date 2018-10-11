@@ -106,3 +106,4 @@ venv.bak/
 # all test stuff
 test.py
 test/
+tmp/
