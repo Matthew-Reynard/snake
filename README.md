@@ -1,6 +1,10 @@
 # snake
 Snake game using Reinforcement Learning (RL) and TensorFlow
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Matthew-Reynard/snake/master/Images/snake.png" width="200" title="Snake Game" alt="[Snake Game Image]">
+</p>
+
 *Note: still under construction*
 
 ---

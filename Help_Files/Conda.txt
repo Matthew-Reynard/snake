@@ -1,0 +1,33 @@
+This is a step-by-step guide to install and run a conda environment on Windows or Linux.
+* This guide requires Anaconda to be installed. Quick check, type the following commands:
+
+$ conda --version
+
+Once this is installed, select your operating system below and begin, otherwise go to https://www.anaconda.com/download/ to install Anaconda.
+
+-------------------------------------------------------------------
+                               Windows:
+-------------------------------------------------------------------
+Not sure yet...
+
+-------------------------------------------------------------------
+                               Linux:
+-------------------------------------------------------------------
+Notes:
+
+$ export PATH=~/anaconda3/bin:$PATH
+(run this command to use conda in the terminal)
+
+ENV = virtual environment name (you choose this)
+PATH_TO_PROJECT =>  path to your development folder or project
+
+First download anaconda and install with the following command once in the downloads directory
+
+Commands:
+$ bash Anaconda-(latest)-Linux-x86_64.sh
+$ conda create python=3.6 --name ENV
+$ conda activate ENV
+       OR
+$ source activate ENV (depending on you conda version)
+(parenthesis will appear on the left of the command input)
+$ conda deactivate

@@ -1,0 +1,20 @@
+Setting environment variables in different OS:
+
+-------------------------------------------------------------------
+                               Windows:
+-------------------------------------------------------------------
+Type "environment variables" in the search bar and change it.
+
+-------------------------------------------------------------------
+                               Linux:
+-------------------------------------------------------------------
+$ sudo gedit /etc/environment
+
+Type the following 2 lines in the file:
+
+PATH="PATH_TO_VARIABLE"
+export PATH
+
+or a simple "hack" is to type the following into the terminal before running the necessary commands:
+
+$ export PATH="PATH_TO_VARIABLE"
