@@ -31,6 +31,7 @@ from Environment_for_CNN_local import Environment
 import matplotlib.pyplot as plt # not used yet
 import time # Used to measure how long training takes
 import math # Time formatting
+import random
 
 from Trajectory import Traj 
 
@@ -61,7 +62,7 @@ SEED = 1
 WRAP = False
 TAIL = True
 
-T_MEMORY = 100000
+REPLAY_MEMORY = 100000
 
 # Number of hidden layers, nodes, channels, etc. 
 if TAIL:
@@ -180,7 +181,7 @@ def trainDeepModel(load = False):
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 80, max_time = 100, tail = TAIL)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 80, max_time = 60, tail = TAIL)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -188,10 +189,10 @@ def trainDeepModel(load = False):
 	# Hyper-parameters
 	alpha = 0.01  # Learning rate, i.e. which fraction of the Q values should be updated
 	gamma = 0.99  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
-	epsilon = 0.15  # Probability to choose random action instead of best action
+	epsilon = 0.1  # Probability to choose random action instead of best action
 
-	epsilon_function = False
-	epsilon_start = 0.6
+	epsilon_function = True
+	epsilon_start = 0.5
 	epsilon_end = 0.1
 	epsilon_percentage = 0.8 # in decimal
 
@@ -239,8 +240,8 @@ def trainDeepModel(load = False):
 	# error plot
 	# errors = []
 
-	print_episode = 100
-	total_episodes = 1000000
+	print_episode = 1000
+	total_episodes = 100000
 
 	# Saving model capabilities
 	saver = tf.train.Saver()
@@ -309,9 +310,8 @@ def trainDeepModel(load = False):
 				# Update environment with by performing action
 				new_state, reward, done, info = env.step(action, action_space=3)
 
-				# Update trajectory
-				
-				if len(tau) < T_MEMORY:
+				# Update trajectory (Update replay memory)
+				if len(tau) < REPLAY_MEMORY:
 					tau.append(Traj(state_vector, action, reward, env.local_state_vector_3D()))
 					# print(tau[i].new_state)
 					# i=i+1
@@ -321,8 +321,33 @@ def trainDeepModel(load = False):
 
 				state = new_state
 
-				# REPLAY_MEMORY
-				random_tau = random.randint(0, len(tau))
+				# Choose a random step from the replay memory
+				random_tau = random.randint(0, len(tau)-1)
+
+				# Get the Q vector of the training step
+				Q_vector = sess.run(Q_values, feed_dict={x: tau[random_tau].state})
+				
+				'''
+				Training using replay memory
+				'''
+				# if terminating state of episode
+				if tau[random_tau].reward == -1:
+					# Set the chosen action's current value to the reward value
+					Q_vector[:,tau[random_tau].action] = tau[random_tau].reward
+				else:
+					# Gets the Q vector of the new state
+					y_prime = sess.run(Q_values, feed_dict={x: tau[random_tau].new_state})
+
+					# Getting the best action value
+					maxq = sess.run(y_prime_max, feed_dict={y: y_prime})
+
+					# RL DQN Training Equation
+					Q_vector[:,tau[random_tau].action] = tau[random_tau].reward + (gamma * maxq)
+
+				_, e = sess.run([optimizer, error], feed_dict={x: tau[random_tau].state, y: Q_vector})
+
+				'''
+				Standard training with learning after every step
 
 				# if final state of the episode
 				if done:
@@ -339,21 +364,14 @@ def trainDeepModel(load = False):
 					# RL Equation
 					Q_vector[:,action] = reward + (gamma * maxq)
 
-					# TRYING EXPERIENCED REPLAY
-					# y_prime = sess.run(Q_values, feed_dict={x: tau[random_tau].new_state})
-
-					# # Equation for training
-					# maxq = sess.run(y_prime_max, feed_dict={y: y_prime})
-
-					# # RL Equation
-					# Q_vector[:,action] = tau[random_tau].reward + (gamma * maxq)
-
 
 				_, e = sess.run([optimizer, error], feed_dict={x: state_vector, y: Q_vector})
 				# _ = sess.run(optimizer, feed_dict={x: state_vector, y: Q_vector})
 				# e = sess.run(error,feed_dict={x:state_vector, y:Q_vector})
 				# sess.run(optimizer)
 				
+				'''
+
 				# DEBUGGING
 				# print("action:", action)
 				# print("y_prime:", y_prime)
@@ -371,7 +389,6 @@ def trainDeepModel(load = False):
 
 
 			if (episode % print_episode == 0 and episode != 0) or (episode == total_episodes-1):
-				print(tau[10].action)
 				current_time = time.time()-start_time
 				print("Ep:", episode, 
 					"\tavg t: {0:.3f}".format(avg_time/print_episode), 
@@ -547,39 +564,24 @@ def runDeepModel():
 
 # Play the game
 def play():
-	# print("\n ----- Playing the game -----\n")
+	print("\n ----- Playing the game -----\n")
 
-	# env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 200, tail = TAIL)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 200, tail = TAIL)
 
-	# env.play()
+	env.play()
 
 	# env.prerender()
-	
 	# env.reset()
-
 	# print(env.local_state_vector_3D())
-	
 	# env.render()
-
 	# time.sleep(5)
-
-	# tau = [Traj(1,2,3,4), Traj(4,5,6,5)]
-	tau = []
-	tau.append(Traj(np.zeros((3,9,9)), 8, 9, np.zeros((3,9,9))))
-	tau.append(Traj(np.zeros((3,9,9)), 8, 9, np.zeros((3,9,9))))
-	tau.append(Traj(np.zeros((3,9,9)), 8, 9, np.zeros((3,9,9))))
-	tau.append(Traj(np.zeros((3,9,9)), 8, 9, np.zeros((3,9,9))))
-	tau.append(Traj(np.zeros((3,9,9)), 8, 9, np.zeros((3,9,9))))
-
-	print(tau[3].new_state)
-	print(len(tau))
 
 
 # Choose the appropriate function to run - Need to find a better more user friendly way to implement this
 if __name__ == '__main__':
 
 	# --- Deep Neural Network with CNN --- #
-	trainDeepModel(load = True)
+	trainDeepModel(load = False)
 	# runDeepModel()
 
 	# --- Just for fun --- #
