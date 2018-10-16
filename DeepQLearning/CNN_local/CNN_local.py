@@ -62,7 +62,7 @@ SEED = 1
 WRAP = False
 TAIL = True
 
-REPLAY_MEMORY = 100000
+REPLAY_MEMORY = 500000
 
 # Number of hidden layers, nodes, channels, etc. 
 if TAIL:
@@ -192,9 +192,9 @@ def trainDeepModel(load = False):
 	epsilon = 0.1  # Probability to choose random action instead of best action
 
 	epsilon_function = True
-	epsilon_start = 0.5
+	epsilon_start = 0.2
 	epsilon_end = 0.1
-	epsilon_percentage = 0.8 # in decimal
+	epsilon_percentage = 0.5 # in decimal
 
 	alpha_function = False
 	alpha_start = 0.01
@@ -546,7 +546,7 @@ def runDeepModel():
 					action = sess.run(action_t, feed_dict={y: Q_vector})
 
 				# Update environment with by performing action
-				new_state, reward, done, info = env.step(action)
+				new_state, reward, done, info = env.step(action,action_space=3)
 
 				state = new_state
 
@@ -566,7 +566,7 @@ def runDeepModel():
 def play():
 	print("\n ----- Playing the game -----\n")
 
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 200, tail = TAIL)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 100, tail = TAIL)
 
 	env.play()
 
@@ -581,8 +581,8 @@ def play():
 if __name__ == '__main__':
 
 	# --- Deep Neural Network with CNN --- #
-	trainDeepModel(load = False)
-	# runDeepModel()
+	# trainDeepModel(load = True)
+	runDeepModel()
 
 	# --- Just for fun --- #
 	# play()

@@ -1,5 +1,4 @@
 '''
-
 Simple SnakeAI Game 
 
 @author: Matthew Reynard
@@ -48,9 +47,9 @@ class Environment:
 
         # self.FPS = 120 # NOT USED YET
         self.UPDATE_RATE = rate
-        self.SCALE = 20 # scale of the snake body 20x20 pixels
+        self.SCALE = 20 #Scale of the snake body 20x20 pixels
         self.GRID_SIZE = grid_size
-        self.LOCAL_GRID_SIZE = 9
+        self.LOCAL_GRID_SIZE = 9 #Has to be an odd number
         self.ENABLE_WRAP = wrap
         self.ENABLE_TAIL = tail
         
@@ -64,7 +63,8 @@ class Environment:
         self.snake = Snake()
 
         # Create Food 
-        self.food = Food()
+        self.NUM_OF_FOOD = 7
+        self.food = Food(self.NUM_OF_FOOD)
 
         self.score = 0
         self.time = 0
@@ -73,6 +73,7 @@ class Environment:
         self.display = None
         self.bg = None
         self.clock = None
+
 
     # If you want to render the game to the screen, you will have to prerender
     # in order to load the textures (images)
@@ -91,6 +92,7 @@ class Environment:
 
         # Creates the grid background
         self.bg = pygame.image.load("../../Images/Grid20.png").convert()
+
 
     # Resets environment
     def reset(self):
@@ -114,7 +116,8 @@ class Environment:
         self.snake.box[0] = (self.snake.x, self.snake.y)
 
         # Create a piece of food that is not within the snake
-        self.food.make(self.GRID_SIZE, self.SCALE, self.snake)
+        self.food.reset(self.GRID_SIZE, self.SCALE, self.snake)
+        # self.food.make_within_range(self.GRID_SIZE, self.SCALE, self.snake)
 
         # Reset snakes tail
         self.snake.tail_length = 0
@@ -161,6 +164,7 @@ class Environment:
 
         # Testing
         return action
+
 
     # Ending the Game -  This has to be at the end of the code, 
     # as the exit button on the pygame window doesn't work (not implemented yet)
@@ -237,7 +241,11 @@ class Environment:
                     done = True
 
         # Checking if the snake has reached the food
-        reached_food = ((self.snake.x, self.snake.y) == (self.food.x, self.food.y)) 
+        for i in range(self.NUM_OF_FOOD):
+            reached_food = ((self.snake.x, self.snake.y) == (self.food.array[i][0], self.food.array[i][1]))
+            if reached_food:
+                eaten_food = i
+                break
 
         # Reward: Including the distance between them
         # if reward == 0:
@@ -251,7 +259,10 @@ class Environment:
             # CHOOSE 1 OF THE 2 BELOW:
 
             # Create a piece of food that is not within the snake
-            self.food.make(self.GRID_SIZE, self.SCALE, self.snake)
+            # self.food.reset(self.GRID_SIZE, self.SCALE, self.snake)
+            if self.score + self.NUM_OF_FOOD <= self.GRID_SIZE**2:
+                # print(self.score)
+                self.food.make(self.GRID_SIZE, self.SCALE, self.snake, index = eaten_food)
             # Test for one food item at a time
             # done = True 
 
@@ -261,7 +272,7 @@ class Environment:
                 self.snake.box.append((self.snake.x, self.snake.y)) #adds a rectangle variable to snake.box array(list)
 
             # Reward functions
-            reward = 10
+            reward = 1
             # reward = 100 / (np.sqrt((self.snake.x-self.food.x)**2 + (self.snake.y-self.food.y)**2) + 1) # Including the distance between them
             # reward = 1000 * self.score
             # reward = 1000 / self.time # Including the time in the reward function
@@ -283,9 +294,11 @@ class Environment:
 
         return new_state, reward, done, info
 
+
     # Given the state array, return the index of that state as an integer
     # Used for the Qlearning lookup table
     def state_index(self, state_array):
+
         return int((self.GRID_SIZE**3)*state_array[0]+(self.GRID_SIZE**2)*state_array[1]+(self.GRID_SIZE**1)*state_array[2]+(self.GRID_SIZE**0)*state_array[3])
 
 
@@ -299,11 +312,13 @@ class Environment:
 
     # Set the environment to a particular state
     def set_state(self, state):
+
         self.state = state
 
 
     # Number of states with just the head and food
     def number_of_states(self):
+        
         return (self.GRID_SIZE**2)*((self.GRID_SIZE**2))
 
 
@@ -315,6 +330,7 @@ class Environment:
 
         # up, down, left, right
         # return 4
+
 
     # The state represented as a onehot 1D vector
     def state_vector(self):
@@ -374,6 +390,8 @@ class Environment:
 
         return state
 
+
+    # State as a 3D vector of the whole map for the CNN
     def state_vector_3D(self):
 
         if self.ENABLE_TAIL:
@@ -395,8 +413,11 @@ class Environment:
 
         return state
 
+
+    # State as a 3D vector of the local area around the snake
     def local_state_vector_3D(self): #(3,9,9)
 
+        #s = snake
         sx = int(self.snake.x/self.SCALE)
         sy = int(self.snake.y/self.SCALE)
 
@@ -407,11 +428,12 @@ class Environment:
             state[0, 4, 4] = 1
 
             # Food
-            x_prime = 4+int(self.food.x/self.SCALE)-int(self.snake.x/self.SCALE)
-            y_prime = 4+int(self.food.y/self.SCALE)-int(self.snake.y/self.SCALE)
+            for i in range(self.NUM_OF_FOOD):
+                x_prime = 4+int(self.food.array[i][0]/self.SCALE)-int(self.snake.x/self.SCALE)
+                y_prime = 4+int(self.food.array[i][1]/self.SCALE)-int(self.snake.y/self.SCALE)
 
-            if x_prime < 9 and x_prime >= 0 and y_prime < 9 and y_prime >= 0:
-                state[1, y_prime, x_prime] = 1
+                if x_prime < 9 and x_prime >= 0 and y_prime < 9 and y_prime >= 0:
+                    state[1, y_prime, x_prime] = 1
 
 
             # Obstacles
@@ -548,8 +570,8 @@ class Environment:
 
         return action
 
+
     # Lets you simply play the game
-    # Need to implement a log file to record the game, to attempt a IRL Algorithm
     def play(self):
 
         GAME_OVER = False
@@ -576,6 +598,7 @@ class Environment:
                 # self.render()
 
         self.end()
+
 
 # If I run this file by accident :P
 if __name__ == "__main__":
