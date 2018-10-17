@@ -272,7 +272,7 @@ class Environment:
                 self.snake.box.append((self.snake.x, self.snake.y)) #adds a rectangle variable to snake.box array(list)
 
             # Reward functions
-            reward = 1
+            reward = 10
             # reward = 100 / (np.sqrt((self.snake.x-self.food.x)**2 + (self.snake.y-self.food.y)**2) + 1) # Including the distance between them
             # reward = 1000 * self.score
             # reward = 1000 / self.time # Including the time in the reward function

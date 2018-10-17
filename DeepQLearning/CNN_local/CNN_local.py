@@ -187,14 +187,14 @@ def trainDeepModel(load = False):
 		env.prerender()
 
 	# Hyper-parameters
-	alpha = 0.01  # Learning rate, i.e. which fraction of the Q values should be updated
+	alpha = 0.001  # Learning rate, i.e. which fraction of the Q values should be updated
 	gamma = 0.99  # Discount factor, i.e. to which extent the algorithm considers possible future rewards
 	epsilon = 0.1  # Probability to choose random action instead of best action
 
 	epsilon_function = True
-	epsilon_start = 0.2
+	epsilon_start = 0.5
 	epsilon_end = 0.1
-	epsilon_percentage = 0.5 # in decimal
+	epsilon_percentage = 0.6 # in decimal
 
 	alpha_function = False
 	alpha_start = 0.01
@@ -581,8 +581,8 @@ def play():
 if __name__ == '__main__':
 
 	# --- Deep Neural Network with CNN --- #
-	# trainDeepModel(load = True)
-	runDeepModel()
+	trainDeepModel(load = True)
+	# runDeepModel()
 
 	# --- Just for fun --- #
 	# play()

@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 import math
+import matplotlib.pyplot as plt
 
 GRID_SIZE = 9
 
@@ -74,105 +75,34 @@ class Tau():
 
 if __name__ == '__main__':
 
-	# for i in range(10000):
-	# 	if i%60<10:
-	# 		if math.floor((i/60)%60)<10:
-	# 			print("\ttime {0:.0f}:0{1:.0f}:0{2:.0f}".format(math.floor((i/60)/60), math.floor((i/60)%60), i%60))
-	# 		else:
-	# 			print("\ttime {0:.0f}:{1:.0f}:0{2:.0f}".format(math.floor((i/60)/60), math.floor((i/60)%60), i%60))
-	# 	else:
-	# 		if math.floor((i/60)%60)<10:
-	# 			print("\ttime {0:.0f}:0{1:.0f}:{2:.0f}".format(math.floor((i/60)/60), math.floor((i/60)%60), i%60))
-	# 		else:
-	# 			print("\ttime {0:.0f}:{1:.0f}:{2:.0f}".format(math.floor((i/60)/60), math.floor((i/60)%60), i%60))
+	total_episodes = 100 
 
-	a = [Tau(1,2,3), Tau(4,5,6)]
+	scale_factor = 100
 
-	a.append(Tau(np.zeros((3,9,9)),1,9))
+	start = 0.7
+	end = 0.5
+	range_ = 0.5
 
 
-	for i in range(1000):
-		print(a[0].field3)
-		print("len: ",len(a))
+	x = np.arange(0,total_episodes)
+	y = np.zeros(total_episodes)
+	y[0] = start
+	print(x.size)
 
-		if len(a)<100:
-			a.append(Tau(np.zeros((3,9,9)),4,9))
-		else:
-			a.pop(0)
-			a.append(Tau(np.zeros((3,9,9)),4,i))
+	print(np.exp(-np.log(((2+1)/10)*100)))
 
+	for i in range(total_episodes):
+		# print(i, x[i])
+		# y[i] = np.exp(-np.log((((x[i]+1)/total_episodes)*scale_factor))-np.log(1/(start-end))) + end
+		y[i] = np.exp(-np.log(x[i]+1))*10
 
-	# Q = createDeepModel(x)
+	# y = np.exp(-np.log((x/total_episodes)*scale_factor)-np.log(1/(start-end))) + end
 
-	# init = tf.global_variables_initializer()
-
-	# with tf.Session() as sess:
-	# 	# Initialize global variables
-	# 	sess.run(init)
-
-	# 	state_vector = np.array([[[1, 2, 3, 4, 5, 6, 7, 8], 
-	# 							[1, 2, 3, 4, 5, 6, 7, 8],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8], 
-	# 							[1, 2, 3, 4, 5, 6, 7, 8]],
-
-	# 							[[1, 2, 3, 4, 5, 6, 7, 8], 
-	# 							[1, 2, 3, 4, 5, 6, 7, 8],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8], 
-	# 							[1, 2, 3, 4, 5, 6, 7, 8]],
-
-	# 							[[1, 2, 3, 4, 5, 6, 7, 8], 
-	# 							[1, 2, 3, 4, 5, 6, 7, 8],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8], 
-	# 							[1, 2, 3, 4, 5, 6, 7, 8]],
-	# 							])
-
-	# 	state_vector_9 = np.array([[[1, 2, 3, 4, 5, 6, 7, 8, 9], 
-	# 							[1, 2, 3, 4, 5, 6, 7, 8, 9],
-	# 							[1, 2, 3, 4, 5, 6, 7, 8, 9],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8, 9],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8, 9],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8, 9],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8, 9],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8, 9], 
-	# 							[1, 2, 3, 4, 5, 6, 7, 8, 9]],
-
-	# 							[[1, 2, 3, 4, 5, 6, 7, 8, 9], 
-	# 							[1, 2, 3, 4, 5, 6, 7, 8, 9],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8, 9],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8, 9],
-	# 							[1, 2, 3, 4, 5, 6, 7, 8, 9],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8, 9],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8, 9],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8, 9], 
-	# 							[1, 2, 3, 4, 5, 6, 7, 8, 9]],
-
-	# 							[[1, 2, 3, 4, 5, 6, 7, 8, 9], 
-	# 							[1, 2, 3, 4, 5, 6, 7, 8, 9],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8, 9],
-	# 							[1, 2, 3, 4, 5, 6, 7, 8, 9],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8, 9],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8, 9],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8, 9],  
-	# 							[1, 2, 3, 4, 5, 6, 7, 8, 9], 
-	# 							[1, 2, 3, 4, 5, 6, 7, 8, 9]],
-	# 							])
+	# print(np.exp(-np.log(100)-np.log(1/(start-end))) + end)
+	# y = 1/np.power(1.01,x) + end
 
 
-	# 	print(state_vector.shape)
-
-	# 	Q_vector = sess.run(Q, feed_dict={x: state_vector_9})
-
-	# 	print(Q_vector)
-
+	# plt.plot([np.mean(errors[i:i+500]) for i in range(len(errors) - 500)])
+	plt.plot(x,y/10)
+	plt.savefig("./e.png")
+	plt.show()
