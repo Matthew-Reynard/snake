@@ -2,6 +2,7 @@ import numpy as np
 import tensorflow as tf
 import math
 import matplotlib.pyplot as plt
+import random
 
 GRID_SIZE = 9
 
@@ -75,34 +76,57 @@ class Tau():
 
 if __name__ == '__main__':
 
-	total_episodes = 100 
 
-	scale_factor = 100
+	# allowed = list((range(2), range(2)))
+	allowed = []
 
-	start = 0.7
-	end = 0.5
-	range_ = 0.5
+	for j in range(3):
+		for i in range(3):
+			allowed.append((i,j))
+
+	disallowed = [(1,0)]
+
+	a = [(0,0),(2,0)]
+
+	[disallowed.append(b) for b in a[3:]]
+
+	# allowed.remove([pos for pos in disallowed])
+
+	[allowed.remove(pos) for pos in disallowed]
+
+	# print(np.asarray(allowed))
+
+	for i in range(10):
+		print(random.choice((allowed)))
+
+	# total_episodes = 100 
+
+	# scale_factor = 100
+
+	# start = 0.7
+	# end = 0.5
+	# range_ = 0.5
 
 
-	x = np.arange(0,total_episodes)
-	y = np.zeros(total_episodes)
-	y[0] = start
-	print(x.size)
+	# x = np.arange(0,total_episodes)
+	# y = np.zeros(total_episodes)
+	# y[0] = start
+	# print(x.size)
 
-	print(np.exp(-np.log(((2+1)/10)*100)))
+	# print(np.exp(-np.log(((2+1)/10)*100)))
 
-	for i in range(total_episodes):
-		# print(i, x[i])
-		# y[i] = np.exp(-np.log((((x[i]+1)/total_episodes)*scale_factor))-np.log(1/(start-end))) + end
-		y[i] = np.exp(-np.log(x[i]+1))*10
+	# for i in range(total_episodes):
+	# 	# print(i, x[i])
+	# 	# y[i] = np.exp(-np.log((((x[i]+1)/total_episodes)*scale_factor))-np.log(1/(start-end))) + end
+	# 	y[i] = np.exp(-np.log(x[i]+1))*10
 
-	# y = np.exp(-np.log((x/total_episodes)*scale_factor)-np.log(1/(start-end))) + end
+	# # y = np.exp(-np.log((x/total_episodes)*scale_factor)-np.log(1/(start-end))) + end
 
-	# print(np.exp(-np.log(100)-np.log(1/(start-end))) + end)
-	# y = 1/np.power(1.01,x) + end
+	# # print(np.exp(-np.log(100)-np.log(1/(start-end))) + end)
+	# # y = 1/np.power(1.01,x) + end
 
 
-	# plt.plot([np.mean(errors[i:i+500]) for i in range(len(errors) - 500)])
-	plt.plot(x,y/10)
-	plt.savefig("./e.png")
-	plt.show()
+	# # plt.plot([np.mean(errors[i:i+500]) for i in range(len(errors) - 500)])
+	# plt.plot(x,y/10)
+	# plt.savefig("./e.png")
+	# plt.show()

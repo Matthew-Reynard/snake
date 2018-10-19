@@ -30,6 +30,7 @@ import numpy as np
 import pygame
 from snakeAI import Snake
 from foodAI import Food
+from obstacleAI import Obstacle
 import sys
 import math # Only used for infinity game time
 
@@ -43,7 +44,7 @@ import math # Only used for infinity game time
 class Environment:
 
     # Initialise the Game Environment with default values
-    def __init__(self, wrap = False, grid_size = 10, rate = 100, max_time = math.inf, tail = False):
+    def __init__(self, wrap = False, grid_size = 10, rate = 100, max_time = math.inf, tail = False, obstacles = False):
 
         # self.FPS = 120 # NOT USED YET
         self.UPDATE_RATE = rate
@@ -52,6 +53,7 @@ class Environment:
         self.LOCAL_GRID_SIZE = 9 #Has to be an odd number
         self.ENABLE_WRAP = wrap
         self.ENABLE_TAIL = tail
+        self.ENABLE_OBSTACLES = obstacles
         
         self.DISPLAY_WIDTH = self.GRID_SIZE * self.SCALE
         self.DISPLAY_HEIGHT = self.GRID_SIZE * self.SCALE
@@ -63,8 +65,10 @@ class Environment:
         self.snake = Snake()
 
         # Create Food 
-        self.NUM_OF_FOOD = 7
+        self.NUM_OF_FOOD = 3
         self.food = Food(self.NUM_OF_FOOD)
+
+        self.obstacle = Obstacle(3)
 
         self.score = 0
         self.time = 0
@@ -73,6 +77,12 @@ class Environment:
         self.display = None
         self.bg = None
         self.clock = None
+
+        self.grid = []
+
+        for j in range(self.GRID_SIZE):
+            for i in range(self.GRID_SIZE):
+                self.grid.append((i*self.SCALE, j*self.SCALE))
 
 
     # If you want to render the game to the screen, you will have to prerender
@@ -89,6 +99,9 @@ class Environment:
 
         # Creates visual Food 
         self.food.create(pygame)
+
+        # Creates visual Obstacles 
+        self.obstacle.create(pygame)
 
         # Creates the grid background
         self.bg = pygame.image.load("../../Images/Grid20.png").convert()
@@ -112,17 +125,25 @@ class Environment:
         self.snake.dx = 1
         self.snake.dy = 0
 
+        self.snake.pos = (self.snake.x, self.snake.y)
+
+        disallowed = [self.snake.pos]
+
         # Update the head position of the snake
-        self.snake.box[0] = (self.snake.x, self.snake.y)
+        # self.snake.box[0] = (self.snake.x, self.snake.y)
+        # Create obstacles at random positions
+        self.obstacle.reset(self.grid, disallowed)
+
+        [disallowed.append(grid_pos) for grid_pos in self.obstacle.array]
 
         # Create a piece of food that is not within the snake
-        self.food.reset(self.GRID_SIZE, self.SCALE, self.snake)
+        self.food.reset(self.grid, disallowed)
         # self.food.make_within_range(self.GRID_SIZE, self.SCALE, self.snake)
 
         # Reset snakes tail
         self.snake.tail_length = 0
         self.snake.box.clear()
-        self.snake.box = [(self.snake.x, self.snake.y)] 
+        self.snake.box = [self.snake.pos] 
 
         # Fill the state array with the snake and food coordinates on the grid
         self.state[0] = int(self.snake.x / self.SCALE)
@@ -150,6 +171,7 @@ class Environment:
 
         # Draw the background, the snake and the food
         self.display.blit(self.bg, (0, 0))
+        self.obstacle.draw(self.display)
         self.food.draw(self.display)
         self.snake.draw(self.display)
 
@@ -177,32 +199,33 @@ class Environment:
     # If the snake goes out of the screen bounds, wrap it around
     def wrap(self):
         if self.snake.x > self.DISPLAY_WIDTH - self.SCALE:
-            self.snake.x = 0;
+            self.snake.x = 0
         if self.snake.x < 0:
-            self.snake.x = self.DISPLAY_WIDTH - self.SCALE;
+            self.snake.x = self.DISPLAY_WIDTH - self.SCALE
         if self.snake.y > self.DISPLAY_HEIGHT - self.SCALE:
-            self.snake.y = 0;
+            self.snake.y = 0
         if self.snake.y < 0:
-            self.snake.y = self.DISPLAY_HEIGHT - self.SCALE;
+            self.snake.y = self.DISPLAY_HEIGHT - self.SCALE
+        self.snake.pos = (self.snake.x, self.snake.y)
 
 
     # Step through the game, one state at a time.
     # Return the reward, the new_state, whether its reached_food or not, and the time
     def step(self, action, action_space = 4):
+        # Increment time step
         self.time += 1
-
-        # Test
-        # self.score += 1
 
         # If the snake has reached the food
         reached_food = False
+
+        hit_obstacle = False
 
         # If the episode is finished - after a certain amount of timesteps or it crashed
         done = False
 
         # Initialze to -1 for every time step - to find the fastest route (can be a more negative reward)
         # reward = -1
-        reward = 0.05
+        reward = -0.05
 
         # Update the position of the snake head and tail
         self.snake.update(self.SCALE, action, action_space)
@@ -222,6 +245,14 @@ class Environment:
             if self.snake.y < 0:
                 reward = -1
                 done = True
+
+        for i in range(self.obstacle.array_length):
+            hit_obstacle = (self.snake.pos == self.obstacle.array[i])
+
+            if hit_obstacle:
+                # print("dead")
+                done = True
+                reward = -1
 
         # Update the snakes tail positions (from back to front)
         if self.snake.tail_length > 0:
@@ -261,8 +292,9 @@ class Environment:
             # Create a piece of food that is not within the snake
             # self.food.reset(self.GRID_SIZE, self.SCALE, self.snake)
             if self.score + self.NUM_OF_FOOD <= self.GRID_SIZE**2:
-                # print(self.score)
-                self.food.make(self.GRID_SIZE, self.SCALE, self.snake, index = eaten_food)
+                disallowed = []
+                [disallowed.append(grid_pos) for grid_pos in self.obstacle.array]
+                self.food.make(self.grid, self.snake, disallowed, index = eaten_food)
             # Test for one food item at a time
             # done = True 
 
@@ -272,7 +304,7 @@ class Environment:
                 self.snake.box.append((self.snake.x, self.snake.y)) #adds a rectangle variable to snake.box array(list)
 
             # Reward functions
-            reward = 10
+            reward = 1
             # reward = 100 / (np.sqrt((self.snake.x-self.food.x)**2 + (self.snake.y-self.food.y)**2) + 1) # Including the distance between them
             # reward = 1000 * self.score
             # reward = 1000 / self.time # Including the time in the reward function

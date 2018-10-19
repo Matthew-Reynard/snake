@@ -5,6 +5,8 @@ class Snake:
         self.y = 0
         self.dx = 0
         self.dy = 0
+
+        self.pos = (self.x, self.y)
         
         self.head_img = None
 
@@ -14,7 +16,7 @@ class Snake:
 
         # List of position tuples (x,y) for the snakes body 
         # self.box[0] => the head of the snake
-        self.box = [(self.x, self.y)] 
+        self.box = [] 
 
         self.tail_length = 0 # basically len(self.box) - 1
 
@@ -162,6 +164,8 @@ class Snake:
         # Updating positions using velocity
         self.x += self.dx * scale
         self.y += self.dy * scale
+
+        self.pos = (self.x, self.y)
 
         # # Update the head position of the snake
         # self.box[0] = (self.x, self.y)

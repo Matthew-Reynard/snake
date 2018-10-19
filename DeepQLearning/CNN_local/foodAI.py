@@ -34,92 +34,33 @@ class Food:
 
         # self.rect = self.food_img.get_rect()
 
-    def reset(self, grid_size, scale, snake):
+    def reset(self, grid, disallowed):
         self.array.clear()
 
+        # Make a copy of the grid
+        allowed = grid[:]
+
+        [allowed.remove(pos) for pos in disallowed]
+
         for i in range(self.amount):
-            made = False
-            while not made:
-                different = True
-                myRow = random.randint(0, grid_size-1)
-                myCol = random.randint(0, grid_size-1)
-
-                self.pos = (myCol * scale, myRow * scale) # multiplying by scale
-
-                if i > 0:
-                    for n in range(len(self.array)):
-                        # print(n)
-                        # print(n,len(self.array))
-                        if self.pos == self.array[n]:
-                            # print(self.pos, self.array[n])
-                            different = False
-                            break
-
-                if different:
-                    for k in range(0, snake.tail_length + 1):
-                        # print("making food")
-                        # Need to change this to the whole body of the snake
-                        if self.pos == snake.box[k]:
-                        # if self.pos == (snake.x, snake.y):
-                            made = False # the food IS within the snakes body
-                            break
-                        else:
-                            self.x = self.pos[0]
-                            self.y = self.pos[1]
-                            self.array.append((self.x, self.y))
-                            made = True # the food IS NOT within the snakes body
-
-        # print(self.array)
+            new_pos = random.choice((allowed))
+            self.array.append(new_pos)
+            allowed.remove(new_pos)
 
 
     # Load a food item into the screen at a random location
-    def make(self, grid_size, scale, snake, index = 0):
-        made = False
-        while not made:
-            different = True
-            myRow = random.randint(0, grid_size-1)
-            myCol = random.randint(0, grid_size-1)
+    def make(self, grid, snake, disallowed, index = 0):
+        
+        # Make a copy of the grid
+        allowed = grid[:]
 
-            # Making the food only in one position - Test 1
-            # myRow = 3
-            # myCol = 3
+        [disallowed.append(grid_pos) for grid_pos in snake.box[1:]]
 
-            # Making the food only in one of three positions - Test 2
-            # r = random.randint(0,2)
-            # if r == 0:
-            #     myRow = 1
-            #     myCol = 5
-            # if r == 1:
-            #     myRow = 6
-            #     myCol = 6
-            # if r == 2:
-            #     myRow = 5
-            #     myCol = 1
+        [disallowed.append(grid_pos) for grid_pos in self.array]
 
-            self.pos = (myCol * scale, myRow * scale) # multiplying by scale
+        [allowed.remove(pos) for pos in disallowed]
 
-            for i in range(self.amount):
-                if i != index:
-                    if self.pos == self.array[i]:
-                        different = False
-                        break
-
-            if different:
-                for i in range(0, snake.tail_length + 1):
-                    # print("making food")
-                    # Need to change this to the whole body of the snake
-                    if self.pos == snake.box[i]:
-                    # if self.pos == (snake.x, snake.y):
-                        made = False # the food IS within the snakes body
-                        break
-                    else:
-                        self.x = myCol * scale
-                        self.y = myRow * scale
-                        self.array[index] = (self.x, self.y)
-                        made = True # the food IS NOT within the snakes body
-            else:
-                pass
-                # print("not different")
+        self.array[index] = random.choice((allowed))
 
     # make a piece of food within the local grid
     def make_within_range(self, grid_size, scale, snake, local_grid_size = 3):

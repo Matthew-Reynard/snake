@@ -59,7 +59,7 @@ LOGDIR = "./Logs/log0"
 # Parameters
 GRID_SIZE = 9
 SEED = 1
-WRAP = False
+WRAP = True
 TAIL = True
 
 REPLAY_MEMORY = 500000
@@ -566,7 +566,7 @@ def runDeepModel():
 def play():
 	print("\n ----- Playing the game -----\n")
 
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 100, tail = TAIL)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 100, tail = TAIL, obstacles = True)
 
 	env.play()
 
@@ -581,8 +581,8 @@ def play():
 if __name__ == '__main__':
 
 	# --- Deep Neural Network with CNN --- #
-	trainDeepModel(load = True)
+	# trainDeepModel(load = True)
 	# runDeepModel()
 
 	# --- Just for fun --- #
-	# play()
+	play()
