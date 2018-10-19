@@ -58,8 +58,9 @@ LOGDIR = "./Logs/log0"
 
 # Parameters
 GRID_SIZE = 9
+LOCAL_GRID_SIZE = 9 # Has to be an odd number (I think...)
 SEED = 1
-WRAP = True
+WRAP = False
 TAIL = True
 
 REPLAY_MEMORY = 500000
@@ -82,7 +83,7 @@ filter2_size = 3
 n_actions = 4
 
 # input - shape is included to minimise unseen errors
-x = tf.placeholder(tf.float32, [n_input_channels, GRID_SIZE, GRID_SIZE], name="Input")
+x = tf.placeholder(tf.float32, [n_input_channels, LOCAL_GRID_SIZE, LOCAL_GRID_SIZE], name="Input")
 
 # output
 y = tf.placeholder(tf.float32, [1, n_actions], name="Output")
@@ -148,7 +149,7 @@ def createDeepModel(data, load_variables = False):
 			   	  'b_out':tf.Variable(tf.constant(0.1, shape=[n_actions]), name = 'b_out')}
 
 	# Model operations
-	x = tf.reshape(data, shape=[-1, GRID_SIZE, GRID_SIZE, n_input_channels])
+	x = tf.reshape(data, shape=[-1, LOCAL_GRID_SIZE, LOCAL_GRID_SIZE, n_input_channels])
 
 	conv1 = conv2d(x, weights['W_conv1'], name = 'conv1')
 	# conv1 = maxpool2d(conv1, name = 'max_pool1')
@@ -181,7 +182,7 @@ def trainDeepModel(load = False):
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 80, max_time = 60, tail = TAIL)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 80, max_time = 60, tail = TAIL, action_space=3)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -302,13 +303,13 @@ def trainDeepModel(load = False):
 
 				# Deciding one which action to take
 				if np.random.rand() <= epsilon:
-					action = env.sample()
+					action = env.sample_action()
 				else:
 					# "action" is the max value of the Q values (output vector of NN)
 					action = sess.run(action_t, feed_dict={y: Q_vector})
 
 				# Update environment with by performing action
-				new_state, reward, done, info = env.step(action, action_space=3)
+				new_state, reward, done, info = env.step(action)
 
 				# Update trajectory (Update replay memory)
 				if len(tau) < REPLAY_MEMORY:
@@ -457,7 +458,7 @@ def runDeepModel():
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
-	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 80, max_time = 100, tail = TAIL)
+	env = Environment(wrap = WRAP, grid_size = GRID_SIZE, rate = 80, max_time = 100, tail = TAIL, action_space=3)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -540,13 +541,13 @@ def runDeepModel():
 
 				# Deciding one which action to take
 				if np.random.rand() <= epsilon:
-					action = env.sample()
+					action = env.sample_action()
 				else:
 					# "action" is the max value of the Q values (output vector of NN)
 					action = sess.run(action_t, feed_dict={y: Q_vector})
 
 				# Update environment with by performing action
-				new_state, reward, done, info = env.step(action,action_space=3)
+				new_state, reward, done, info = env.step(action)
 
 				state = new_state
 
@@ -582,7 +583,7 @@ if __name__ == '__main__':
 
 	# --- Deep Neural Network with CNN --- #
 	# trainDeepModel(load = True)
-	# runDeepModel()
+	runDeepModel()
 
 	# --- Just for fun --- #
-	play()
+	# play()

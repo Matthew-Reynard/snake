@@ -32,28 +32,28 @@ from snakeAI import Snake
 from foodAI import Food
 from obstacleAI import Obstacle
 import sys
-import math # Only used for infinity game time
+import math # Used for infinity game time
 
 # import csv
 # import pandas as pd
 # import matplotlib.pyplot as plt 
 
-# Trying to use a DQN with TF instead of the normal Q Learning
-# import tensorflow as tf
-
 class Environment:
 
-    # Initialise the Game Environment with default values
-    def __init__(self, wrap = False, grid_size = 10, rate = 100, max_time = math.inf, tail = False, obstacles = False):
+    def __init__(self, wrap = False, grid_size = 10, rate = 100, max_time = math.inf, tail = False, obstacles = False, action_space = 3):
+        """
+        Initialise the Game Environment with default values
+        """
 
         # self.FPS = 120 # NOT USED YET
         self.UPDATE_RATE = rate
-        self.SCALE = 20 #Scale of the snake body 20x20 pixels
+        self.SCALE = 20 # Scale of the snake body 20x20 pixels
         self.GRID_SIZE = grid_size
-        self.LOCAL_GRID_SIZE = 9 #Has to be an odd number
+        self.LOCAL_GRID_SIZE = 9 # Has to be an odd number
         self.ENABLE_WRAP = wrap
         self.ENABLE_TAIL = tail
         self.ENABLE_OBSTACLES = obstacles
+        self.ACTION_SPACE = action_space
         
         self.DISPLAY_WIDTH = self.GRID_SIZE * self.SCALE
         self.DISPLAY_HEIGHT = self.GRID_SIZE * self.SCALE
@@ -64,11 +64,13 @@ class Environment:
         # Create and Initialise Snake 
         self.snake = Snake()
 
-        # Create Food 
-        self.NUM_OF_FOOD = 3
+        # Create Food
+        self.NUM_OF_FOOD = 100
         self.food = Food(self.NUM_OF_FOOD)
 
-        self.obstacle = Obstacle(3)
+        # Create Obstacles
+        self.NUM_OF_OBSTACLES = 0
+        self.obstacle = Obstacle(self.NUM_OF_OBSTACLES)
 
         self.score = 0
         self.time = 0
@@ -78,6 +80,7 @@ class Environment:
         self.bg = None
         self.clock = None
 
+        # Used putting food and obstacles on the grid
         self.grid = []
 
         for j in range(self.GRID_SIZE):
@@ -85,9 +88,12 @@ class Environment:
                 self.grid.append((i*self.SCALE, j*self.SCALE))
 
 
-    # If you want to render the game to the screen, you will have to prerender
-    # in order to load the textures (images)
     def prerender(self):
+        """
+        If you want to render the game to the screen, you will have to prerender
+        Load textures / images
+        """
+
         pygame.init()
 
         self.display = pygame.display.set_mode((self.DISPLAY_WIDTH, self.DISPLAY_HEIGHT))
@@ -107,8 +113,8 @@ class Environment:
         self.bg = pygame.image.load("../../Images/Grid20.png").convert()
 
 
-    # Resets environment
     def reset(self):
+        """Reset the environment"""
 
         # Reset the score to 0
         self.score = 0
@@ -160,8 +166,8 @@ class Environment:
         return self.state, info
 
 
-    # Renders ONLY the CURRENT state
     def render(self):
+        """Renders ONLY the CURRENT state"""
 
         # Mainly to close the window and stop program when it's running
         action = self.controls()
@@ -188,16 +194,21 @@ class Environment:
         return action
 
 
-    # Ending the Game -  This has to be at the end of the code, 
-    # as the exit button on the pygame window doesn't work (not implemented yet)
     def end(self):
+        """
+        Ending the Game -  This has to be at the end of the code
+        Clean way to end the pygame env
+        with a few backups...
+        """
+
         pygame.quit()
         quit()
         sys.exit(0) # safe backup  
 
 
-    # If the snake goes out of the screen bounds, wrap it around
     def wrap(self):
+        """ If the snake goes out the screen bounds, wrap it around"""
+
         if self.snake.x > self.DISPLAY_WIDTH - self.SCALE:
             self.snake.x = 0
         if self.snake.x < 0:
@@ -209,9 +220,12 @@ class Environment:
         self.snake.pos = (self.snake.x, self.snake.y)
 
 
-    # Step through the game, one state at a time.
-    # Return the reward, the new_state, whether its reached_food or not, and the time
-    def step(self, action, action_space = 4):
+    def step(self, action, action_space = self.ACTION_SPACE):
+        """
+        Step through the game, one state at a time.
+        Return the reward, the new_state, whether its reached_food or not, and the time
+        """
+
         # Increment time step
         self.time += 1
 
@@ -327,45 +341,57 @@ class Environment:
         return new_state, reward, done, info
 
 
-    # Given the state array, return the index of that state as an integer
-    # Used for the Qlearning lookup table
     def state_index(self, state_array):
-
+        """
+        Given the state array, return the index of that state as an integer
+        Used for the Qlearning lookup table
+        """
         return int((self.GRID_SIZE**3)*state_array[0]+(self.GRID_SIZE**2)*state_array[1]+(self.GRID_SIZE**1)*state_array[2]+(self.GRID_SIZE**0)*state_array[3])
 
 
-    # Random action generator
-    def sample(self):
-        # Can't use this with a tail, else it will have a double chance of doing nothing
-        action = np.random.randint(0,4) 
-        # action = np.random.randint(0,3)
-        return action
+    def sample_action(self):
+        """
+        Return a random action
+
+        Can't use action space 4 with a tail, else it will have a double chance of doing nothing
+        or crash into itself
+        """
+        return np.random.randint(0, self.ACTION_SPACE) 
 
 
-    # Set the environment to a particular state
     def set_state(self, state):
-
+        """Set the state of the game environment"""
         self.state = state
 
 
-    # Number of states with just the head and food
     def number_of_states(self):
-        
+        """
+        Return the number of states with just the snake head and 1 food
+
+        Used for Q Learning look up table
+        """
         return (self.GRID_SIZE**2)*((self.GRID_SIZE**2))
 
 
-    # Number of actions that can be taken
     def number_of_actions(self):
+        """
+        Return the number of possible actions 
 
-        # 'forward', left, right
-        return 3
+        Used for Q Learning look up table
 
-        # up, down, left, right
-        # return 4
+        Options:
+        > 'forward' (i.e. do nothing), left, right
+        > up, down, left, right
+        """
+        return self.ACTION_SPACE
 
 
-    # The state represented as a onehot 1D vector
     def state_vector(self):
+        """
+        The state represented as a onehot 1D vector
+
+        Used for the feed forward NN
+        """
 
         if self.ENABLE_TAIL:
            # (rows, columns)
@@ -423,8 +449,10 @@ class Environment:
         return state
 
 
-    # State as a 3D vector of the whole map for the CNN
     def state_vector_3D(self):
+        """
+        State as a 3D vector of the whole map for the CNN
+        """
 
         if self.ENABLE_TAIL:
             state = np.zeros((3, self.GRID_SIZE, self.GRID_SIZE))
@@ -446,8 +474,12 @@ class Environment:
         return state
 
 
-    # State as a 3D vector of the local area around the snake
-    def local_state_vector_3D(self): #(3,9,9)
+    def local_state_vector_3D(self): 
+        """
+        State as a 3D vector of the local area around the snake
+
+        Shape = (3,9,9)
+        """
 
         #s = snake
         sx = int(self.snake.x/self.SCALE)
@@ -506,8 +538,8 @@ class Environment:
         return state
 
 
-    # Defines all the players controls during the game
     def controls(self):
+        """Defines all the players controls during the game"""
 
         GAME_OVER = False # NOT IMPLEMENTED YET
 
@@ -603,8 +635,12 @@ class Environment:
         return action
 
 
-    # Lets you simply play the game
     def play(self):
+        """ 
+        Lets you simply play the game
+
+        Useful for debugging and testing out the environment
+        """
 
         GAME_OVER = False
 

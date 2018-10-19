@@ -77,56 +77,67 @@ class Tau():
 if __name__ == '__main__':
 
 
-	# allowed = list((range(2), range(2)))
-	allowed = []
+	# # allowed = list((range(2), range(2)))
+	# allowed = []
 
-	for j in range(3):
-		for i in range(3):
-			allowed.append((i,j))
+	# for j in range(3):
+	# 	for i in range(3):
+	# 		allowed.append((i,j))
 
-	disallowed = [(1,0)]
+	# disallowed = [(1,0)]
 
-	a = [(0,0),(2,0)]
+	# a = [(0,0),(2,0)]
 
-	[disallowed.append(b) for b in a[3:]]
+	# [disallowed.append(b) for b in a[3:]]
 
-	# allowed.remove([pos for pos in disallowed])
+	# # allowed.remove([pos for pos in disallowed])
 
-	[allowed.remove(pos) for pos in disallowed]
+	# [allowed.remove(pos) for pos in disallowed]
 
-	# print(np.asarray(allowed))
+	# # print(np.asarray(allowed))
 
-	for i in range(10):
-		print(random.choice((allowed)))
+	# for i in range(10):
+	# 	print(random.choice((allowed)))
 
-	# total_episodes = 100 
+	total_episodes = 100
 
-	# scale_factor = 100
+	scale_factor = 100
 
-	# start = 0.7
-	# end = 0.5
-	# range_ = 0.5
+	start = 1
+	end = 0.05
+	range_ = 0.5
 
 
-	# x = np.arange(0,total_episodes)
-	# y = np.zeros(total_episodes)
+	x = np.arange(0,total_episodes)
+	y = np.empty(total_episodes)
+	# y.fill(end)
+
+	decay = int(total_episodes * range_)
+
 	# y[0] = start
 	# print(x.size)
 
 	# print(np.exp(-np.log(((2+1)/10)*100)))
 
-	# for i in range(total_episodes):
-	# 	# print(i, x[i])
-	# 	# y[i] = np.exp(-np.log((((x[i]+1)/total_episodes)*scale_factor))-np.log(1/(start-end))) + end
-	# 	y[i] = np.exp(-np.log(x[i]+1))*10
+	for i in range(total_episodes):
+		# print(i, x[i])
+		# y[i] = np.exp(-np.log((((x[i]+1)/total_episodes)*scale_factor))-np.log(1/(start-end))) + end
+		
+		if i < int(total_episodes * range_):
+			y[i] = ((x[decay - i - 1]**2)/x[decay - 0 - 1]**2)*(start-end) + end
+		else:
+			y[i] = end
 
-	# # y = np.exp(-np.log((x/total_episodes)*scale_factor)-np.log(1/(start-end))) + end
+	for i in range(total_episodes):
+		print(i, y[i])
 
-	# # print(np.exp(-np.log(100)-np.log(1/(start-end))) + end)
-	# # y = 1/np.power(1.01,x) + end
+	# y = np.exp(-np.log((x/total_episodes)*scale_factor)-np.log(1/(start-end))) + end
+
+	# print(np.exp(-np.log(100)-np.log(1/(start-end))) + end)
+	# y = 1/np.power(1.01,x) + end
 
 
-	# # plt.plot([np.mean(errors[i:i+500]) for i in range(len(errors) - 500)])
-	# plt.plot(x,y/10)
-	# plt.savefig("./e.png")
-	# plt.show()
+	# plt.plot([np.mean(errors[i:i+500]) for i in range(len(errors) - 500)])
+	plt.plot(x,y)
+	plt.savefig("./e.png")
+	plt.show()
