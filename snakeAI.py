@@ -20,6 +20,10 @@ class Snake:
 
         self.tail_length = 0 # basically len(self.box) - 1
 
+        # Used for the CNN local network input to see where the snake has been recently
+        self.history_size = 30
+        self.history = []
+
 
     def create(self, pygame):
 
@@ -166,6 +170,11 @@ class Snake:
         self.y += self.dy * scale
 
         self.pos = (self.x, self.y)
+
+        self.history.append(self.pos)
+
+        if len(self.history) > self.history_size:
+            self.history.pop(0)
 
         # # Update the head position of the snake
         # self.box[0] = (self.x, self.y)

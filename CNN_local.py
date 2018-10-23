@@ -44,7 +44,7 @@ MODEL_PATH_LOAD = "./Models/CNN_local/model_0.ckpt"
 W_conv1_textfile_path_save = "./Data/CNN_local/CNN_variables/W_conv1.npy"
 b_conv1_textfile_path_save = "./Data/CNN_local/CNN_variables/b_conv1.npy"
 
-W_conv2_textfile_path_save = "./Data/CNN_localCNN_variables/W_conv2.npy"
+W_conv2_textfile_path_save = "./Data/CNN_local/CNN_variables/W_conv2.npy"
 b_conv2_textfile_path_save = "./Data/CNN_local/CNN_variables/b_conv2.npy"
 
 W_fc_textfile_path_save = "./Data/CNN_local/CNN_variables/W_fc.npy"
@@ -57,19 +57,21 @@ b_out_textfile_path_save = "./Data/CNN_local/CNN_variables/b_out.npy"
 LOGDIR = "./Logs/CNN_local/log0"
 
 # Parameters
-GRID_SIZE = 9
+GRID_SIZE = 8
 LOCAL_GRID_SIZE = 9 # Has to be an odd number (I think...)
 SEED = 1
 WRAP = False
 TAIL = True
 
-REPLAY_MEMORY = 1000000
+REPLAY_MEMORY = 100000
 
 # Number of hidden layers, nodes, channels, etc. 
 if TAIL:
 	n_input_channels = 3
 else:
 	n_input_channels = 2
+
+n_input_channels = 4 # Using history
 
 # these still need to be added to the code
 n_out_channels_conv1 = 16
@@ -80,7 +82,7 @@ filter1_size = 3
 filter2_size = 3
 
 # Number of actions - Up, down, left, right
-n_actions = 4
+n_actions = 3
 
 # input - shape is included to minimise unseen errors
 x = tf.placeholder(tf.float32, [n_input_channels, LOCAL_GRID_SIZE, LOCAL_GRID_SIZE], name="Input")
@@ -185,9 +187,9 @@ def trainDeepModel(load = False):
 	env = Environment(wrap = WRAP, 
 					  grid_size = GRID_SIZE, 
 					  rate = 80, 
-					  max_time = 60, 
+					  max_time = 100, 
 					  tail = TAIL,
-					  food_count = 5,
+					  food_count = 3,
 					  obstacle_count = 0, 
 					  action_space=3)
 	
@@ -201,7 +203,7 @@ def trainDeepModel(load = False):
 
 	epsilon_function = True
 	epsilon_start = 0.15
-	epsilon_end = 0.005
+	epsilon_end = 0.05
 	epsilon_percentage = 0.5 # in decimal
 
 	alpha_function = False
@@ -320,12 +322,12 @@ def trainDeepModel(load = False):
 
 				# Update trajectory (Update replay memory)
 				if len(tau) < REPLAY_MEMORY:
-					tau.append(Traj(state_vector, action, reward, env.local_state_vector_3D()))
+					tau.append(Traj(state_vector, action, reward, env.local_state_vector_3D(), done))
 					# print(tau[i].new_state)
 					# i=i+1
 				else:
 					tau.pop(0)
-					tau.append(Traj(state_vector, action, reward, env.local_state_vector_3D()))
+					tau.append(Traj(state_vector, action, reward, env.local_state_vector_3D(), done))
 
 				state = new_state
 
@@ -339,7 +341,7 @@ def trainDeepModel(load = False):
 				Training using replay memory
 				'''
 				# if terminating state of episode
-				if tau[random_tau].reward == -1:
+				if tau[random_tau].done:
 					# Set the chosen action's current value to the reward value
 					Q_vector[:,tau[random_tau].action] = tau[random_tau].reward
 				else:
@@ -470,7 +472,7 @@ def runDeepModel():
 					  rate = 80, 
 					  max_time = 100, 
 					  tail = TAIL,
-					  food_count = 5,
+					  food_count = 3,
 					  obstacle_count = 0,  
 					  action_space=3)
 	
@@ -562,6 +564,7 @@ def runDeepModel():
 
 				# Update environment with by performing action
 				new_state, reward, done, info = env.step(action)
+				print(reward)
 
 				state = new_state
 
@@ -583,9 +586,11 @@ def play():
 
 	env = Environment(wrap = WRAP, 
 					  grid_size = GRID_SIZE, 
-					  rate = 100, 
+					  rate = 200, 
 					  tail = TAIL, 
-					  obstacles = True)
+					  food_count = 1,
+					  obstacle_count = 0,
+					  action_space = 3)
 
 	env.play()
 
@@ -594,8 +599,8 @@ def play():
 if __name__ == '__main__':
 
 	# --- Deep Neural Network with CNN --- #
-	trainDeepModel(load = True)
+	# trainDeepModel(load = True)
 	# runDeepModel()
 
 	# --- Just for fun --- #
-	# play()
+	play()

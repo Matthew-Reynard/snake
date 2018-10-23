@@ -125,6 +125,9 @@ class Environment:
         self.snake.x = np.random.randint(0,self.GRID_SIZE) * self.SCALE
         self.snake.y = np.random.randint(0,self.GRID_SIZE) * self.SCALE
 
+        self.snake.history.clear()
+        self.snake.history.append((self.snake.x, self.snake.y))
+
         # Starting at the same spot
         # self.snake.x = 8 * self.SCALE
         # self.snake.y = 8 * self.SCALE
@@ -228,6 +231,12 @@ class Environment:
         Return the reward, the new_state, whether its reached_food or not, and the time
         """
 
+        # Rewards:
+        reward_out_of_bounds = -10
+        reward_hitting_tail = -10
+        reward_each_time_step = -0.1
+        reward_reaching_food = 10
+
         # Increment time step
         self.time += 1
 
@@ -250,25 +259,24 @@ class Environment:
             self.wrap()
         else:
             if self.snake.x > self.DISPLAY_WIDTH - self.SCALE:
-                reward = -1 # very negative reward, to ensure that it never crashes into the side
+                reward = -10 # very negative reward, to ensure that it never crashes into the side
                 done = True 
             if self.snake.x < 0:
-                reward = -1
+                reward = -10
                 done = True
             if self.snake.y > self.DISPLAY_HEIGHT - self.SCALE:
-                reward = -1
+                reward = -10
                 done = True
             if self.snake.y < 0:
-                reward = -1
+                reward = -10
                 done = True
 
         for i in range(self.obstacle.array_length):
             hit_obstacle = (self.snake.pos == self.obstacle.array[i])
 
             if hit_obstacle:
-                # print("dead")
                 done = True
-                reward = -1
+                reward = -10
 
         # Update the snakes tail positions (from back to front)
         if self.snake.tail_length > 0:
@@ -284,8 +292,16 @@ class Environment:
             for i in range(1, self.snake.tail_length + 1):
                 if(self.snake.box[0] == (self.snake.box[i])):
                     # print("Crashed") # DEBUGGING
-                    reward = -1
+                    reward = -10
                     done = True
+
+        # Make the most recent history have the most negative rewards
+        decay = (1+reward_each_time_step)/self.snake.history_size
+        for i in range(len(self.snake.history) - 1):
+            # print(-1+(decay*i))
+            if ((self.snake.x, self.snake.y) == (self.snake.history[-i-2][0], self.snake.history[-i-2][1])):
+                reward = -1+(decay*i)
+                break
 
         # Checking if the snake has reached the food
         for i in range(self.NUM_OF_FOOD):
@@ -487,55 +503,61 @@ class Environment:
         sx = int(self.snake.x/self.SCALE)
         sy = int(self.snake.y/self.SCALE)
 
-        if self.ENABLE_TAIL:
-            state = np.zeros((3, self.LOCAL_GRID_SIZE, self.LOCAL_GRID_SIZE))
+        # state = np.zeros((3, self.LOCAL_GRID_SIZE, self.LOCAL_GRID_SIZE))
+        state = np.zeros((4, self.LOCAL_GRID_SIZE, self.LOCAL_GRID_SIZE)) # When using history
 
-            # Agent
-            state[0, 4, 4] = 1
+        # Agent
+        local_pos = int((self.LOCAL_GRID_SIZE-1)/2)
+        state[0, local_pos, local_pos] = 1
 
-            # Food
-            for i in range(self.NUM_OF_FOOD):
-                x_prime = 4+int(self.food.array[i][0]/self.SCALE)-int(self.snake.x/self.SCALE)
-                y_prime = 4+int(self.food.array[i][1]/self.SCALE)-int(self.snake.y/self.SCALE)
+        # History
+        decay = 0.05
 
-                if x_prime < 9 and x_prime >= 0 and y_prime < 9 and y_prime >= 0:
-                    state[1, y_prime, x_prime] = 1
+        for i in range(len(self.snake.history)-1):
+            x_prime = local_pos+int(self.snake.history[-i-2][0]/self.SCALE)-int(self.snake.x/self.SCALE)
+            y_prime = local_pos+int(self.snake.history[-i-2][1]/self.SCALE)-int(self.snake.y/self.SCALE)
 
+            if x_prime < self.LOCAL_GRID_SIZE and x_prime >= 0 and y_prime < self.LOCAL_GRID_SIZE and y_prime >= 0:
+                if 1-decay*i >= 0 and state[3, y_prime, x_prime] == 0:
+                    state[3, y_prime, x_prime] = 1-decay*i
+                # else:
+                    # state[3, y_prime, x_prime] = 0
 
-            # Obstacles
+        # Food
+        for i in range(self.NUM_OF_FOOD):
+            x_prime_food = local_pos+int(self.food.array[i][0]/self.SCALE)-int(self.snake.x/self.SCALE)
+            y_prime_food = local_pos+int(self.food.array[i][1]/self.SCALE)-int(self.snake.y/self.SCALE)
 
-            # Tail
-            for i in range(1, self.snake.tail_length + 1):
-                
-                x_prime_tail = 4+int(self.snake.box[i][0]/self.SCALE)-int(self.snake.x/self.SCALE)
-                y_prime_tail = 4+int(self.snake.box[i][1]/self.SCALE)-int(self.snake.y/self.SCALE)
-
-                if x_prime_tail < 9 and x_prime_tail >= 0 and y_prime_tail < 9 and y_prime_tail >= 0:
-                    state[2, y_prime_tail, x_prime_tail] = 1
-
-            # Walls
-            for j in range(0, self.LOCAL_GRID_SIZE):
-                for i in range(0, self.LOCAL_GRID_SIZE):
-
-                    x_prime_wall = 4-sx
-                    y_prime_wall = 4-sy
-
-                    if i < x_prime_wall or j < y_prime_wall:
-                        state[2, j, i] = 1
-
-                    x_prime_wall = 4+(9-sx)-1
-                    y_prime_wall = 4+(9-sy)-1
-
-                    if i > x_prime_wall or j > y_prime_wall:
-                        state[2, j, i] = 1
+            if x_prime_food < self.LOCAL_GRID_SIZE and x_prime_food >= 0 and y_prime_food < self.LOCAL_GRID_SIZE and y_prime_food >= 0:
+                state[1, y_prime_food, x_prime_food] = 1
 
 
-        else:
-            state = np.zeros((2, self.GRID_SIZE, self.GRID_SIZE))
+        # Obstacles
 
-            state[0, int(self.snake.y/self.SCALE), int(self.snake.x/self.SCALE)] = 1
+        # Tail
+        for i in range(1, self.snake.tail_length + 1):
+            
+            x_prime_tail = local_pos+int(self.snake.box[i][0]/self.SCALE)-int(self.snake.x/self.SCALE)
+            y_prime_tail = local_pos+int(self.snake.box[i][1]/self.SCALE)-int(self.snake.y/self.SCALE)
 
-            state[1, int(self.food.y/self.SCALE), int(self.food.x/self.SCALE)] = 1
+            if x_prime_tail < self.LOCAL_GRID_SIZE and x_prime_tail >= 0 and y_prime_tail < self.LOCAL_GRID_SIZE and y_prime_tail >= 0:
+                state[2, y_prime_tail, x_prime_tail] = 1
+
+        # Walls
+        for j in range(0, self.LOCAL_GRID_SIZE):
+            for i in range(0, self.LOCAL_GRID_SIZE):
+
+                x_prime_wall = local_pos-sx
+                y_prime_wall = local_pos-sy
+
+                if i < x_prime_wall or j < y_prime_wall:
+                    state[2, j, i] = 1
+
+                x_prime_wall = local_pos+(self.GRID_SIZE-sx)-1
+                y_prime_wall = local_pos+(self.GRID_SIZE-sy)-1
+
+                if i > x_prime_wall or j > y_prime_wall:
+                    state[2, j, i] = 1
 
         return state
 
@@ -653,6 +675,7 @@ class Environment:
         while not GAME_OVER:
 
             # print(self.local_state_vector_3D()) # DEBUGGING
+            # print(self.snake.history)
 
             action = self.render()
 
