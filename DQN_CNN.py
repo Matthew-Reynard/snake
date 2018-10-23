@@ -23,6 +23,11 @@ BUGS - or just things that I can't get working:
 - Saving and restoring model successfully using tf.Saver()
 - 
 
+HYPER-PARAMETERS
+- learning rate = 0.01
+- discount factor = 0.99
+- epsilon = 0.5 -> 0.05 (50%)
+
 '''
 
 import numpy as np
@@ -179,7 +184,8 @@ def trainDeepModel(load = False):
 					  grid_size = GRID_SIZE, 
 					  rate = 80, 
 					  max_time = 100, 
-					  tail = TAIL)
+					  tail = TAIL,
+					  action_space = 4)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -415,7 +421,8 @@ def runDeepModel():
 					  grid_size = GRID_SIZE, 
 					  rate = 80, 
 					  max_time = 100, 
-					  tail = TAIL)
+					  tail = TAIL,
+					  action_space = 4)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -541,8 +548,8 @@ def play():
 if __name__ == '__main__':
 	
 	# --- Deep Neural Network with CNN --- #
-	trainDeepModel(load = False)
+	# trainDeepModel(load = False)
 	# runDeepModel()
 
 	# --- Just for fun --- #
-	# play()
+	play()
