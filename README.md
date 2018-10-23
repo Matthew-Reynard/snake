@@ -46,4 +46,4 @@ Create an executable file (with GUI)
 The controls aren't as responsive as I'd like - it only executes the last button (input) click of the frame.  
 
 ### Website
-Click [here](www.matthewreynard.com) to keep an eye out for the Inverse Reinforcement Learning snake game, I will update this page once it goes live.
+Click [here](http://www.matthewreynard.com) to keep an eye out for the Inverse Reinforcement Learning snake game, I will update this page once it goes live.
