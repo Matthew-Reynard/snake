@@ -63,7 +63,7 @@ SEED = 1
 WRAP = False
 TAIL = True
 
-REPLAY_MEMORY = 100000
+REPLAY_MEMORY = 250000
 
 # Number of hidden layers, nodes, channels, etc. 
 if TAIL:
@@ -202,7 +202,7 @@ def trainDeepModel(load = False):
 	epsilon = 0.1  # Probability to choose random action instead of best action
 
 	epsilon_function = True
-	epsilon_start = 0.15
+	epsilon_start = 0.5
 	epsilon_end = 0.05
 	epsilon_percentage = 0.5 # in decimal
 
@@ -251,7 +251,7 @@ def trainDeepModel(load = False):
 	# errors = []
 
 	print_episode = 1000
-	total_episodes = 100000
+	total_episodes = 1000000
 
 	# Saving model capabilities
 	saver = tf.train.Saver()
@@ -599,8 +599,8 @@ def play():
 if __name__ == '__main__':
 
 	# --- Deep Neural Network with CNN --- #
-	# trainDeepModel(load = True)
+	trainDeepModel(load = False)
 	# runDeepModel()
 
 	# --- Just for fun --- #
-	play()
+	# play()
