@@ -1,4 +1,5 @@
 import random
+import csv
 
 class Obstacle:
 
@@ -21,6 +22,7 @@ class Obstacle:
 
     def reset(self, grid, disallowed):
         """Create all the obstacles, not in the disallowed positions"""
+        self.array.clear()
 
         # If I want the obstacles in the same location every episode
         # random.seed(10)
@@ -34,6 +36,27 @@ class Obstacle:
             new_pos = random.choice((allowed))
             self.array.append(new_pos)
             allowed.remove(new_pos)
+
+    def reset_map(self, grid_size):
+        self.array.clear()
+
+        map1 = []
+        
+        # Read the map in from the text file
+        with open('./Maps/map2.txt', 'r') as csvfile:
+            matrixreader = csv.reader(csvfile, delimiter=' ')
+            for row in matrixreader:
+                map1.append(row)
+
+        num = 0
+
+        for j in range(grid_size):
+            for i in range(grid_size):
+                if map1[j][i] == '1':
+                    self.array.append((i*20,j*20))
+                    num = num + 1
+
+        self.array_length = num
 
 
     def draw(self, display):

@@ -1,3 +1,5 @@
+import random
+
 class Snake:
 
     def __init__(self):
@@ -21,7 +23,7 @@ class Snake:
         self.tail_length = 0 # basically len(self.box) - 1
 
         # Used for the CNN local network input to see where the snake has been recently
-        self.history_size = 30
+        self.history_size = 100 # Needs to be proportional to the grid size
         self.history = []
 
 
@@ -48,6 +50,20 @@ class Snake:
         # self.box = [(0,0)] # List of Rectangles tuples (x,y,width,height) for the snakes tail --> The main one
         # self.box[0] = self.head_img.get_rect()
 
+
+    def reset(self, grid, disallowed):
+
+        allowed = grid[:]
+
+        [allowed.remove(pos) for pos in disallowed]
+
+        self.pos = random.choice(allowed)
+
+        self.x = self.pos[0]
+        self.y = self.pos[1]
+
+        self.history.clear()
+        self.history.append((self.x, self.y))
 
     def update(self, scale, action, action_space):
 

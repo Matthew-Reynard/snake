@@ -37,43 +37,38 @@ from Trajectory import Traj
 
 # GLOBAL VARIABLES
 # Paths
-MODEL_PATH_SAVE = "./Models/CNN_local/model_0.ckpt"
-MODEL_PATH_LOAD = "./Models/CNN_local/model_0.ckpt"
+MODEL_PATH_SAVE = "./Models/CNN_pixels/model_0.ckpt"
+MODEL_PATH_LOAD = "./Models/CNN_pixels/model_0.ckpt"
 
 # Not text files. Some of these arrays are 4D which can't be neatly written to a text file.
-W_conv1_textfile_path_save = "./Data/CNN_local/CNN_variables/W_conv1.npy"
-b_conv1_textfile_path_save = "./Data/CNN_local/CNN_variables/b_conv1.npy"
+W_conv1_textfile_path_save = "./Data/CNN_pixels/CNN_variables/W_conv1.npy"
+b_conv1_textfile_path_save = "./Data/CNN_pixels/CNN_variables/b_conv1.npy"
 
-W_conv2_textfile_path_save = "./Data/CNN_local/CNN_variables/W_conv2.npy"
-b_conv2_textfile_path_save = "./Data/CNN_local/CNN_variables/b_conv2.npy"
+W_conv2_textfile_path_save = "./Data/CNN_pixels/CNN_variables/W_conv2.npy"
+b_conv2_textfile_path_save = "./Data/CNN_pixels/CNN_variables/b_conv2.npy"
 
-W_fc_textfile_path_save = "./Data/CNN_local/CNN_variables/W_fc.npy"
-b_fc_textfile_path_save = "./Data/CNN_local/CNN_variables/b_fc.npy"
+W_fc_textfile_path_save = "./Data/CNN_pixels/CNN_variables/W_fc.npy"
+b_fc_textfile_path_save = "./Data/CNN_pixels/CNN_variables/b_fc.npy"
 
-W_out_textfile_path_save = "./Data/CNN_local/CNN_variables/W_out.npy"
-b_out_textfile_path_save = "./Data/CNN_local/CNN_variables/b_out.npy"
+W_out_textfile_path_save = "./Data/CNN_pixels/CNN_variables/W_out.npy"
+b_out_textfile_path_save = "./Data/CNN_pixels/CNN_variables/b_out.npy"
 
 # This is for viewing the model and summaries in Tensorboard
-LOGDIR = "./Logs/CNN_local/log0"
+LOGDIR = "./Logs/CNN_pixels/log0"
 
 # Parameters
-GRID_SIZE = 50
-LOCAL_GRID_SIZE = 9 # Has to be an odd number (I think...)
+GRID_SIZE = 5
+LOCAL_GRID_SIZE = 20 * GRID_SIZE # Has to be an odd number (I think...)
 SEED = 1
-WRAP = False
+WRAP = True
 TAIL = True
-FOOD_COUNT = 50
-OBSTACLE_COUNT = 60
+FOOD_COUNT = 1
+OBSTACLE_COUNT = 0
 
 REPLAY_MEMORY = 250000
 
-# Number of hidden layers, nodes, channels, etc. 
-if TAIL:
-	n_input_channels = 3
-else:
-	n_input_channels = 2
-
-n_input_channels = 4 # Using history
+# Input channels
+n_input_channels = 3 # Using pixels
 
 # these still need to be added to the code
 n_out_channels_conv1 = 16
@@ -87,7 +82,7 @@ filter2_size = 3
 n_actions = 3
 
 # input - shape is included to minimise unseen errors
-x = tf.placeholder(tf.float32, [n_input_channels, LOCAL_GRID_SIZE, LOCAL_GRID_SIZE], name="Input")
+x = tf.placeholder(tf.float32, [LOCAL_GRID_SIZE, LOCAL_GRID_SIZE, n_input_channels], name="Input")
 
 # output
 y = tf.placeholder(tf.float32, [1, n_actions], name="Output")
@@ -144,7 +139,7 @@ def createDeepModel(data, load_variables = False):
 		
 		weights = {'W_conv1':tf.Variable(tf.truncated_normal([3, 3, n_input_channels, 16], mean=0, stddev=1.0, seed=0), name = 'W_conv1'),
 			   	   'W_conv2':tf.Variable(tf.truncated_normal([3, 3, 16, 32], mean=0, stddev=1.0, seed=1), name = 'W_conv2'),
-			   	   'W_fc':tf.Variable(tf.truncated_normal([4*4*32, 256], mean=0, stddev=1.0, seed=2), name = 'W_fc'),
+			   	   'W_fc':tf.Variable(tf.truncated_normal([95*95*32, 256], mean=0, stddev=1.0, seed=2), name = 'W_fc'),
 			   	   'W_out':tf.Variable(tf.truncated_normal([256, n_actions], mean=0, stddev=1.0, seed=3), name = 'W_out')}
 
 		biases = {'b_conv1':tf.Variable(tf.constant(0.1, shape=[16]), name = 'b_conv1'),
@@ -161,7 +156,7 @@ def createDeepModel(data, load_variables = False):
 	conv2 = conv2d(conv1, weights['W_conv2'], name = 'conv2')
 	conv2 = maxpool2d(conv2, name = 'max_pool2')
 
-	fc = tf.reshape(conv2,[-1, 4*4*32])
+	fc = tf.reshape(conv2,[-1, 95*95*32])
 	fc = tf.nn.relu(tf.matmul(fc, weights['W_fc']) + biases['b_fc'])
 
 	output = tf.matmul(fc, weights['W_out']) + biases['b_out']
@@ -179,16 +174,16 @@ def trainDeepModel(load = False):
 	print("\n ---- Training the Deep Neural Network ----- \n")
 
 	# Decide whether or not to render to the screen or not
-	RENDER_TO_SCREEN = False
+	RENDER_TO_SCREEN = True
 
 	# True - Load model from modelpath_load; False - Initialise random weights
-	USE_SAVED_MODEL_FILE = False
+	USE_SAVED_MODEL_FILE = False 
 
 	# First we need our environment form Environment_for_DQN.py
 	# has to have a grid_size of 10 for this current NN
 	env = Environment(wrap = WRAP, 
 					  grid_size = GRID_SIZE, 
-					  rate = 80, 
+					  rate = 0, 
 					  max_time = 300, 
 					  tail = TAIL,
 					  food_count = FOOD_COUNT,
@@ -204,7 +199,7 @@ def trainDeepModel(load = False):
 	epsilon = 0.1  # Probability to choose random action instead of best action
 
 	epsilon_function = True
-	epsilon_start = 0.3
+	epsilon_start = 0.1
 	epsilon_end = 0.05
 	epsilon_percentage = 0.5 # in decimal
 
@@ -306,7 +301,7 @@ def trainDeepModel(load = False):
 					env.render()
 
 				# One Hot representation of the current state
-				state_vector = env.local_state_vector_3D()
+				state_vector = env.pixels()
 
 				# Retrieve the Q values from the NN in vector form
 				Q_vector = sess.run(Q_values, feed_dict={x: state_vector})
@@ -324,12 +319,12 @@ def trainDeepModel(load = False):
 
 				# Update trajectory (Update replay memory)
 				if len(tau) < REPLAY_MEMORY:
-					tau.append(Traj(state_vector, action, reward, env.local_state_vector_3D(), done))
+					tau.append(Traj(state_vector, action, reward, env.pixels(), done))
 					# print(tau[i].new_state)
 					# i=i+1
 				else:
 					tau.pop(0)
-					tau.append(Traj(state_vector, action, reward, env.local_state_vector_3D(), done))
+					tau.append(Traj(state_vector, action, reward, env.pixels(), done))
 
 				state = new_state
 
@@ -586,9 +581,9 @@ def runDeepModel():
 def play():
 	print("\n ----- Playing the game -----\n")
 
-	env = Environment(wrap = True, 
+	env = Environment(wrap = WRAP, 
 					  grid_size = GRID_SIZE, 
-					  rate = 100, 
+					  rate = 200, 
 					  tail = TAIL, 
 					  food_count = 1,
 					  obstacle_count = 0,
@@ -601,8 +596,8 @@ def play():
 if __name__ == '__main__':
 
 	# --- Deep Neural Network with CNN --- #
-	trainDeepModel(load = False)
+	# trainDeepModel(load = False)
 	# runDeepModel()
 
 	# --- Just for fun --- #
-	# play()
+	play()

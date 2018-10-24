@@ -23,7 +23,7 @@ class Food:
         self.food_img.set_colorkey(white)
 
         # If the image isn't 20x20 pixels
-        # self.food_img = pygame.transform.scale(self.food_img, (20, 20))
+        self.food_img = pygame.transform.scale(self.food_img, (20, 20))
 
     def reset(self, grid, disallowed):
         self.array.clear()
@@ -33,7 +33,7 @@ class Food:
 
         [allowed.remove(pos) for pos in disallowed]
 
-        # If you want the food to spawn in 3 specific locations
+        # If you want the food to only spawn in 3 different locations
         # if self.amount == 1:
             # allowed = [(2*20,7*20),(6*20,6*20),(7*20,1*20)]
 
@@ -60,10 +60,13 @@ class Food:
         # Add the others foods positions (including this previous one) to the the disallowed list
         [disallowed.append(grid_pos) for grid_pos in self.array]
 
+        # Show if theres a duplicate in the disallowed list
+        # print(set([x for x in disallowed if disallowed.count(x) > 1])) # DEBUGGING
+
         # Remove the disallowed positions from the allowed grid positions
         [allowed.remove(pos) for pos in disallowed]
 
-        # If you want the food to spawn in 3 specific locations
+        # If you want the food to only spawn in 3 different locations
         # if self.amount == 1:
             # allowed = [(2*20,6*20),(5*20,5*20),(6*20,1*20)]
 

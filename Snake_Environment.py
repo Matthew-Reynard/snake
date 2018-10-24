@@ -112,7 +112,7 @@ class Environment:
         self.obstacle.create(pygame)
 
         # Creates the grid background
-        self.bg = pygame.image.load("./Images/Grid20.png").convert()
+        self.bg = pygame.image.load("./Images/Grid50.png").convert()
 
 
     def reset(self):
@@ -121,31 +121,41 @@ class Environment:
         # Reset the score to 0
         self.score = 0
 
-        # Starting at random positions
-        self.snake.x = np.random.randint(0,self.GRID_SIZE) * self.SCALE
-        self.snake.y = np.random.randint(0,self.GRID_SIZE) * self.SCALE
+        disallowed = []
 
-        self.snake.history.clear()
-        self.snake.history.append((self.snake.x, self.snake.y))
+        # Create obstacles at random positions
+        self.obstacle.reset(self.grid, disallowed)
+
+        # self.obstacle.reset_map(self.GRID_SIZE)
+
+        [disallowed.append(grid_pos) for grid_pos in self.obstacle.array]
+
+        # print(disallowed)
+        # Starting at random positions
+        # self.snake.x = np.random.randint(0,self.GRID_SIZE) * self.SCALE
+        # self.snake.y = np.random.randint(0,self.GRID_SIZE) * self.SCALE
+
+        # self.snake.history.clear()
+        # self.snake.history.append((self.snake.x, self.snake.y))
 
         # Starting at the same spot
         # self.snake.x = 8 * self.SCALE
         # self.snake.y = 8 * self.SCALE
 
+        self.snake.reset(self.grid, disallowed)
+
         # Initialise the movement to the right
         self.snake.dx = 1
         self.snake.dy = 0
 
-        self.snake.pos = (self.snake.x, self.snake.y)
+        # self.snake.pos = (self.snake.x, self.snake.y)
 
-        disallowed = [self.snake.pos]
+        disallowed.append(self.snake.pos)
 
-        # Update the head position of the snake
-        # self.snake.box[0] = (self.snake.x, self.snake.y)
         # Create obstacles at random positions
-        self.obstacle.reset(self.grid, disallowed)
+        # self.obstacle.reset(self.grid, disallowed)
 
-        [disallowed.append(grid_pos) for grid_pos in self.obstacle.array]
+        # [disallowed.append(grid_pos) for grid_pos in self.obstacle.array]
 
         # Create a piece of food that is not within the snake
         self.food.reset(self.grid, disallowed)
@@ -188,6 +198,14 @@ class Environment:
 
         # Update the pygame display
         pygame.display.update()
+
+        # print(pygame.display.get_surface().get_size())
+
+        # pygame.display.get_surface().lock()
+        # p = pygame.PixelArray(pygame.display.get_surface())
+        # p = pygame.surfarray.array3d(pygame.display.get_surface())
+        # print("PIXELS:", p.shape)
+        # pygame.display.get_surface().unlock()
 
         # print(clock.get_rawtime())
         # clock.tick(self.FPS) # FPS setting
@@ -326,6 +344,7 @@ class Environment:
             if self.score + self.NUM_OF_FOOD <= self.GRID_SIZE**2:
                 disallowed = []
                 [disallowed.append(grid_pos) for grid_pos in self.obstacle.array]
+                # print("disallowed:\n", disallowed)
                 self.food.make(self.grid, self.snake, disallowed, index = eaten_food)
             # Test for one food item at a time
             # done = True 
@@ -562,6 +581,15 @@ class Environment:
         return state
 
 
+    def pixels(self): 
+        """
+        Returns the pixels in a (GRID*20, GRID*20, 3) size array/
+    
+        Unfortunatly it has to render in order to gather the pixels
+        """
+        return pygame.surfarray.array3d(pygame.display.get_surface())
+
+
     def controls(self):
         """Defines all the players controls during the game"""
 
@@ -678,6 +706,8 @@ class Environment:
             # print(self.snake.history)
 
             action = self.render()
+
+            # print(self.pixels())
 
             # When the snake touches the food, game ends
             # action_space has to be 3 for the players controls, 
