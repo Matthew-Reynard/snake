@@ -57,13 +57,13 @@ b_out_textfile_path_save = "./Data/CNN_local/CNN_variables/b_out.npy"
 LOGDIR = "./Logs/CNN_local/log0"
 
 # Parameters
-GRID_SIZE = 50
+GRID_SIZE = 8
 LOCAL_GRID_SIZE = 9 # Has to be an odd number (I think...)
 SEED = 1
 WRAP = False
 TAIL = True
-FOOD_COUNT = 50
-OBSTACLE_COUNT = 60
+FOOD_COUNT = 3
+OBSTACLE_COUNT = 0
 
 REPLAY_MEMORY = 250000
 
@@ -252,7 +252,7 @@ def trainDeepModel(load = False):
 	# error plot
 	# errors = []
 
-	print_episode = 1000
+	print_episode = 10
 	total_episodes = 100000
 
 	# Saving model capabilities
@@ -601,8 +601,8 @@ def play():
 if __name__ == '__main__':
 
 	# --- Deep Neural Network with CNN --- #
-	trainDeepModel(load = False)
-	# runDeepModel()
+	# trainDeepModel(load = False)
+	runDeepModel()
 
 	# --- Just for fun --- #
 	# play()
