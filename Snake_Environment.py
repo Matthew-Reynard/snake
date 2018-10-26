@@ -42,7 +42,7 @@ import math # Used for infinity game time
 
 class Environment:
 
-    def __init__(self, wrap = False, grid_size = 10, rate = 100, max_time = math.inf, tail = False, action_space = 3, food_count = 1, obstacle_count = 0):
+    def __init__(self, wrap = False, grid_size = 10, rate = 100, max_time = math.inf, tail = False, action_space = 3, food_count = 1, obstacle_count = 0, map_path = None):
         """
         Initialise the Game Environment with default values
         """
@@ -56,6 +56,7 @@ class Environment:
         self.ENABLE_TAIL = tail
         #self.ENABLE_OBSTACLES = obstacles
         self.ACTION_SPACE = action_space
+        self.MAP_PATH = map_path
         
         self.DISPLAY_WIDTH = self.GRID_SIZE * self.SCALE
         self.DISPLAY_HEIGHT = self.GRID_SIZE * self.SCALE
@@ -121,12 +122,14 @@ class Environment:
         # Reset the score to 0
         self.score = 0
 
+        # Positions on the grid that 
         disallowed = []
 
-        # Create obstacles at random positions
-        self.obstacle.reset(self.grid, disallowed)
-
-        # self.obstacle.reset_map(self.GRID_SIZE)
+        if self.MAP_PATH != None:
+            self.obstacle.reset_map(self.GRID_SIZE, self.MAP_PATH)
+        else:
+            # Create obstacles at random positions
+            self.obstacle.reset(self.grid, disallowed)
 
         [disallowed.append(grid_pos) for grid_pos in self.obstacle.array]
 
@@ -707,7 +710,7 @@ class Environment:
 
             action = self.render()
 
-            # print(self.pixels())
+            # print(self.pixels().shape)
 
             # When the snake touches the food, game ends
             # action_space has to be 3 for the players controls, 

@@ -583,7 +583,7 @@ def play():
 
 	env = Environment(wrap = WRAP, 
 					  grid_size = GRID_SIZE, 
-					  rate = 200, 
+					  rate = 100, 
 					  tail = TAIL, 
 					  food_count = 1,
 					  obstacle_count = 0,
@@ -596,8 +596,8 @@ def play():
 if __name__ == '__main__':
 
 	# --- Deep Neural Network with CNN --- #
-	# trainDeepModel(load = False)
+	trainDeepModel(load = False)
 	# runDeepModel()
 
 	# --- Just for fun --- #
-	play()
+	# play()

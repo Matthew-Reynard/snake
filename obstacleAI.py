@@ -37,13 +37,13 @@ class Obstacle:
             self.array.append(new_pos)
             allowed.remove(new_pos)
 
-    def reset_map(self, grid_size):
+    def reset_map(self, grid_size, map_path):
         self.array.clear()
 
         map1 = []
         
         # Read the map in from the text file
-        with open('./Maps/map2.txt', 'r') as csvfile:
+        with open(map_path, 'r') as csvfile:
             matrixreader = csv.reader(csvfile, delimiter=' ')
             for row in matrixreader:
                 map1.append(row)
