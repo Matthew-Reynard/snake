@@ -57,14 +57,14 @@ b_out_textfile_path_save = "./Data/CNN_local/CNN_variables/b_out.npy"
 LOGDIR = "./Logs/CNN_local/log0"
 
 # Parameters
-GRID_SIZE = 8*2
+GRID_SIZE = 50
 LOCAL_GRID_SIZE = 9 # Has to be an odd number (I think...)
 SEED = 1
 WRAP = False
 TAIL = True
 FOOD_COUNT = 1
 OBSTACLE_COUNT = 0
-MAP_PATH = "./Maps/Grid16/map2.txt"
+MAP_PATH = "./Maps/Grid{}/map3.txt".format(GRID_SIZE)
 
 REPLAY_MEMORY = 250000
 
@@ -590,7 +590,7 @@ def play():
 					  grid_size = GRID_SIZE, 
 					  rate = 100, 
 					  tail = TAIL, 
-					  food_count = 1,
+					  food_count = 20,
 					  obstacle_count = 0,
 					  action_space = 3,
 					  map_path = MAP_PATH)
