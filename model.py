@@ -8,11 +8,11 @@ import os
 class DeepQNetwork(nn.Module):
 	def __init__(self, ALPHA):
 		super(DeepQNetwork, self).__init__()
-		self.conv1 = nn.Conv2d(4, 16, 3, stride=1, padding=0)
+		self.conv1 = nn.Conv2d(2, 16, 3, stride=1, padding=0)
 		self.conv2 = nn.Conv2d(16, 32, 3, stride=1)
 		# self.conv3 = nn.Conv2d(64, 128, 3)
-		self.fc1 = nn.Linear(5*5*32, 256)
-		self.fc2 = nn.Linear(256, 3)
+		self.fc1 = nn.Linear(1*1*32, 256)
+		self.fc2 = nn.Linear(256, 4)
 
 		# self.optimiser = optim.RMSprop(self.parameters(), lr=ALPHA)
 		self.optimiser = optim.SGD(self.parameters(), lr=ALPHA)
@@ -22,11 +22,11 @@ class DeepQNetwork(nn.Module):
 
 	def forward(self, observation):
 		observation = T.Tensor(observation).to(self.device)
-		observation = observation.view(-1, 4, 9, 9) # size of image 4x9x9
+		observation = observation.view(-1, 2, 5, 5) # size of image 4x9x9
 		observation = F.relu(self.conv1(observation))
 		observation = F.relu(self.conv2(observation))
 		# observation = F.relu(self.conv3(observation))
-		observation = observation.view(-1, 5*5*32) # flatten
+		observation = observation.view(-1, 1*1*32) # flatten
 		observation = F.relu(self.fc1(observation))
 
 		actions = self.fc2(observation)
@@ -96,32 +96,33 @@ class Agent(object):
 		# print("===============QPRED=====================")
 		# print(Qpred)
 		for i in range(batch_size):
-			Qtarget[i][maxA[i]] = reward[i]
-			print(Qtarget[i][maxA[i]])
-		# Qtarget[:][0,maxA] = T.max(Qnext, dim=1)[0] # reward + self.GAMMA*
+			Qtarget[i][maxA[i]] = reward[i] + self.GAMMA*T.max(Qnext[i])
+			# print(Qtarget[i][maxA[i]])
+		# Qtarget[:][0,maxA] = reward + self.GAMMA*T.max(Qnext, dim=1)[0]
 		# Qtarget[:,[0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0]] = T.Tensor([0,0,0,0,0,0,0,0,0,2,0,0,1,0,0,0])
 
-		print("=============Qnext=======================")
-		print(Qnext[:])
-		print("=============reward=======================")
-		print(reward)
-		print("=============Qnext max=======================")
+		# print("=============Qnext=======================")
+		# print(Qnext[:])
+		# print("=============reward=======================")
+		# print(reward)
+		# print("=============Qnext max=======================")
 		# print(list(T.max(Qnext[:], dim=1))[0])
 		# print(T.max(Qnext[1]))
-		print(T.max(Qnext, dim=1)[0])
-		print("=============MAX A=======================")
-		print(maxA)
-		print("===============QPRED=====================")
-		print(Qpred)
-		print("===============TARGET=====================")
-		print(Qtarget[:][1,maxA])
-		print("=============Q target=====================")
-		print(Qtarget)
-		print("==============================================================================")
+		# print(T.max(Qnext, dim=1)[0])
+		# print("=============MAX A=======================")
+		# print(maxA)
+		# print("===============QPRED=====================")
+		# print(Qpred)
+		# print("===============TARGET=====================")
+		# print(Qtarget[:][1,maxA])
+		# print("=============Q target=====================")
+		# print(Qtarget)
+		# print("==============================================================================")
+		
 		# linear decrease of epsilon
 		if self.steps > 500:
-			if self.EPSILON - 1e-5 > self.EPS_END:
-				self.EPSILON -= 1e-5
+			if self.EPSILON - 1e-4 > self.EPS_END:
+				self.EPSILON -= 1e-4
 			else:
 				self.EPSILON = self.EPS_END
 
@@ -136,9 +137,9 @@ class Agent(object):
 
 	def save_model(self, name):
 		try:
-			os.makedirs('./results', exist_ok=True)
+			os.makedirs('./Models/Torch2', exist_ok=True)
 		except Exception:
-			print('Could not create directory ./results')
+			print('Could not create directory ./Models/Torch2')
 
 		T.save(self.Q_eval.state_dict(), name)
 

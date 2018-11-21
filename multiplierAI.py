@@ -1,18 +1,18 @@
-# Maybe can use numpy.random instead of this
-# import random
 import numpy as np
 
-class Food:
+class Multiplier:
 
     def __init__(self, number = 1):
         self.x = 0
         self.y = 0
         self.pos = (self.x, self.y)
 
-        self.food_img = None
+        self.mult_img = None
 
         self.array = [self.pos]
         self.amount = number
+
+        self.amount_eaten = 0
 
     # Create the Pygame sections of the food to render it
     def create(self, pygame):
@@ -20,14 +20,16 @@ class Food:
         # PYGAME STUFF
 
         white = (255,255,255)
-        self.food_img = pygame.image.load("./Images/Food.png").convert()
-        self.food_img.set_colorkey(white)
+        self.mult_img = pygame.image.load("./Images/Object2.png").convert()
+        self.mult_img.set_colorkey(white)
 
         # If the image isn't 20x20 pixels
-        self.food_img = pygame.transform.scale(self.food_img, (20, 20))
+        self.mult_img = pygame.transform.scale(self.mult_img, (20, 20))
+
 
     def reset(self, grid, disallowed):
         self.array.clear()
+        self.amount_eaten = 0
 
         # Make a copy of the grid
         allowed = grid[:]
@@ -110,15 +112,16 @@ class Food:
         index = 0
 
         for i in range(self.amount):
-            reached = ((snake.x, snake.y) == (self.array[i][0], self.array[i][1]))
-            if reached:
+            increase_multiplier = ((snake.x, snake.y) == (self.array[i][0], self.array[i][1]))
+            if increase_multiplier:
+                self.amount_eaten += 1
+                reached = True
                 index = i
                 break
 
         return reached, index
 
-
     #Draw the food
     def draw(self, display):
         for i in range(self.amount):
-            display.blit(self.food_img, self.array[i])
+            display.blit(self.mult_img, self.array[i])

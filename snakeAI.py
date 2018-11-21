@@ -1,4 +1,5 @@
-import random
+# import random
+import numpy as np
 
 class Snake:
 
@@ -12,8 +13,6 @@ class Snake:
         
         self.head_img = None
 
-        # self.head_mask = None
-
         self.tail_img = None
 
         # List of position tuples (x,y) for the snakes body 
@@ -25,6 +24,10 @@ class Snake:
         # Used for the CNN local network input to see where the snake has been recently
         self.history_size = 100 # Needs to be proportional to the grid size
         self.history = []
+
+        self.start_tail_length = 0
+
+        self.score_multiplier = 1
 
 
     def create(self, pygame):
@@ -57,7 +60,7 @@ class Snake:
 
         [allowed.remove(pos) for pos in disallowed]
 
-        self.pos = random.choice(allowed)
+        self.pos = allowed[np.random.choice(len(allowed))]
 
         self.x = self.pos[0]
         self.y = self.pos[1]
@@ -65,10 +68,25 @@ class Snake:
         self.history.clear()
         self.history.append((self.x, self.y))
 
+    def reset_tail(self, start_length):
+
+        self.start_tail_length = start_length
+
+        self.tail_length = 0
+        self.box.clear()
+        self.box = [self.pos] 
+
+        for i in range(self.start_tail_length):
+            self.tail_length += 1
+            self.box.append((self.x, self.y))
+
+
     def update(self, scale, action, action_space):
 
         # ACTION SPACE OF 4 - Up, Down, Left, Right
         # This is for when just using the head and food
+
+        # Human AI controls, 4 controls allowed, but limited movement
 
         # if action_space == 4:
         #     # Up

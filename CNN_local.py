@@ -30,10 +30,9 @@ import tensorflow as tf
 # import matplotlib.pyplot as plt # not used yet
 import time # Used to measure how long training takes
 import math # Time formatting
-import random
 
 from Snake_Environment import Environment
-from Trajectory import Traj 
+from utils import Trajectory
 
 # GLOBAL VARIABLES
 # Paths
@@ -57,14 +56,14 @@ b_out_textfile_path_save = "./Data/CNN_local/CNN_variables/b_out.npy"
 LOGDIR = "./Logs/CNN_local/log0"
 
 # Parameters
-GRID_SIZE = 50
+GRID_SIZE = 10
 LOCAL_GRID_SIZE = 9 # Has to be an odd number (I think...)
 SEED = 1
 WRAP = False
 TAIL = True
 FOOD_COUNT = 1
 OBSTACLE_COUNT = 0
-MAP_PATH = "./Maps/Grid{}/map3.txt".format(GRID_SIZE)
+MAP_PATH = "./Maps/Grid{}/map4.txt".format(GRID_SIZE)
 
 REPLAY_MEMORY = 250000
 
@@ -324,17 +323,17 @@ def trainDeepModel(load = False):
 
 				# Update trajectory (Update replay memory)
 				if len(tau) < REPLAY_MEMORY:
-					tau.append(Traj(state_vector, action, reward, env.local_state_vector_3D(), done))
+					tau.append(Trajectory(state_vector, action, reward, env.local_state_vector_3D(), done))
 					# print(tau[i].new_state)
 					# i=i+1
 				else:
 					tau.pop(0)
-					tau.append(Traj(state_vector, action, reward, env.local_state_vector_3D(), done))
+					tau.append(Trajectory(state_vector, action, reward, env.local_state_vector_3D(), done))
 
 				state = new_state
 
 				# Choose a random step from the replay memory
-				random_tau = random.randint(0, len(tau)-1)
+				random_tau = np.random.randint(0, len(tau)-1)
 
 				# Get the Q vector of the training step
 				Q_vector = sess.run(Q_values, feed_dict={x: tau[random_tau].state})
@@ -586,12 +585,15 @@ def runDeepModel():
 def play():
 	print("\n ----- Playing the game -----\n")
 
-	env = Environment(wrap = True, 
+	MAP_PATH = "./Maps/Grid{}/map1.txt".format(GRID_SIZE)
+
+	env = Environment(wrap = False, 
 					  grid_size = GRID_SIZE, 
 					  rate = 100, 
 					  tail = TAIL, 
-					  food_count = 20,
+					  food_count = 1,
 					  obstacle_count = 0,
+					  multiplier_count = 0,
 					  action_space = 3,
 					  map_path = MAP_PATH)
 

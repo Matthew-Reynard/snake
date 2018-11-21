@@ -33,6 +33,7 @@ with contextlib.redirect_stdout(None):
 from snakeAI import Snake
 from foodAI import Food
 from obstacleAI import Obstacle
+from multiplierAI import Multiplier
 import sys
 import math # Used for infinity game time
 
@@ -42,7 +43,7 @@ import math # Used for infinity game time
 
 class Environment:
 
-    def __init__(self, wrap = False, grid_size = 10, rate = 100, max_time = math.inf, tail = False, action_space = 3, food_count = 1, obstacle_count = 0, map_path = None):
+    def __init__(self, wrap = False, grid_size = 10, rate = 100, max_time = math.inf, tail = False, action_space = 3, food_count = 1, obstacle_count = 0, multiplier_count = 3, map_path = None):
         """
         Initialise the Game Environment with default values
         """
@@ -53,6 +54,8 @@ class Environment:
         self.GRID_SIZE = grid_size
         self.LOCAL_GRID_SIZE = 9 # Has to be an odd number
         self.ENABLE_WRAP = wrap
+        if not self.ENABLE_WRAP: 
+            self.GRID_SIZE += 2
         self.ENABLE_TAIL = tail
         #self.ENABLE_OBSTACLES = obstacles
         self.ACTION_SPACE = action_space
@@ -75,13 +78,20 @@ class Environment:
         self.NUM_OF_OBSTACLES = obstacle_count
         self.obstacle = Obstacle(self.NUM_OF_OBSTACLES)
 
+        # Create Multipliers
+        self.NUM_OF_MULTIPLIERS = multiplier_count
+        self.multiplier = Multiplier(self.NUM_OF_MULTIPLIERS)
+
         self.score = 0
         self.time = 0
-        self.state = np.zeros(4)
+        self.state = None
 
         self.display = None
         self.bg = None
         self.clock = None
+        self.font = None
+
+        self.steps = 0
 
         # Used putting food and obstacles on the grid
         self.grid = []
@@ -98,10 +108,14 @@ class Environment:
         """
 
         pygame.init()
+        pygame.key.set_repeat()
 
         self.display = pygame.display.set_mode((self.DISPLAY_WIDTH, self.DISPLAY_HEIGHT))
         pygame.display.set_caption('SnakeAI')
         self.clock = pygame.time.Clock()
+
+        pygame.font.init()
+        self.font = pygame.font.SysFont('Default', 32, bold=False)
 
         # Creates a visual Snake 
         self.snake.create(pygame)
@@ -112,6 +126,9 @@ class Environment:
         # Creates visual Obstacles 
         self.obstacle.create(pygame)
 
+        # Creates visual Multipliers 
+        self.multiplier.create(pygame)
+
         # Creates the grid background
         self.bg = pygame.image.load("./Images/Grid50.png").convert()
 
@@ -119,21 +136,28 @@ class Environment:
     def reset(self):
         """Reset the environment"""
 
+        self.steps = 0
+
         # Reset the score to 0
         self.score = 0
 
         # Positions on the grid that 
         disallowed = []
 
+        # self.obstacle.array.clear()
         if self.MAP_PATH != None:
-            self.obstacle.reset_map(self.GRID_SIZE, self.MAP_PATH)
+            self.obstacle.reset_map(self.GRID_SIZE, self.MAP_PATH, self.ENABLE_WRAP)
+            if not self.ENABLE_WRAP:
+                # pass
+                self.obstacle.create_border(self.GRID_SIZE, self.SCALE)
         else:
             # Create obstacles at random positions
-            self.obstacle.reset(self.grid, disallowed)
+            # self.obstacle.reset(self.grid, disallowed)
+            if not self.ENABLE_WRAP:
+                self.obstacle.create_border(self.GRID_SIZE, self.SCALE)
 
         [disallowed.append(grid_pos) for grid_pos in self.obstacle.array]
 
-        # print(disallowed)
         # Starting at random positions
         # self.snake.x = np.random.randint(0,self.GRID_SIZE) * self.SCALE
         # self.snake.y = np.random.randint(0,self.GRID_SIZE) * self.SCALE
@@ -164,16 +188,15 @@ class Environment:
         self.food.reset(self.grid, disallowed)
         # self.food.make_within_range(self.GRID_SIZE, self.SCALE, self.snake)
 
+        [disallowed.append(grid_pos) for grid_pos in self.food.array]
+
+        self.multiplier.reset(self.grid, disallowed)
+
         # Reset snakes tail
-        self.snake.tail_length = 0
-        self.snake.box.clear()
-        self.snake.box = [self.snake.pos] 
+        self.snake.reset_tail(0)
 
         # Fill the state array with the snake and food coordinates on the grid
-        self.state[0] = int(self.snake.x / self.SCALE)
-        self.state[1] = int(self.snake.y / self.SCALE)
-        self.state[2] = int(self.food.x / self.SCALE)
-        self.state[3] = int(self.food.y / self.SCALE)
+        self.state = self.state_array()
 
         # Reset the time
         self.time = 0
@@ -197,7 +220,14 @@ class Environment:
         self.display.blit(self.bg, (0, 0))
         self.obstacle.draw(self.display)
         self.food.draw(self.display)
+        self.multiplier.draw(self.display)
         self.snake.draw(self.display)
+
+        # Text on screen
+        text = self.font.render("Score: "+str(int(self.score)), True, (240, 240, 240, 0))
+        self.display.blit(text,(10,0))
+        text = self.font.render("Multiplier: "+str(self.snake.score_multiplier)+"x", True, (240, 240, 240, 0))
+        self.display.blit(text,(150,0))
 
         # Update the pygame display
         pygame.display.update()
@@ -252,6 +282,8 @@ class Environment:
         Return the reward, the new_state, whether its reached_food or not, and the time
         """
 
+        self.steps += 1
+
         # Rewards:
         reward_out_of_bounds = -10
         reward_hitting_tail = -10
@@ -271,7 +303,7 @@ class Environment:
 
         # Initialze to -1 for every time step - to find the fastest route (can be a more negative reward)
         # reward = -1
-        reward = -0.1
+        reward = -0.01
 
         # Update the position of the snake head and tail
         self.snake.update(self.SCALE, action, self.ACTION_SPACE)
@@ -280,16 +312,16 @@ class Environment:
             self.wrap()
         else:
             if self.snake.x > self.DISPLAY_WIDTH - self.SCALE:
-                reward = -10 # very negative reward, to ensure that it never crashes into the side
+                reward = -1 # very negative reward, to ensure that it never crashes into the side
                 done = True 
             if self.snake.x < 0:
-                reward = -10
+                reward = -1
                 done = True
             if self.snake.y > self.DISPLAY_HEIGHT - self.SCALE:
-                reward = -10
+                reward = -1
                 done = True
             if self.snake.y < 0:
-                reward = -10
+                reward = -1
                 done = True
 
         for i in range(self.obstacle.array_length):
@@ -297,12 +329,18 @@ class Environment:
 
             if hit_obstacle:
                 done = True
-                reward = -10
+                reward = -1
 
         # Update the snakes tail positions (from back to front)
-        if self.snake.tail_length > 0:
-            for i in range(self.snake.tail_length, 0, -1):
+        if self.steps <= self.snake.start_tail_length:
+            for i in range(self.steps, 0, -1):
+                # print(i, len(self.snake.box))
                 self.snake.box[i] = self.snake.box[i-1]
+
+        else:
+            if self.snake.tail_length > 0:
+                for i in range(self.snake.tail_length, 0, -1):
+                    self.snake.box[i] = self.snake.box[i-1]
 
         # Update the head position of the snake for the draw method
         self.snake.box[0] = (self.snake.x, self.snake.y)
@@ -313,42 +351,53 @@ class Environment:
             for i in range(1, self.snake.tail_length + 1):
                 if(self.snake.box[0] == (self.snake.box[i])):
                     # print("Crashed") # DEBUGGING
-                    reward = -10
+                    reward = -1
                     done = True
 
         # Make the most recent history have the most negative rewards
-        decay = (1+reward_each_time_step)/self.snake.history_size
-        for i in range(len(self.snake.history) - 1):
-            # print(-1+(decay*i))
-            if ((self.snake.x, self.snake.y) == (self.snake.history[-i-2][0], self.snake.history[-i-2][1])):
-                reward = -1+(decay*i)
-                break
+        # decay = (1+reward_each_time_step)/self.snake.history_size
+        # for i in range(len(self.snake.history) - 1):
+        #     # print(-1+(decay*i))
+        #     if ((self.snake.x, self.snake.y) == (self.snake.history[-i-2][0], self.snake.history[-i-2][1])):
+        #         reward = -1+(decay*i)
+        #         break
 
         # Checking if the snake has reached the food
-        for i in range(self.NUM_OF_FOOD):
-            reached_food = ((self.snake.x, self.snake.y) == (self.food.array[i][0], self.food.array[i][1]))
-            if reached_food:
-                eaten_food = i
-                break
+        reached_food, eaten_food = self.food.eat(self.snake)
+
+        # Checking if the snake has reached the multiplier
+        reached_multiplier, eaten_multiplier = self.multiplier.eat(self.snake)
+
+        if reached_multiplier:
+            # After every 3 multipliers are gathered, increase the score multiplier
+            if self.multiplier.amount_eaten % 3 == 0 and self.multiplier.amount_eaten != 0:
+                self.snake.score_multiplier += 1
+
+            disallowed = []
+            [disallowed.append(grid_pos) for grid_pos in self.obstacle.array]
+            [disallowed.append(grid_pos) for grid_pos in self.food.array]
+            self.multiplier.make(self.grid, self.snake, disallowed, index = eaten_multiplier)
+
+        # if self.steps % 10 == 0:
+        #     self.snake.score_multiplier = self.steps / 10
 
         # Reward: Including the distance between them
         # if reward == 0:
         #     reward = ((self.GRID_SIZE**2) / np.sqrt(((self.snake.x/self.SCALE-self.food.x/self.SCALE)**2 + (self.snake.y/self.SCALE-self.food.y/self.SCALE)**2) + 1)**2)/(self.GRID_SIZE**2)
             # print(reward) 
+
         
         # If the snake reaches the food, increment score (and increase snake tail length)
         if reached_food:
-            self.score += 1 # Increment score
-
-            # CHOOSE 1 OF THE 2 BELOW:
+            self.score += 1*self.snake.score_multiplier # Increment score
 
             # Create a piece of food that is not within the snake
-            # self.food.reset(self.GRID_SIZE, self.SCALE, self.snake)
             if self.score + self.NUM_OF_FOOD <= self.GRID_SIZE**2:
                 disallowed = []
                 [disallowed.append(grid_pos) for grid_pos in self.obstacle.array]
-                # print("disallowed:\n", disallowed)
+                [disallowed.append(grid_pos) for grid_pos in self.multiplier.array]
                 self.food.make(self.grid, self.snake, disallowed, index = eaten_food)
+
             # Test for one food item at a time
             # done = True 
 
@@ -358,7 +407,7 @@ class Environment:
                 self.snake.box.append((self.snake.x, self.snake.y)) #adds a rectangle variable to snake.box array(list)
 
             # Reward functions
-            reward = 10
+            reward = 1
             # reward = 100 / (np.sqrt((self.snake.x-self.food.x)**2 + (self.snake.y-self.food.y)**2) + 1) # Including the distance between them
             # reward = 1000 * self.score
             # reward = 1000 / self.time # Including the time in the reward function
@@ -367,16 +416,11 @@ class Environment:
         if self.time == self.MAX_TIME_PER_EPISODE:
             done = True
 
-        # Create the new_state array/list
-        new_state = np.zeros(4) # Does this increase programming time dramatically?
-        if not done:
-            new_state[0] = int(self.snake.x / self.SCALE)
-            new_state[1] = int(self.snake.y / self.SCALE)
-            new_state[2] = int(self.food.x / self.SCALE)
-            new_state[3] = int(self.food.y / self.SCALE)
+        # Get the new_state
+        new_state = self.state_array()
 
-        # A dictionary of information that can be useful
-        info = {"time":self.time, "score":self.score}
+        # A dictionary of information that may be useful
+        info = {"time": self.time, "score": self.score}
 
         return new_state, reward, done, info
 
@@ -424,6 +468,22 @@ class Environment:
         > up, down, left, right
         """
         return self.ACTION_SPACE
+
+
+    def state_array(self):
+        """
+        The state represented as an array or snake positions and food positions
+
+        Used for Q learning
+        """
+        new_state = np.zeros(4) 
+
+        new_state[0] = int(self.snake.x / self.SCALE)
+        new_state[1] = int(self.snake.y / self.SCALE)
+        new_state[2] = int(self.food.x / self.SCALE)
+        new_state[3] = int(self.food.y / self.SCALE)
+
+        return new_state
 
 
     def state_vector(self):
@@ -493,6 +553,7 @@ class Environment:
         """
         State as a 3D vector of the whole map for the CNN
         """
+        print(int(self.snake.y/self.SCALE), int(self.snake.x/self.SCALE))
 
         if self.ENABLE_TAIL:
             state = np.zeros((3, self.GRID_SIZE, self.GRID_SIZE))
