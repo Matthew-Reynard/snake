@@ -140,15 +140,15 @@ class Environment:
 
         # Reset the score to 0
         self.score = 0
-
+  
         # Positions on the grid that 
         disallowed = []
 
-        # self.obstacle.array.clear()
+        self.obstacle.array.clear()
+        self.obstacle.array_length = 0
         if self.MAP_PATH != None:
             self.obstacle.reset_map(self.GRID_SIZE, self.MAP_PATH, self.ENABLE_WRAP)
             if not self.ENABLE_WRAP:
-                # pass
                 self.obstacle.create_border(self.GRID_SIZE, self.SCALE)
         else:
             # Create obstacles at random positions
@@ -172,8 +172,12 @@ class Environment:
         self.snake.reset(self.grid, disallowed)
 
         # Initialise the movement to the right
-        self.snake.dx = 1
-        self.snake.dy = 0
+        if self.ACTION_SPACE == 3:
+            self.snake.dx = 1
+            self.snake.dy = 0
+        if self.ACTION_SPACE == 5:
+            self.snake.dx = 0
+            self.snake.dy = 0
 
         # self.snake.pos = (self.snake.x, self.snake.y)
 
@@ -287,7 +291,7 @@ class Environment:
         # Rewards:
         reward_out_of_bounds = -10
         reward_hitting_tail = -10
-        reward_each_time_step = -0.1
+        reward_each_time_step = -0.01
         reward_reaching_food = 10
 
         # Increment time step
@@ -304,6 +308,10 @@ class Environment:
         # Initialze to -1 for every time step - to find the fastest route (can be a more negative reward)
         # reward = -1
         reward = -0.01
+
+        if self.snake.dx != 0 or self.snake.dy != 0:
+            reward = 0.01
+
 
         # Update the position of the snake head and tail
         self.snake.update(self.SCALE, action, self.ACTION_SPACE)
@@ -355,12 +363,12 @@ class Environment:
                     done = True
 
         # Make the most recent history have the most negative rewards
-        # decay = (1+reward_each_time_step)/self.snake.history_size
-        # for i in range(len(self.snake.history) - 1):
-        #     # print(-1+(decay*i))
-        #     if ((self.snake.x, self.snake.y) == (self.snake.history[-i-2][0], self.snake.history[-i-2][1])):
-        #         reward = -1+(decay*i)
-        #         break
+        decay = (1+reward_each_time_step)/(self.snake.history_size-1)
+        for i in range(len(self.snake.history) - 1):
+            # print(-1*(1-decay*i))
+            if ((self.snake.x, self.snake.y) == (self.snake.history[-i-2][0], self.snake.history[-i-2][1])):
+                reward = -1*(1-decay*i)
+                break
 
         # Checking if the snake has reached the food
         reached_food, eaten_food = self.food.eat(self.snake)
@@ -407,7 +415,7 @@ class Environment:
                 self.snake.box.append((self.snake.x, self.snake.y)) #adds a rectangle variable to snake.box array(list)
 
             # Reward functions
-            reward = 1
+            reward = 10
             # reward = 100 / (np.sqrt((self.snake.x-self.food.x)**2 + (self.snake.y-self.food.y)**2) + 1) # Including the distance between them
             # reward = 1000 * self.score
             # reward = 1000 / self.time # Including the time in the reward function
@@ -674,79 +682,86 @@ class Environment:
                 if (event.key == pygame.K_q):
                     self.end()
 
-                # Moving left
-                if (event.key == pygame.K_LEFT or event.key == pygame.K_a) and GAME_OVER == False:
-                    
-                    # Moving up or down
-                    if self.snake.dy != 0:
-                        # moving down
-                        if self.snake.dy == 1:
-                            action = 2 # turn right
-                        # moving up
-                        elif self.snake.dy == -1:
-                            action = 1 # turn left
-
-                    # Moving left or right
-                    elif self.snake.dx != 0:
-                        action = 0
-
-                    # log_file.writerow([pygame.time.get_ticks(), str(snake.x), str(snake.y), "A"])
-
-                # Moving right
-                elif (event.key == pygame.K_RIGHT or event.key == pygame.K_d) and GAME_OVER == False:
-                    
-                    # Moving up or down
-                    if self.snake.dy != 0:
-                        # moving down
-                        if self.snake.dy == 1:
-                            action = 1 # turn left
-                        # moving up
-                        elif self.snake.dy == -1:
-                            action = 2 # turn right
-
-                    # Moving left or right
-                    elif self.snake.dx != 0:
-                        action = 0
-
-                    # log_file.writerow([pygame.time.get_ticks(), str(snake.x), str(snake.y), "D"])
-
-
                 # Moving up
-                elif (event.key == pygame.K_UP or event.key == pygame.K_w) and GAME_OVER == False:
+                if (event.key == pygame.K_UP or event.key == pygame.K_w) and GAME_OVER == False:
                     
-                    # Moving up or down
-                    if self.snake.dy != 0:
-                        action = 0
+                    if self.ACTION_SPACE == 3:
+                        # Moving up or down
+                        if self.snake.dy != 0:
+                            action = 0
 
-                    # Moving left or right
-                    elif self.snake.dx != 0:
-                        # moving left
-                        if self.snake.dx == -1:
-                            action = 2 # turn right
-                        # moving right
-                        elif self.snake.dx == 1:
-                            action = 1 # turn left
+                        # Moving left or right
+                        elif self.snake.dx != 0:
+                            # moving left
+                            if self.snake.dx == -1:
+                                action = 2 # turn right
+                            # moving right
+                            elif self.snake.dx == 1:
+                                action = 1 # turn left
 
-                    # log_file.writerow([pygame.time.get_ticks(), str(snake.x), str(snake.y), "W"])
-
+                    if self.ACTION_SPACE == 5:
+                        action = 1 # up
 
                 # Moving down
                 elif (event.key == pygame.K_DOWN or event.key == pygame.K_s) and GAME_OVER == False:
                     
-                    # Moving up or down
-                    if self.snake.dy != 0:
-                        action = 0
+                    if self.ACTION_SPACE == 3:
+                        # Moving up or down
+                        if self.snake.dy != 0:
+                            action = 0
 
-                    # Moving left or right
-                    elif self.snake.dx != 0:
-                        # moving left
-                        if self.snake.dx == -1:
-                            action = 1 # turn left
-                        # moving right
-                        elif self.snake.dx == 1:
-                            action = 2 # turn right
+                        # Moving left or right
+                        elif self.snake.dx != 0:
+                            # moving left
+                            if self.snake.dx == -1:
+                                action = 1 # turn left
+                            # moving right
+                            elif self.snake.dx == 1:
+                                action = 2 # turn right
 
-                    # log_file.writerow([pygame.time.get_ticks(), str(snake.x), str(snake.y), "S"])
+                    if self.ACTION_SPACE == 5:
+                        action = 2 # down
+
+                # Moving left
+                elif (event.key == pygame.K_LEFT or event.key == pygame.K_a) and GAME_OVER == False:
+
+                    if self.ACTION_SPACE == 3:
+                        # Moving up or down
+                        if self.snake.dy != 0:
+                            # moving down
+                            if self.snake.dy == 1:
+                                action = 2 # turn right
+                            # moving up
+                            elif self.snake.dy == -1:
+                                action = 1 # turn left
+
+                        # Moving left or right
+                        elif self.snake.dx != 0:
+                            action = 0
+
+                    if self.ACTION_SPACE == 5:
+                        action = 3 # left
+
+
+                # Moving right
+                elif (event.key == pygame.K_RIGHT or event.key == pygame.K_d) and GAME_OVER == False:
+                    
+                    if self.ACTION_SPACE == 3:
+                        # Moving up or down
+                        if self.snake.dy != 0:
+                            # moving down
+                            if self.snake.dy == 1:
+                                action = 1 # turn left
+                            # moving up
+                            elif self.snake.dy == -1:
+                                action = 2 # turn right
+
+                        # Moving left or right
+                        elif self.snake.dx != 0:
+                            action = 0
+
+                    if self.ACTION_SPACE == 5:
+                        action = 4 # right
 
         return action
 

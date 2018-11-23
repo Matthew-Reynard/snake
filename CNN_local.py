@@ -50,18 +50,18 @@ W_fc_textfile_path_save = "./Data/CNN_local/CNN_variables/W_fc.npy"
 b_fc_textfile_path_save = "./Data/CNN_local/CNN_variables/b_fc.npy"
 
 W_out_textfile_path_save = "./Data/CNN_local/CNN_variables/W_out.npy"
-b_out_textfile_path_save = "./Data/CNN_local/CNN_variables/b_out.npy"
+b_out_textfile_path_save = "./Data/CNN_local/CNN_variables/b_out.npy" 
 
 # This is for viewing the model and summaries in Tensorboard
 LOGDIR = "./Logs/CNN_local/log0"
 
 # Parameters
-GRID_SIZE = 10
+GRID_SIZE = 8
 LOCAL_GRID_SIZE = 9 # Has to be an odd number (I think...)
 SEED = 1
 WRAP = False
 TAIL = True
-FOOD_COUNT = 1
+FOOD_COUNT = 4
 OBSTACLE_COUNT = 0
 MAP_PATH = "./Maps/Grid{}/map4.txt".format(GRID_SIZE)
 
@@ -83,7 +83,7 @@ filter1_size = 3
 filter2_size = 3
 
 # Number of actions - Up, down, left, right
-n_actions = 3
+n_actions = 5
 
 # input - shape is included to minimise unseen errors
 x = tf.placeholder(tf.float32, [n_input_channels, LOCAL_GRID_SIZE, LOCAL_GRID_SIZE], name="Input")
@@ -188,11 +188,13 @@ def trainDeepModel(load = False):
 	env = Environment(wrap = WRAP, 
 					  grid_size = GRID_SIZE, 
 					  rate = 80, 
-					  max_time = 300, 
+					  max_time = 120, 
 					  tail = TAIL,
 					  food_count = FOOD_COUNT,
-					  obstacle_count = OBSTACLE_COUNT, 
-					  action_space=3)
+					  obstacle_count = OBSTACLE_COUNT,
+					  multiplier_count = 0, 
+					  action_space = 5,
+					  map_path = None)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -203,9 +205,9 @@ def trainDeepModel(load = False):
 	epsilon = 0.1  # Probability to choose random action instead of best action
 
 	epsilon_function = True
-	epsilon_start = 0.3
+	epsilon_start = 0.1
 	epsilon_end = 0.05
-	epsilon_percentage = 0.5 # in decimal
+	epsilon_percentage = 0.1 # in decimal
 
 	alpha_function = False
 	alpha_start = 0.01
@@ -252,7 +254,7 @@ def trainDeepModel(load = False):
 	# errors = []
 
 	print_episode = 1000
-	total_episodes = 100000
+	total_episodes = 1000000
 
 	# Saving model capabilities
 	saver = tf.train.Saver()
@@ -331,35 +333,39 @@ def trainDeepModel(load = False):
 					tau.append(Trajectory(state_vector, action, reward, env.local_state_vector_3D(), done))
 
 				state = new_state
-
-				# Choose a random step from the replay memory
-				random_tau = np.random.randint(0, len(tau)-1)
-
-				# Get the Q vector of the training step
-				Q_vector = sess.run(Q_values, feed_dict={x: tau[random_tau].state})
 				
+
 				'''
 				Training using replay memory
 				'''
+
+				# Choose a random step from the replay memory
+				# random_tau = np.random.randint(0, len(tau)-1)
+
+				# Get the Q vector of the training step
+				# Q_vector = sess.run(Q_values, feed_dict={x: tau[random_tau].state})
 				# if terminating state of episode
-				if tau[random_tau].done:
-					# Set the chosen action's current value to the reward value
-					Q_vector[:,tau[random_tau].action] = tau[random_tau].reward
-				else:
-					# Gets the Q vector of the new state
-					y_prime = sess.run(Q_values, feed_dict={x: tau[random_tau].new_state})
+				# if tau[random_tau].done:
+				# 	# Set the chosen action's current value to the reward value
+				# 	Q_vector[:,tau[random_tau].action] = tau[random_tau].reward
+				# else:
+				# 	# Gets the Q vector of the new state
+				# 	y_prime = sess.run(Q_values, feed_dict={x: tau[random_tau].new_state})
 
-					# Getting the best action value
-					maxq = sess.run(y_prime_max, feed_dict={y: y_prime})
+				# 	# Getting the best action value
+				# 	maxq = sess.run(y_prime_max, feed_dict={y: y_prime})
 
-					# RL DQN Training Equation
-					Q_vector[:,tau[random_tau].action] = tau[random_tau].reward + (gamma * maxq)
+				# 	# RL DQN Training Equation
+				# 	Q_vector[:,tau[random_tau].action] = tau[random_tau].reward + (gamma * maxq)
 
-				_, e = sess.run([optimizer, error], feed_dict={x: tau[random_tau].state, y: Q_vector})
+				# _, e = sess.run([optimizer, error], feed_dict={x: tau[random_tau].state, y: Q_vector})
+
 
 				'''
 				Standard training with learning after every step
+				'''
 
+				Q_vector = sess.run(Q_values, feed_dict={x: state_vector})
 				# if final state of the episode
 				if done:
 					Q_vector[:,action] = reward
@@ -381,7 +387,7 @@ def trainDeepModel(load = False):
 				# e = sess.run(error,feed_dict={x:state_vector, y:Q_vector})
 				# sess.run(optimizer)
 				
-				'''
+				
 
 				# DEBUGGING
 				# print("action:", action)
@@ -447,7 +453,7 @@ def trainDeepModel(load = False):
 				writer.add_summary(s, episode)
 
 		save_path = saver.save(sess, MODEL_PATH_SAVE)
-		print("Model saved in path: %s" % save_path)
+		print( "Model saved in path: %s" % save_path)
 
 	# plt.plot([np.mean(errors[i:i+500]) for i in range(len(errors) - 500)])
 	# plt.savefig("./Images/errors.png")
@@ -474,8 +480,10 @@ def runDeepModel():
 					  max_time = 200, 
 					  tail = TAIL,
 					  food_count = FOOD_COUNT,
-					  obstacle_count = OBSTACLE_COUNT,  
-					  action_space=3)
+					  obstacle_count = OBSTACLE_COUNT,
+					  multiplier_count = 0,  
+					  action_space  =5,
+					  map_path = None)
 	
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -593,9 +601,9 @@ def play():
 					  tail = TAIL, 
 					  food_count = 1,
 					  obstacle_count = 0,
-					  multiplier_count = 0,
-					  action_space = 3,
-					  map_path = MAP_PATH)
+					  multiplier_count = 4,
+					  action_space = 5,
+					  map_path = None)
 
 	env.play()
 
@@ -604,8 +612,8 @@ def play():
 if __name__ == '__main__':
 
 	# --- Deep Neural Network with CNN --- #
-	# trainDeepModel(load = False)
-	# runDeepModel()
-
+	# trainDeepModel(load = True)
+	runDeepModel()
+  
 	# --- Just for fun --- #
-	play()
+	# play()
