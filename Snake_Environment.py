@@ -115,7 +115,7 @@ class Environment:
         self.clock = pygame.time.Clock()
 
         pygame.font.init()
-        self.font = pygame.font.SysFont('Default', 32, bold=False)
+        self.font = pygame.font.SysFont('Default', 24, bold=False)
 
         # Creates a visual Snake 
         self.snake.create(pygame)
@@ -150,13 +150,18 @@ class Environment:
             self.obstacle.reset_map(self.GRID_SIZE, self.MAP_PATH, self.ENABLE_WRAP)
             if not self.ENABLE_WRAP:
                 self.obstacle.create_border(self.GRID_SIZE, self.SCALE)
+
+            [disallowed.append(grid_pos) for grid_pos in self.obstacle.array]
         else:
-            # Create obstacles at random positions
-            # self.obstacle.reset(self.grid, disallowed)
             if not self.ENABLE_WRAP:
                 self.obstacle.create_border(self.GRID_SIZE, self.SCALE)
 
-        [disallowed.append(grid_pos) for grid_pos in self.obstacle.array]
+            [disallowed.append(grid_pos) for grid_pos in self.obstacle.array]
+            # Create obstacles at random positions
+
+        random_array = self.obstacle.reset(self.grid, disallowed, self.NUM_OF_OBSTACLES)
+
+        [disallowed.append(grid_pos) for grid_pos in random_array]
 
         # Starting at random positions
         # self.snake.x = np.random.randint(0,self.GRID_SIZE) * self.SCALE
@@ -199,8 +204,8 @@ class Environment:
         # Reset snakes tail
         self.snake.reset_tail(0)
 
-        # Fill the state array with the snake and food coordinates on the grid
-        self.state = self.state_array()
+        # The state for the current model
+        self.state = self.local_state_vector_3D()
 
         # Reset the time
         self.time = 0
@@ -231,7 +236,7 @@ class Environment:
         text = self.font.render("Score: "+str(int(self.score)), True, (240, 240, 240, 0))
         self.display.blit(text,(10,0))
         text = self.font.render("Multiplier: "+str(self.snake.score_multiplier)+"x", True, (240, 240, 240, 0))
-        self.display.blit(text,(150,0))
+        self.display.blit(text,(80,0))
 
         # Update the pygame display
         pygame.display.update()
@@ -310,7 +315,7 @@ class Environment:
         reward = -0.01
 
         if self.snake.dx != 0 or self.snake.dy != 0:
-            reward = 0.01
+            reward = 0.5
 
 
         # Update the position of the snake head and tail
@@ -363,11 +368,12 @@ class Environment:
                     done = True
 
         # Make the most recent history have the most negative rewards
-        decay = (1+reward_each_time_step)/(self.snake.history_size-1)
+        start_decay = 0.5
+        decay = ((1+reward_each_time_step)/(self.snake.history_size-1)) * start_decay
         for i in range(len(self.snake.history) - 1):
-            # print(-1*(1-decay*i))
+            # print(-1*(start_decay-decay*i))
             if ((self.snake.x, self.snake.y) == (self.snake.history[-i-2][0], self.snake.history[-i-2][1])):
-                reward = -1*(1-decay*i)
+                reward = -1*(start_decay-decay*i)
                 break
 
         # Checking if the snake has reached the food
@@ -425,10 +431,12 @@ class Environment:
             done = True
 
         # Get the new_state
-        new_state = self.state_array()
+        new_state = self.local_state_vector_3D()
 
         # A dictionary of information that may be useful
-        info = {"time": self.time, "score": self.score}
+        info = {"time": self.time, 
+                "score": self.score, 
+                "step": self.step}
 
         return new_state, reward, done, info
 

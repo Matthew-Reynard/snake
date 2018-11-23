@@ -26,9 +26,10 @@ class Obstacle:
             # self.random_objects[i].set_colorkey(white)
 
 
-    def reset(self, grid, disallowed):
+    def reset(self, grid, disallowed, num_of_obstacles):
         """Create all the obstacles, not in the disallowed positions"""
-        self.array.clear()
+        # self.array.clear()
+        random_array = []
 
         # If I want the obstacles in the same location every episode
         # random.seed(10)
@@ -38,10 +39,15 @@ class Obstacle:
 
         [allowed.remove(pos) for pos in disallowed]
 
-        for i in range(self.array_length):
+        for i in range(num_of_obstacles):
             new_pos = random.choice((allowed))
             self.array.append(new_pos)
+            random_array.append(new_pos)
             allowed.remove(new_pos)
+
+        self.array_length = self.array_length + num_of_obstacles
+
+        return random_array
 
     def reset_map(self, grid_size, map_path, wrap):
         # self.array.clear()
