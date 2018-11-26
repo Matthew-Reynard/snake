@@ -9,10 +9,12 @@ class DeepQNetwork(nn.Module):
 	def __init__(self, ALPHA):
 		super(DeepQNetwork, self).__init__()
 		self.conv1 = nn.Conv2d(2, 16, 3, stride=1, padding=0)
+		# self.maxp1 = nn.MaxPool2d(2, stride=1, padding=0)
 		self.conv2 = nn.Conv2d(16, 32, 3, stride=1)
+		# self.maxp2 = nn.MaxPool2d(2, stride=1, padding=0)
 		# self.conv3 = nn.Conv2d(64, 128, 3)
 		self.fc1 = nn.Linear(1*1*32, 256)
-		self.fc2 = nn.Linear(256, 4)
+		self.fc2 = nn.Linear(256, 5)
 
 		# self.optimiser = optim.RMSprop(self.parameters(), lr=ALPHA)
 		self.optimiser = optim.SGD(self.parameters(), lr=ALPHA)
@@ -22,13 +24,12 @@ class DeepQNetwork(nn.Module):
 
 	def forward(self, observation):
 		observation = T.Tensor(observation).to(self.device)
-		observation = observation.view(-1, 2, 5, 5) # size of image 4x9x9
+		observation = observation.view(-1, 2, 7, 7) # size of image 4x9x9
 		observation = F.relu(self.conv1(observation))
 		observation = F.relu(self.conv2(observation))
 		# observation = F.relu(self.conv3(observation))
 		observation = observation.view(-1, 1*1*32) # flatten
 		observation = F.relu(self.fc1(observation))
-
 		actions = self.fc2(observation)
 
 		return actions
@@ -121,8 +122,8 @@ class Agent(object):
 		
 		# linear decrease of epsilon
 		if self.steps > 500:
-			if self.EPSILON - 1e-4 > self.EPS_END:
-				self.EPSILON -= 1e-4
+			if self.EPSILON - 5e-5 > self.EPS_END:
+				self.EPSILON -= 5e-5
 			else:
 				self.EPSILON = self.EPS_END
 

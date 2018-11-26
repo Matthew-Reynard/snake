@@ -314,8 +314,9 @@ class Environment:
         # reward = -1
         reward = -0.01
 
-        if self.snake.dx != 0 or self.snake.dy != 0:
-            reward = 0.5
+        # If the snake is moving (used for big maps)
+        # if self.snake.dx != 0 or self.snake.dy != 0:
+        #     reward = 0.5
 
 
         # Update the position of the snake head and tail
@@ -368,13 +369,13 @@ class Environment:
                     done = True
 
         # Make the most recent history have the most negative rewards
-        start_decay = 0.5
-        decay = ((1+reward_each_time_step)/(self.snake.history_size-1)) * start_decay
-        for i in range(len(self.snake.history) - 1):
-            # print(-1*(start_decay-decay*i))
-            if ((self.snake.x, self.snake.y) == (self.snake.history[-i-2][0], self.snake.history[-i-2][1])):
-                reward = -1*(start_decay-decay*i)
-                break
+        # start_decay = 0.5
+        # decay = ((1+reward_each_time_step)/(self.snake.history_size-1)) * start_decay
+        # for i in range(len(self.snake.history) - 1):
+        #     # print(-1*(start_decay-decay*i))
+        #     if ((self.snake.x, self.snake.y) == (self.snake.history[-i-2][0], self.snake.history[-i-2][1])):
+        #         reward = -1*(start_decay-decay*i)
+        #         break
 
         # Checking if the snake has reached the food
         reached_food, eaten_food = self.food.eat(self.snake)
@@ -569,7 +570,7 @@ class Environment:
         """
         State as a 3D vector of the whole map for the CNN
         """
-        print(int(self.snake.y/self.SCALE), int(self.snake.x/self.SCALE))
+        # print(int(self.snake.y/self.SCALE), int(self.snake.x/self.SCALE))
 
         if self.ENABLE_TAIL:
             state = np.zeros((3, self.GRID_SIZE, self.GRID_SIZE))

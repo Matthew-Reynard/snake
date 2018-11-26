@@ -5,8 +5,9 @@ from Snake_Environment import Environment
 
 if __name__ == '__main__':
 
-	RENDER = True
-	start_eps = 0.5
+	TRAIN = True
+	RENDER = False
+	start_eps = (0.5 if TRAIN else 0.05)
 
 	GRID_SIZE = 5
 	LOCAL_GRID_SIZE = 9 # Has to be an odd number (I think...)
@@ -25,7 +26,7 @@ if __name__ == '__main__':
 					  food_count = FOOD_COUNT,
 					  obstacle_count = OBSTACLE_COUNT,
 					  multiplier_count = 0,
-					  action_space = 4,
+					  action_space = 5,
 					  map_path = MAP_PATH)
 
 	brain = Agent(gamma = 0.99, epsilon = start_eps, alpha = 0.001, maxMemorySize = 5000, replace = None)
@@ -83,12 +84,12 @@ if __name__ == '__main__':
 			brain.storeTransition(observation, action, reward, observation_)
 
 			observation = observation_
-			loss = brain.learn(batch_size)
+			if TRAIN: loss = brain.learn(batch_size)
 			lastAction = action
 			if RENDER: env.render()
 
 		avg_score += info["score"]
-		avg_loss += loss.item()
+		if TRAIN: avg_loss += loss.item()
 
 
 		if i%100 == 0 and not i==0 or i == numGames-1:
