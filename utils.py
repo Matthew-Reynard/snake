@@ -7,5 +7,6 @@ class Trajectory():
         self.new_state = new_state
         self.done = done
 
+
 def plot_loss():
 	pass
