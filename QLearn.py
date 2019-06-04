@@ -25,7 +25,8 @@ from Snake_Environment import Environment
 Q_textfile_path_load = "./Data/QLearning/Q_test.txt"
 Q_textfile_path_save = "./Data/QLearning/Q_test.txt"
 
-GRID_SIZE = 10
+GRID_SIZE = 6
+
 
 # Dimensions: (states, actions)
 def Qmatrix(x, env):
@@ -43,15 +44,19 @@ def Qmatrix(x, env):
 def train():
 
 	RENDER_TO_SCREEN = False
+	# RENDER_TO_SCREEN = True
 
-	# rate should be 0 when not rendering, else it will lengthen training time unnecessarily
+	# Setting up the environment
 	env = Environment(wrap = False, 
 					  grid_size = GRID_SIZE, 
 					  rate = 80, 
-					  max_time = 200,
-					  food_count = 1,
-					  obstacle_count = 0,
-					  action_space = 4)
+					  max_time = 100,
+					  tail = False, 
+					  food_count = 1, 
+					  obstacle_count = 0, 
+					  multiplier_count = 0, 
+					  map_path = None,
+					  action_space = 5) 
 
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -71,7 +76,7 @@ def train():
 	avg_score = 0
 
 	print_episode = 1000
-	total_episodes = 1000000
+	total_episodes = 10000
 
 	for episode in range(total_episodes):
 		# Reset the environment
@@ -97,6 +102,8 @@ def train():
 					action = np.argmax(Q[env.state_index(state)])
 
 				new_state, reward, done, info = env.step(action)
+
+				# print(state)
 
 				Q[env.state_index(state), action] += alpha * (reward + gamma * np.max(Q[env.state_index(new_state)]) - Q[env.state_index(state), action])
 
@@ -132,13 +139,17 @@ def run():
 
 	RENDER_TO_SCREEN = True
 
+	# Setting up the environment
 	env = Environment(wrap = False, 
 					  grid_size = GRID_SIZE, 
 					  rate = 80, 
 					  max_time = 100,
-					  food_count = 1,
-					  obstacle_count = 0,
-					  action_space = 4)
+					  tail = False, 
+					  food_count = 1, 
+					  obstacle_count = 0, 
+					  multiplier_count = 0, 
+					  map_path = None,
+					  action_space = 5) 
 
 	if RENDER_TO_SCREEN:
 		env.prerender()
@@ -162,8 +173,6 @@ def run():
 			else:
 				action = np.argmax(Q[env.state_index(state)])
 
-			# print(state)
-
 			new_state, reward, done, info = env.step(action)
 
 			# Q[env.state_index(state), action] += alpha * (reward + gamma * np.max(Q[env.state_index(new_state)]) - Q[env.state_index(state), action])
@@ -183,15 +192,19 @@ def play():
 					  grid_size = 10, 
 					  rate = 100, 
 					  tail = True, 
-					  obstacles = True)
+					  action_space = 3,
+					  food_count = 1,
+					  obstacle_count = 0,
+					  multiplier_count = 0, 
+					  map_path = None)
 
 	env.play()
 
 
 if __name__ == '__main__':
 
-	# CHOOSE 1 OF THE 3
+	train() 
 
-	# train() 
 	# run()
-	play()
+
+	# play()

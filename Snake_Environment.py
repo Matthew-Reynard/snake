@@ -205,7 +205,10 @@ class Environment:
         self.snake.reset_tail(0)
 
         # The state for the current model
-        self.state = self.local_state_vector_3D()
+        self.state = self.state_array()
+        # self.state = self.state_vector()
+        # self.state = self.state_vector_3D()
+        # self.state = self.local_state_vector_3D()
 
         # Reset the time
         self.time = 0
@@ -432,7 +435,10 @@ class Environment:
             done = True
 
         # Get the new_state
-        new_state = self.local_state_vector_3D()
+        new_state = self.state_array()
+        # new_state = self.state_vector()
+        # new_state = self.state_vector_3D()
+        # new_state = self.local_state_vector_3D()
 
         # A dictionary of information that may be useful
         info = {"time": self.time, 

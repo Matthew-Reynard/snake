@@ -2,6 +2,12 @@ results/
 Models/Torch
 Models/Torch2
 
+# all test stuff
+test.py
+test/
+tmp/
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -106,8 +112,3 @@ venv.bak/
 
 # mypy
 .mypy_cache/
-
-# all test stuff
-test.py
-test/
-tmp/
