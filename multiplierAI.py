@@ -121,7 +121,11 @@ class Multiplier:
 
         return reached, index
 
+        # Eating the food by the snake
+
     #Draw the food
     def draw(self, display):
         for i in range(self.amount):
             display.blit(self.mult_img, self.array[i])
+
+            # Creates food on grid within range of slef.amount

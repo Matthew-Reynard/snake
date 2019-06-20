@@ -82,7 +82,7 @@ class Obstacle:
             for i in range(grid_size):
                 if map1[j][i] == '1':
                     self.array.append((i*20,j*20))
-                    num = num + 1
+                    num +=1
 
         self.array_length = num
 
